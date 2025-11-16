@@ -99,16 +99,28 @@ if ($action === 'add') {
     $date = $_POST['appointment_date'] ?? '';
     $timeSlot = $_POST['time_slot'] ?? '';
     $recaptcha_token = $_POST['g-recaptcha-response'] ?? '';
-    // Verify reCAPTCHA v2
-    $recaptcha_secret = '6LejFOsrAAAAAMif6gHs-UjcfJxnWW7fCF-bzWNe';
-    $recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify';
-    $recaptcha = file_get_contents($recaptcha_url . '?secret=' . urlencode($recaptcha_secret) . '&response=' . urlencode($recaptcha_token));
-    $recaptcha = json_decode($recaptcha, true);
-    if (!$recaptcha || empty($recaptcha['success'])) {
-        jsonResponse([
-            'success' => false,
-            'message' => 'reCAPTCHA validation failed.'
-        ]);
+    // Verify reCAPTCHA only if enabled and properly configured via env
+    $recaptcha_enabled = false;
+    $recaptcha_secret = getenv('RECAPTCHA_SECRET') ?: '';
+    $enabledEnv = getenv('RECAPTCHA_ENABLED');
+    if ($enabledEnv === false || $enabledEnv === null || $enabledEnv === '') {
+        $recaptcha_enabled = ($recaptcha_secret !== '');
+    } else {
+        $recaptcha_enabled = (int)$enabledEnv === 1 || strtolower((string)$enabledEnv) === 'true';
+    }
+    if ($recaptcha_enabled) {
+        if (!$recaptcha_secret || !$recaptcha_token) {
+            jsonResponse(['success'=>false,'message'=>'reCAPTCHA validation failed.']);
+        }
+        $recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify';
+        $recaptcha = @file_get_contents($recaptcha_url . '?secret=' . urlencode($recaptcha_secret) . '&response=' . urlencode($recaptcha_token));
+        $recaptcha = $recaptcha ? json_decode($recaptcha, true) : null;
+        if (!$recaptcha || empty($recaptcha['success'])) {
+            jsonResponse([
+                'success' => false,
+                'message' => 'reCAPTCHA validation failed.'
+            ]);
+        }
     }
 
     // Validate required fields

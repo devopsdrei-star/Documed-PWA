@@ -15,21 +15,47 @@
 <body>
   <div class="recaptcha-box">
     <h2>Human Validation</h2>
-    <div class="g-recaptcha" data-sitekey="6LejFOsrAAAAAHdGaGHj9crHVF-Gja-GiNR0I5dC" data-callback="onRecaptcha"></div>
+    <div id="recaptcha-container"></div>
     <div id="recaptchaMsg"></div>
   </div>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <script>
+    // Dynamically fetch site key from the server and render the widget for the active domain
+    const msgEl = document.getElementById('recaptchaMsg');
     let recaptchaPassed = false;
     function onRecaptcha(token) {
       recaptchaPassed = !!token;
-      document.getElementById('recaptchaMsg').textContent = '';
+      msgEl.textContent = '';
       if (recaptchaPassed) {
-        // Store token in sessionStorage
         sessionStorage.setItem('recaptchaToken', token);
         window.location.href = 'book_appointment.html';
       }
     }
+
+    fetch('../../backend/api/recaptcha_config.php')
+      .then(r => r.ok ? r.json() : { enabled: false })
+      .then(cfg => {
+        if (!cfg || !cfg.enabled || !cfg.siteKey) {
+          // If reCAPTCHA is disabled or not configured, bypass gracefully
+          sessionStorage.setItem('recaptchaToken', 'DISABLED');
+          window.location.href = 'book_appointment.html';
+          return;
+        }
+        // Load API and render explicitly with the provided site key
+        window.__recaptchaOnload = function() {
+          try {
+            grecaptcha.render('recaptcha-container', { sitekey: cfg.siteKey, callback: onRecaptcha });
+          } catch (e) {
+            msgEl.textContent = 'Failed to load reCAPTCHA. Please refresh the page.';
+          }
+        };
+        const s = document.createElement('script');
+        s.src = 'https://www.google.com/recaptcha/api.js?onload=__recaptchaOnload&render=explicit';
+        s.async = true; s.defer = true;
+        document.head.appendChild(s);
+      })
+      .catch(() => {
+        msgEl.textContent = 'Unable to contact verification service. Please try again.';
+      });
   </script>
 </body>
 </html>
