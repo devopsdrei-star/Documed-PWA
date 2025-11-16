@@ -1,0 +1,15 @@
+{
+  "name": "DocuMed Campus Clinic",
+  "short_name": "DocuMed",
+  "description": "Appointments and clinic services for students, faculty, and staff.",
+  "start_url": "frontend/user/user_dashboard.html",
+  "id": "./frontend/user/user_dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#0a6ecb",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "frontend/assets/images/documed_logo.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "frontend/assets/images/documed_logo.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ]
+}

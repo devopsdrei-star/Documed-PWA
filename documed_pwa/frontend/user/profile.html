@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="manifest" href="../../manifest-landing.json">
+  <link rel="apple-touch-icon" href="../assets/images/documed_logo.png">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f8f9fa;
+      color: #111;
+    }
+    .main-wrapper {
+      background: #fff;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+      max-width: 100%;
+      width: 100%;
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: visible;
+      position: relative;
+    }
+  .top-nav { padding: 0 24px; width: 100%; }
+    .nav-links { gap: 32px; font-weight: 500; font-size: 1.08rem; }
+    .nav-links a {
+      color: #222;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: #00d1c7;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .profile-main {
+      max-width: 900px;
+      margin: 48px auto 32px auto;
+      padding: 0 24px;
+      width: 100%;
+    }
+    .profile-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2563eb;
+      margin-bottom: 32px;
+      text-align: left;
+      letter-spacing: 1px;
+    }
+    .profile-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px 36px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.10);
+      padding: 40px 36px 32px 36px;
+    }
+    .profile-form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0;
+    }
+    .profile-form-group label {
+      font-weight: 600;
+      color: #2563eb;
+      margin-bottom: 6px;
+    }
+    .profile-form-group input, .profile-form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #2563eb;
+      background: #fff;
+      font-size: 1rem;
+      margin-bottom: 0;
+      transition: border 0.2s;
+    }
+    .profile-form-group input:focus, .profile-form-group select:focus {
+      border: 1.5px solid #1742b0;
+      outline: none;
+    }
+    .profile-photo-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 12px auto;
+      cursor: pointer;
+    }
+    .profile-photo-edit {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      box-shadow: 0 2px 8px #2563eb22;
+      background: #fff;
+      transition: filter 0.2s;
+    }
+    .profile-photo-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .profile-photo-container:hover .profile-photo-overlay {
+      opacity: 1;
+    }
+    .profile-photo-container:hover .profile-photo-edit {
+      filter: brightness(0.9);
+    }
+    .profile-photo-text {
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-align: center;
+    }
+    #photoInput {
+      display: none;
+    }
+    .profile-actions {
+      grid-column: 1 / span 2;
+      display: flex;
+      justify-content: flex-end;
+      gap: 18px;
+      margin-top: 24px;
+    }
+    .profile-edit-form button {
+      background: #2563eb;
+      color: #fff;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 1.08rem;
+      box-shadow: 0 2px 8px #2563eb33;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .profile-edit-form button:hover {
+      background: #1742b0;
+      box-shadow: 0 4px 16px #2563eb33;
+    }
+    @media (max-width: 900px) {
+      .profile-form-grid { grid-template-columns: 1fr; }
+      .profile-actions { grid-column: 1; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-wrapper">
+    <nav class="top-nav">
+      <div class="d-flex align-items-center">
+        <div class="nav-logo">
+          <img src="../assets/images/documed_logo.png" alt="DocuMed Logo">
+        </div>
+        <button class="nav-burger" aria-label="Toggle navigation"><span></span></button>
+        <div class="nav-links">
+          <a href="user_dashboard.html">Home</a>
+          <a href="appointments.html">Appointment</a>
+          <a href="medical_history.html">Medical History</a>
+          <a href="profile.html">Profile</a>
+          <a href="user_dashboard.html#services" id="navServices">Services</a>
+          <a href="user_dashboard.html#about" id="navAbout">About Us</a>
+          <a href="user_dashboard.html#contact" id="navContact">Contact</a>
+          <a href="#" id="navHelp">Help</a>
+        </div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-actions" id="navActions">
+          <!-- Dynamic login/profile actions here -->
+        </div>
+      </div>
+    </nav>
+    <div class="profile-main">
+      <div class="profile-title">Edit Profile</div>
+      <form id="profileEditForm" class="profile-edit-form">
+        <div class="profile-form-grid">
+          <div class="profile-form-group">
+            <label>Profile Photo</label>
+            <div class="profile-photo-container" onclick="document.getElementById('photoInput').click()">
+              <img id="profilePhoto" src="../assets/images/user_photo.png" alt="Profile" class="profile-photo-edit">
+              <div class="profile-photo-overlay">
+                <div class="profile-photo-text">
+                  <i class="bi bi-camera-fill"></i><br>
+                  Change Photo
+                </div>
+              </div>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" style="display:none">
+          </div>
+          <div class="profile-form-group">
+            <label for="editEmail">Email</label>
+            <input type="email" id="editEmail" name="email" required>
+          </div>
+          <div class="profile-form-group">
+            <label for="editFirstName">First Name</label>
+            <input type="text" id="editFirstName" name="first_name" required>
+          </div>
+          <div class="profile-form-group">
+            <label for="editLastName">Last Name</label>
+            <input type="text" id="editLastName" name="last_name" required>
+          </div>
+          <div class="profile-form-group">
+            <label for="editMiddleInitial">Middle Initial</label>
+            <input type="text" id="editMiddleInitial" name="middle_initial">
+          </div>
+          <div class="profile-form-group">
+            <label for="editAge">Age</label>
+            <input type="number" id="editAge" name="age">
+          </div>
+          <div class="profile-form-group">
+            <label for="editAddress">Address</label>
+            <input type="text" id="editAddress" name="address">
+          </div>
+          <div class="profile-form-group">
+            <label for="editCivilStatus">Civil Status</label>
+            <select id="editCivilStatus" name="civil_status">
+              <option value="">Select civil status</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Separated">Separated</option>
+                <option value="Divorce">Divorce</option>
+                <option value="Annuled">Annuled</option>
+              </select>
+          </div>
+          <div class="profile-form-group">
+            <label for="editNationality">Nationality</label>
+            <input type="text" id="editNationality" name="nationality">
+          </div>
+          <div class="profile-form-group">
+            <label for="editReligion">Religion</label>
+            <input type="text" id="editReligion" name="religion">
+          </div>
+          <div class="profile-form-group">
+            <label for="editDOB">Date of Birth</label>
+            <input type="date" id="editDOB" name="date_of_birth">
+          </div>
+          <div class="profile-form-group">
+            <label for="editPOB">Place of Birth</label>
+            <input type="text" id="editPOB" name="place_of_birth">
+          </div>
+          <div class="profile-form-group">
+            <label for="editYearCourse">Year & Course</label>
+            <input type="text" id="editYearCourse" name="year_course">
+          </div>
+          <div class="profile-form-group">
+            <label for="editID">Student/Faculty ID</label>
+            <input type="text" id="editID" name="student_faculty_id" disabled>
+          </div>
+          <div class="profile-form-group">
+            <label for="editContactPerson">Contact Person</label>
+            <input type="text" id="editContactPerson" name="contact_person">
+          </div>
+          <div class="profile-form-group">
+            <label for="editContact">Contact Number</label>
+            <input type="text" id="editContact" name="contact_number">
+          </div>
+          <div class="profile-form-group">
+            <label for="editRole">Role</label>
+            <input type="text" id="editRole" name="role" readonly style="background:#f9fafb;" />
+          </div>
+          <div class="profile-form-group" id="departmentGroup" style="display:none;">
+            <label for="editDepartment">Department</label>
+            <select id="editDepartment" name="department">
+              <option value="">Select Department</option>
+              <option value="CCS">CCS</option>
+              <option value="CASL">CASL</option>
+              <option value="CBPA">CBPA</option>
+              <option value="CTHM">CTHM</option>
+              <option value="CTE">CTE</option>
+              <option value="CIT">CIT</option>
+            </select>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button type="submit">Save Changes</button>
+          <div id="profileMsg" style="margin-left:18px;"></div>
+        </div>
+      </form>
+      <div class="settings-divider" style="margin:40px 0 32px 0;"></div>
+      <div id="qrLoginSection" class="profile-edit-form">
+        <div class="profile-title" style="font-size:1.3rem;color:#2563eb;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+          <span>QR Login</span>
+          <span id="qrLoginStatus" style="font-size:0.95rem;font-weight:600;color:#059669;display:none;">Enabled</span>
+        </div>
+        <div class="profile-form-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="profile-form-group">
+            <label for="qrPassword">Confirm Password</label>
+            <input type="password" id="qrPassword" placeholder="Your account password">
+            <div class="form-text" style="margin-top:6px;color:#6b7280;">We’ll verify your password before enabling your personal login QR.</div>
+          </div>
+          <div class="profile-form-group">
+            <label>Actions</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button type="button" id="btnEnableQr" class="btn btn-primary" style="background:#2563eb;">Enable QR Login</button>
+              <button type="button" id="btnDisableQr" class="btn btn-outline-danger">Disable</button>
+            </div>
+          </div>
+          <div class="profile-form-group" style="grid-column: 1 / span 2;">
+            <label>Your Personal QR</label>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <img id="personalQrImg" src="" alt="Personal QR" style="width:140px;height:140px;border:1px solid #e5e7eb;border-radius:8px;display:none;"/>
+              <div id="qrHelp" style="color:#374151;font-size:0.95rem;">
+                Scan this on the login page to sign in instantly. Keep it private—treat it like a password.
+              </div>
+            </div>
+          </div>
+          <div class="profile-form-group" style="grid-column: 1 / span 2;">
+            <div id="qrMsg" style="min-height:20px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-divider" style="margin:40px 0 32px 0;"></div>
+      <form id="passwordForm" class="profile-edit-form">
+        <div class="profile-title" style="font-size:1.3rem;color:#2563eb;margin-bottom:18px;">Change Password</div>
+        <div class="profile-form-grid">
+          <div class="profile-form-group">
+            <label for="oldPassword">Current Password</label>
+            <input type="password" id="oldPassword" name="oldPassword" required placeholder="Enter current password">
+          </div>
+          <div class="profile-form-group">
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" name="newPassword" required placeholder="Enter new password (min 6 chars)">
+          </div>
+          <div class="profile-form-group">
+            <label for="confirmPassword">Confirm New Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm new password">
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button type="submit">Change Password</button>
+          <div id="passwordMsg" style="margin-left:18px;"></div>
+        </div>
+      </form>
+    </div>
+  <script src="../assets/js/mobile-nav.js"></script>
+  <script src="../assets/js/notifications.js"></script>
+  <script src="../assets/js/pwa.js"></script>
+  <script src="../assets/js/help_modal.js"></script>
+  <script src="../assets/js/profile.js"></script>
+  </body>
+  <!-- AI Chatbot Floating Button and Chat Window -->
+  <div id="aiChatbotBtn" style="position:fixed;bottom:100px;right:32px;z-index:9999;">
+    <button style="background:#2563eb;color:#fff;border:none;border-radius:50%;width:60px;height:60px;box-shadow:0 4px 16px rgba(37,99,235,0.18);font-size:2rem;cursor:pointer;" title="Chat with AI">
+      💬
+    </button>
+  </div>
+  <div id="aiChatbotWindow" style="display:none;position:fixed;bottom:170px;right:32px;width:350px;max-width:95vw;height:480px;z-index:10000;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(37,99,235,0.18);overflow:hidden;flex-direction:column;">
+    <div style="background:#2563eb;color:#fff;padding:16px 20px;font-weight:600;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between;">
+      <span>AI Assistant</span>
+      <button id="aiChatbotClose" style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+    <div id="aiChatbotMessages" style="flex:1;overflow-y:auto;padding:16px 12px 12px 12px;height:340px;background:#f8fafc;"></div>
+    <form id="aiChatbotForm" style="display:flex;padding:12px 12px 12px 12px;background:#f3f6fc;gap:8px;">
+      <input id="aiChatbotInput" type="text" placeholder="Type your question..." style="flex:1;padding:10px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1rem;outline:none;" required autocomplete="off" />
+      <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0 18px;font-size:1rem;font-weight:600;">Send</button>
+    </form>
+  </div>
+  <script>
+    // AI Chatbot UI logic
+    const aiBtn = document.getElementById('aiChatbotBtn');
+    const aiWin = document.getElementById('aiChatbotWindow');
+    const aiClose = document.getElementById('aiChatbotClose');
+    aiBtn.onclick = () => { aiWin.style.display = 'flex'; };
+    aiClose.onclick = () => { aiWin.style.display = 'none'; };
+    // Minimize on outside click
+    document.addEventListener('mousedown', function(e) {
+      if (aiWin.style.display === 'flex' && !aiWin.contains(e.target) && !aiBtn.contains(e.target)) {
+        aiWin.style.display = 'none';
+      }
+    });
+    // Chatbot messaging logic (OpenAI integration to be added next)
+    const aiForm = document.getElementById('aiChatbotForm');
+    const aiInput = document.getElementById('aiChatbotInput');
+    const aiMsgs = document.getElementById('aiChatbotMessages');
+    function appendMsg(sender, text) {
+      const div = document.createElement('div');
+      div.style.margin = '8px 0';
+      div.style.textAlign = sender === 'user' ? 'right' : 'left';
+      div.innerHTML = `<span style="display:inline-block;max-width:80%;padding:10px 14px;border-radius:12px;background:${sender==='user'?'#2563eb':'#e0e7ff'};color:${sender==='user'?'#fff':'#222'};font-size:1rem;">${text.replace(/</g,'&lt;')}</span>`;
+      aiMsgs.appendChild(div);
+      aiMsgs.scrollTop = aiMsgs.scrollHeight;
+    }
+    aiForm.onsubmit = function(e) {
+      e.preventDefault();
+      const msg = aiInput.value.trim();
+      if (!msg) return;
+      appendMsg('user', msg);
+      aiInput.value = '';
+      // Call backend to get OpenAI response
+      fetch('../../backend/api/chatbot.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      })
+      .then(res => res.json())
+      .then(data => {
+        // Remove placeholder
+        aiMsgs.lastChild.remove();
+        if (data.reply) {
+          appendMsg('ai', data.reply);
+        } else {
+          appendMsg('ai', data.error || 'Sorry, I could not get a response.');
+        }
+      })
+      .catch(() => {
+        aiMsgs.lastChild.remove();
+        appendMsg('ai', 'Network error. Please try again.');
+      });
+    };
+  </script>
+</html>

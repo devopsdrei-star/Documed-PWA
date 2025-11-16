@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DocuMed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #f3f4f6;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+    }
+    .form-bg {
+      background: #ffffff;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 36px 32px;
+      border-radius: 18px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    h1 {
+      text-align: center;
+      color: #5b5b5b;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 32px;
+      letter-spacing: 1px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px 32px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: 500;
+      color: #065f46;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+    input[type="text"], input[type="date"], input[type="file"], select, textarea {
+      background: #fff;
+      border: 1px solid #2563eb;
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-size: 1rem;
+      margin-bottom: 2px;
+      box-sizing: border-box;
+      transition: box-shadow 0.2s;
+    }
+    input[type="number"] {
+      background: #fff;
+      border: 1px solid #2563eb;
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-size: 1rem;
+      margin-bottom: 2px;
+      box-sizing: border-box;
+      transition: box-shadow 0.2s;
+    }
+    input[type="text"]:focus, input[type="date"]:focus, select:focus, textarea:focus, input[type="number"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #34d399;
+    }
+.checkbox-group {
+      grid-column: 1/3;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 8px;
+      margin-top: 20px; /* dagdagan ang space sa taas ng checkbox row */
+    }
+    .checkbox-row label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1rem;
+      color: #5b5b5b;
+      background: #ffffff;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid #ffffff;
+      cursor: pointer;
+    }
+    .full-width {
+      grid-column: 1/3;
+    }
+    .form-actions {
+      grid-column: 1/3;
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    .btn-update {
+      background: #2563eb;
+      color: #fff;
+      padding: 12px 36px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+    }
+    .btn-update:hover {
+      background: #063fbc;
+    }
+    @media (max-width: 700px) {
+      .form-bg { padding: 18px 6px; }
+      .form-grid { grid-template-columns: 1fr; gap: 18px 0; }
+      .checkbox-group, .full-width, .form-actions { grid-column: 1/2 !important; }
+      h1 { font-size: 1.3rem; margin-bottom: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="form-bg">
+    <h1>Update Patient Info</h1>
+    <form id="updateForm" class="form-grid">
+      <div class="form-group">
+  <label>School ID</label>
+  <select name="student_faculty_id" id="student_faculty_id_select" required></select>
+      </div>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" name="age" min="0">
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <input type="text" name="address">
+      </div>
+      <div class="form-group">
+        <label>Contact Number</label>
+        <input type="text" name="contact_number">
+      </div>
+      <div class="form-group">
+        <label>Birthdate</label>
+        <input type="date" name="date_of_birth">
+      </div>
+      <div class="form-group">
+        <label>Assessment</label>
+        <input type="text" name="assessment">
+      </div>
+      <div class="form-group">
+        <label>Civil Status</label>
+        <input type="text" name="civil_status">
+      </div>
+      <div class="form-group">
+        <label>Nationality</label>
+        <input type="text" name="nationality">
+      </div>
+      <div class="form-group">
+        <label>Religion</label>
+        <input type="text" name="religion">
+      </div>
+      <div class="form-group">
+        <label>Place of Birth</label>
+        <input type="text" name="place_of_birth">
+      </div>
+      <div class="form-group">
+        <label>Years and Course</label>
+        <input type="text" name="year_and_course">
+      </div>
+      <div class="form-group">
+        <label>Contact Person</label>
+        <input type="text" name="contact_person">
+      </div>
+      <div class="form-group">
+        <label>History of Past Illness</label>
+        <input type="text" name="history_past_illness">
+      </div>
+      <div class="form-group">
+        <label>Present Illness</label>
+        <input type="text" name="present_illness">
+      </div>
+      <div class="form-group">
+        <label>Operations/Hospitalizations</label>
+        <input type="text" name="operations_hospitalizations">
+      </div>
+      <div class="form-group">
+        <label>Immunization History</label>
+        <input type="text" name="immunization_history">
+      </div>
+      <div class="form-group">
+        <label>Social/Environmental History</label>
+        <input type="text" name="social_environmental_history">
+      </div>
+      <div class="form-group">
+        <label>OB/Gynecological History</label>
+        <input type="text" name="ob_gyne_history">
+      </div>
+      <div class="checkbox-group">
+        <label style="margin-bottom: 4px;">Physical Examination (Check all that apply)</label>
+        <div class="checkbox-row">
+          <label><input type="checkbox" name="physical_exam_general_survey"> General Survey</label>
+          <label><input type="checkbox" name="physical_exam_skin"> Skin</label>
+          <label><input type="checkbox" name="physical_exam_heart"> Heart</label>
+          <label><input type="checkbox" name="physical_exam_chest_lungs"> Chest/Lungs</label>
+          <label><input type="checkbox" name="physical_exam_abdomen"> Abdomen</label>
+          <label><input type="checkbox" name="physical_exam_genitourinary"> Genitourinary</label>
+          <label><input type="checkbox" name="physical_exam_musculoskeletal"> Musculoskeletal</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Neurological Exam</label>
+        <input type="text" name="neurological_exam">
+      </div>
+      <div class="form-group">
+        <label>Laboratory Results</label>
+        <input type="text" name="laboratory_results">
+      </div>
+      <div class="form-group full-width">
+        <label>Remarks</label>
+        <input type="text" name="remarks">
+      </div>
+      <div class="form-group full-width">
+        <label>Photo</label>
+        <input type="file" name="photo" accept="image/*">
+      </div>
+      <div class="form-actions" style="display:flex;justify-content:center;margin-top:24px;grid-column:1/3;gap:16px;">
+        <button type="button" class="btn-update" onclick="window.location.href='patients.html'">Back</button>
+        <button type="submit" class="btn-update">Update</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    fetch(`../../backend/api/checkup.php?action=view&id=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.patient) {
+          const p = data.patient;
+          const form = document.getElementById('updateForm');
+          form.innerHTML = `
+            <div class="form-group">
+              <label>School ID</label>
+              <input type="text" name="student_faculty_id" value="${p.student_faculty_id}" required>
+            </div>
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" name="name" value="${p.name}" required>
+            </div>
+            <div class="form-group">
+              <label>Age</label>
+              <input type="number" name="age" min="0" value="${p.age}">
+            </div>
+            <div class="form-group">
+              <label>Address</label>
+              <input type="text" name="address" value="${p.address}">
+            </div>
+            <div class="form-group">
+              <label>Contact Number</label>
+              <input type="text" name="contact_number" value="${p.contact_number}">
+            </div>
+            <div class="form-group">
+              <label>Birthdate</label>
+              <input type="date" name="date_of_birth" value="${p.date_of_birth}">
+            </div>
+            <div class="form-group">
+              <label>Assessment</label>
+              <input type="text" name="assessment" value="${p.assessment}">
+            </div>
+            <div class="form-group">
+              <label>Civil Status</label>
+              <input type="text" name="civil_status" value="${p.civil_status}">
+            </div>
+            <div class="form-group">
+              <label>Nationality</label>
+              <input type="text" name="nationality" value="${p.nationality}">
+            </div>
+            <div class="form-group">
+              <label>Religion</label>
+              <input type="text" name="religion" value="${p.religion}">
+            </div>
+            <div class="form-group">
+              <label>Place of Birth</label>
+              <input type="text" name="place_of_birth" value="${p.place_of_birth}">
+            </div>
+            <div class="form-group">
+              <label>Years and Course</label>
+              <input type="text" name="year_and_course" value="${p.year_and_course}">
+            </div>
+            <div class="form-group">
+              <label>Contact Person</label>
+              <input type="text" name="contact_person" value="${p.contact_person}">
+            </div>
+            <div class="form-group">
+              <label>History of Past Illness</label>
+              <input type="text" name="history_past_illness" value="${p.history_past_illness}">
+            </div>
+            <div class="form-group">
+              <label>Present Illness</label>
+              <input type="text" name="present_illness" value="${p.present_illness}">
+            </div>
+            <div class="form-group">
+              <label>Operations/Hospitalizations</label>
+              <input type="text" name="operations_hospitalizations" value="${p.operations_hospitalizations}">
+            </div>
+            <div class="form-group">
+              <label>Immunization History</label>
+              <input type="text" name="immunization_history" value="${p.immunization_history}">
+            </div>
+            <div class="form-group">
+              <label>Social/Environmental History</label>
+              <input type="text" name="social_environmental_history" value="${p.social_environmental_history}">
+            </div>
+            <div class="form-group">
+              <label>OB/Gynecological History</label>
+              <input type="text" name="ob_gyne_history" value="${p.ob_gyne_history}">
+            </div>
+            <div class="checkbox-group">
+              <label style="margin-bottom: 4px;">Physical Examination (Check all that apply)</label>
+              <div class="checkbox-row">
+                <label><input type="checkbox" name="physical_exam_general_survey" ${p.physical_exam_general_survey ? 'checked' : ''}> General Survey</label>
+                <label><input type="checkbox" name="physical_exam_skin" ${p.physical_exam_skin ? 'checked' : ''}> Skin</label>
+                <label><input type="checkbox" name="physical_exam_heart" ${p.physical_exam_heart ? 'checked' : ''}> Heart</label>
+                <label><input type="checkbox" name="physical_exam_chest_lungs" ${p.physical_exam_chest_lungs ? 'checked' : ''}> Chest/Lungs</label>
+                <label><input type="checkbox" name="physical_exam_abdomen" ${p.physical_exam_abdomen ? 'checked' : ''}> Abdomen</label>
+                <label><input type="checkbox" name="physical_exam_genitourinary" ${p.physical_exam_genitourinary ? 'checked' : ''}> Genitourinary</label>
+                <label><input type="checkbox" name="physical_exam_musculoskeletal" ${p.physical_exam_musculoskeletal ? 'checked' : ''}> Musculoskeletal</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Neurological Exam</label>
+              <input type="text" name="neurological_exam" value="${p.neurological_exam}">
+            </div>
+            <div class="form-group">
+              <label>Laboratory Results</label>
+              <input type="text" name="laboratory_results" value="${p.laboratory_results}">
+            </div>
+            <div class="form-group full-width">
+              <label>Remarks</label>
+              <input type="text" name="remarks" value="${p.remarks}">
+            </div>
+            <div class="form-actions" style="display:flex;justify-content:center;margin-top:24px;grid-column:1/3;gap:16px;">
+              <button type="submit" class="btn-update">Update</button>
+              <button type="button" class="btn-update" onclick="window.location.href='patients.html'">Back</button>
+            </div>
+          `;
+          // Preload School ID options once on view load (not inside submit)
+          fetch('../../backend/api/auth.php?action=list_users')
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && Array.isArray(data.users)) {
+                const select = document.getElementById('student_faculty_id_select');
+                if (select) select.innerHTML = data.users.map(u => `<option value="${u.student_faculty_id}" ${u.student_faculty_id === p.student_faculty_id ? 'selected' : ''}>${u.student_faculty_id} - ${u.last_name}, ${u.first_name}</option>`).join('');
+              }
+            });
+          form.onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            if (confirm('Are you sure you want to update this patient info?')) {
+              fetch('../../backend/api/checkup.php?action=update&id=' + id, {
+                method: 'POST',
+                body: formData
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  alert('Patient info updated!');
+                  window.location.href = 'patients.html';
+                } else {
+                  alert(data.message || 'Update failed.');
+                }
+              })
+              .catch(() => alert('Network error while updating.'));
+            }
+          };
+        } else {
+          document.getElementById('updateForm').textContent = 'Patient not found.';
+        }
+      });
+  </script>
+</body>
+</html>

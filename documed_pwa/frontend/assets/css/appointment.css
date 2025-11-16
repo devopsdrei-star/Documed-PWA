@@ -1,0 +1,165 @@
+/* Calendar Styles */
+.flatpickr-calendar {
+    background: transparent;
+    opacity: 0;
+    display: none;
+    text-align: center;
+    visibility: hidden;
+    padding: 0;
+    animation: none;
+    direction: ltr;
+    border: 0;
+    font-size: 14px;
+    line-height: 24px;
+    border-radius: 5px;
+    position: absolute;
+    width: 100%;
+    max-width: 460px;
+    box-sizing: border-box;
+    touch-action: manipulation;
+    box-shadow: 0 3px 13px rgba(0,0,0,0.08);
+}
+
+.flatpickr-calendar.open,
+.flatpickr-calendar.inline {
+    opacity: 1;
+    visibility: visible;
+    overflow: visible;
+    max-height: 640px;
+    background: white;
+    display: inline-block !important;
+}
+
+.flatpickr-calendar.inline {
+    display: block !important;
+    position: relative;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+.flatpickr-calendar.static {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+}
+
+/* Calendar Days */
+.flatpickr-day {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    margin: 4px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #edf2f7;
+    color: #1f2937;
+    box-shadow: none;
+    position: relative;
+    padding: 0;
+    text-align: center;
+}
+
+.flatpickr-day:hover {
+    background: #e6e6e6;
+    border-color: #e6e6e6;
+    border-radius: 50%;
+    color: #000;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day:focus,
+.flatpickr-day.selected:hover {
+    background: #2563eb !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.flatpickr-day.today {
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
+    border-radius: 8px;
+}
+
+.flatpickr-day.past-day,
+.flatpickr-day.disabled,
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    border-color: transparent !important;
+    color: #cbd5e1 !important;
+    background: #f8fafc !important;
+    opacity: 1;
+}
+
+/* Availability Indicators */
+.flatpickr-day.has-slots {
+    border-color: #e6f9ee !important; /* very light */
+    position: relative;
+}
+.flatpickr-day.has-slots::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: #34d399;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(52,211,153,0.12);
+}
+
+.flatpickr-day.no-slots::after {
+    background: #f87171;
+    box-shadow: 0 0 0 2px rgba(248,113,113,0.08);
+}
+
+.flatpickr-day.partial-slots::after {
+    background: #fbbf24;
+    box-shadow: 0 0 0 2px rgba(251,191,36,0.12);
+}
+
+/* Selected day as filled blue pill */
+.flatpickr-day.selected {
+    background: #2563eb !important;
+    color: #fff !important;
+    border-color: #2563eb !important;
+}
+
+/* Today highlight subtle (if not selected) */
+.flatpickr-day.today:not(.selected) {
+    border-color: #e6eefc !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.04) inset;
+}
+
+/* Calendar container to match second image */
+.flatpickr-calendar.inline {
+    background: transparent;
+}
+
+/* Hide weekwrapper left column */
+.flatpickr-weekwrapper { display: none !important; }
+
+/* Ensure consistent spacing */
+#calendar, #calendarContainerModal { max-width: 480px; margin: 0 auto; }
+/* Keep availability dot visible when a date is selected (dot on top-right with contrast border) */
+.flatpickr-day.selected.has-slots::after,
+.flatpickr-day.selected.partial-slots::after,
+.flatpickr-day.selected.no-slots::after {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    z-index: 3;
+    border: 2px solid rgba(255,255,255,0.9); /* white border so dot is visible on blue */
+}
+
+.flatpickr-day.selected.has-slots::after { background: #34d399; box-shadow: 0 0 0 2px rgba(52,211,153,0.12); }
+.flatpickr-day.selected.partial-slots::after { background: #fbbf24; box-shadow: 0 0 0 2px rgba(251,191,36,0.12); }
+.flatpickr-day.selected.no-slots::after { background: #f87171; box-shadow: 0 0 0 2px rgba(248,113,113,0.08); }

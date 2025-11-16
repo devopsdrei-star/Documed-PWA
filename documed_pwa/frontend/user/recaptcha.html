@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Human Validation</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f3f6fc; }
+    .recaptcha-box { background: #fff; border-radius: 14px; box-shadow: 0 8px 32px rgba(37,99,235,0.18); padding: 48px 32px; max-width: 400px; margin: auto; text-align: center; }
+    h2 { color: #2563eb; font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; }
+    #recaptchaMsg { color: #e11d48; font-weight: 600; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="recaptcha-box">
+    <h2>Human Validation</h2>
+    <div class="g-recaptcha" data-sitekey="6LejFOsrAAAAAHdGaGHj9crHVF-Gja-GiNR0I5dC" data-callback="onRecaptcha"></div>
+    <div id="recaptchaMsg"></div>
+  </div>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <script>
+    let recaptchaPassed = false;
+    function onRecaptcha(token) {
+      recaptchaPassed = !!token;
+      document.getElementById('recaptchaMsg').textContent = '';
+      if (recaptchaPassed) {
+        // Store token in sessionStorage
+        sessionStorage.setItem('recaptchaToken', token);
+        window.location.href = 'book_appointment.html';
+      }
+    }
+  </script>
+</body>
+</html>

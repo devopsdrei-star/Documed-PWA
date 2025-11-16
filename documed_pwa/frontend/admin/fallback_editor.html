@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Fallback FAQ Editor</title>
+  <style>body{font-family:Segoe UI,Arial;padding:20px}textarea{width:100%;height:220px}</style>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <h1>Fallback FAQ Editor</h1>
+  <p>Edit the JSON that defines canned fallback replies.</p>
+  <label>Debug token: <input type="text" id="token" placeholder="enter token"></label>
+  <div style="margin-top:12px">
+    <textarea id="json"></textarea>
+  </div>
+  <button id="save">Save</button>
+  <div id="msg" style="margin-top:12px;color:green"></div>
+
+  <script>
+    async function load(){
+      const t = document.getElementById('token').value;
+      const r = await fetch('../../backend/api/fallback_faq.php?t=' + encodeURIComponent(t));
+      if (r.status === 403) { document.getElementById('json').value = '// forbidden - invalid token'; return; }
+      const d = await r.text();
+      document.getElementById('json').value = d;
+    }
+    document.getElementById('save').addEventListener('click', async function(){
+      const t = document.getElementById('token').value;
+      const body = document.getElementById('json').value;
+      try {
+        JSON.parse(body);
+      } catch(e) { alert('Invalid JSON: ' + e.message); return; }
+      const r = await fetch('../../backend/api/fallback_faq.php', { method: 'POST', headers: { 'X-Debug-Token': t, 'Content-Type': 'application/json' }, body });
+      const j = await r.json();
+      if (j.ok) { document.getElementById('msg').textContent = 'Saved.'; setTimeout(()=>document.getElementById('msg').textContent='','2000'); }
+      else document.getElementById('msg').textContent = JSON.stringify(j);
+    });
+    document.getElementById('token').value = 'local-debug-token-please-change';
+    load();
+  </script>
+</body>
+</html>

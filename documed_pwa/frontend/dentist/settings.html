@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"><i class="bi bi-grid"></i> Dashboard</a>
+        <a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a>
+        <a href="settings_profile.html"><i class="bi bi-person-gear"></i> Profile</a>
+        <a href="settings.html" class="active"><i class="bi bi-gear"></i> Settings</a>
+        <a href="dentist_login.html" class="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      </nav>
+    </aside>
+    <main class="main-content" style="padding:24px;">
+      <div class="panel mb-3" style="background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(37,99,235,.08);padding:16px;">
+        <h5 class="mb-2">Clinic Preferences</h5>
+        <div class="row g-2">
+          <div class="col-md-3">
+            <label class="form-label mb-1">Slots per hour</label>
+            <input id="dnSlots" type="number" class="form-control" min="1" max="10" value="2" />
+          </div>
+          <div class="col-md-4">
+            <div class="form-check" style="margin-top:28px;">
+              <input class="form-check-input" type="checkbox" id="dnNotifyEmail" checked>
+              <label class="form-check-label" for="dnNotifyEmail">Email notifications for new bookings</label>
+            </div>
+          </div>
+        </div>
+        <div class="mt-2">
+          <label class="form-label">Working Hours</label>
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle" id="dnHoursTable">
+              <thead><tr><th>Day</th><th>Start</th><th>End</th><th>Closed</th></tr></thead>
+              <tbody>
+                <!-- rows rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+          <button class="btn btn-primary" id="dnSavePrefs">Save Preferences</button>
+          <div id="dnPrefsMsg" class="small mt-2"></div>
+        </div>
+      </div>
+
+      <div class="panel mb-3" style="background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(37,99,235,.08);padding:16px;">
+        <h5 class="mb-2">Clinic Closures</h5>
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label mb-1">Date</label>
+            <input type="date" id="dnClosureDate" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label mb-1">Reason</label>
+            <input type="text" id="dnClosureReason" class="form-control" placeholder="e.g., Urgent meeting, maintenance" />
+          </div>
+          <div class="col-md-3">
+            <button type="button" id="dnAddClosure" class="btn btn-outline-primary w-100">Add Closure</button>
+          </div>
+        </div>
+        <div class="table-responsive mt-3">
+          <table class="table table-bordered align-middle" id="dnClosuresTable">
+            <thead><tr><th style="width:140px;">Date</th><th>Reason</th><th style="width:90px;">Actions</th></tr></thead>
+            <tbody><!-- rows by JS --></tbody>
+          </table>
+        </div>
+        <div id="dnClosuresMsg" class="small"></div>
+      </div>
+
+      <div class="panel mb-3" style="background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(37,99,235,.08);padding:16px;">
+        <h5 class="mb-2">Announcements (All Roles)</h5>
+        <div class="row g-2 align-items-end">
+          <div class="col-md-8">
+            <label class="form-label mb-1">Message</label>
+            <textarea id="dnAnnMessage" class="form-control" rows="2" placeholder="Type announcement (visible to all roles)"></textarea>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label mb-1">Expires On</label>
+            <input type="date" id="dnAnnExpires" class="form-control" />
+          </div>
+          <div class="col-md-1">
+            <button type="button" id="dnAnnPost" class="btn btn-primary w-100">Post</button>
+          </div>
+        </div>
+        <div id="dnAnnMsg" class="small mt-2"></div>
+      </div>
+
+      <h2 class="mt-4" style="color:#2563eb;">Summary Report</h2>
+      <div class="panel" style="background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(37,99,235,.08);padding:16px;">
+        <form id="summaryForm" class="row g-2 align-items-end">
+          <div class="col-auto">
+            <label class="form-label mb-1">From</label>
+            <input type="date" id="sumFrom" class="form-control" />
+          </div>
+          <div class="col-auto">
+            <label class="form-label mb-1">To</label>
+            <input type="date" id="sumTo" class="form-control" />
+          </div>
+          <div class="col-auto">
+            <label class="form-label mb-1">Audience</label>
+            <select id="sumAudience" class="form-select">
+              <option value="All">All</option>
+              <option value="Student">Student</option>
+              <option value="Faculty">Faculty/Teacher</option>
+              <option value="Staff">Staff</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <label class="form-label mb-1">Department</label>
+            <select id="sumDepartment" class="form-select">
+              <option value="">All</option>
+              <option value="CASL">CASL</option>
+              <option value="CBPA">CBPA</option>
+              <option value="CCS">CCS</option>
+              <option value="CHTM">CHTM</option>
+              <option value="CTE">CTE</option>
+              <option value="CIT">CIT</option>
+            </select>
+          </div>
+          <div class="col-auto" id="sumYearWrap" style="display:none;">
+            <label class="form-label mb-1">Year</label>
+            <select id="sumYear" class="form-select">
+              <option value="">All</option>
+              <option value="1">1st</option>
+              <option value="2">2nd</option>
+              <option value="3">3rd</option>
+              <option value="4">4th</option>
+            </select>
+          </div>
+          <div class="col-auto" id="sumCourseWrap" style="display:none;">
+            <label class="form-label mb-1">Course</label>
+            <input id="sumCourse" class="form-control" placeholder="ex. BSIT" />
+          </div>
+          <div class="col-auto ms-auto">
+            <button type="button" id="genBtn" class="btn btn-primary">Generate</button>
+            <button type="button" id="printBtn" class="btn btn-outline-secondary">Print</button>
+          </div>
+        </form>
+        <div id="sumMsg" class="text-muted mt-2"></div>
+        <div id="summaryOut" class="mt-3"></div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/dentist_nav.js"></script>
+  <script src="../assets/js/dentist_settings.js"></script>
+  <script>
+    (function(){
+      const from = document.getElementById('sumFrom');
+      const to = document.getElementById('sumTo');
+      const aud = document.getElementById('sumAudience');
+      const dept = document.getElementById('sumDepartment');
+      const yearWrap = document.getElementById('sumYearWrap');
+      const yearSel = document.getElementById('sumYear');
+      const courseWrap = document.getElementById('sumCourseWrap');
+      const course = document.getElementById('sumCourse');
+      const genBtn = document.getElementById('genBtn');
+      const printBtn = document.getElementById('printBtn');
+      const out = document.getElementById('summaryOut');
+      const msg = document.getElementById('sumMsg');
+
+      function isDental(a){
+        const p = String(a.purpose||'').toLowerCase();
+        const keys = ['dental','tooth','teeth','oral','mouth','clean','cleaning','prophy','consult','consultation','extraction','brace','ortho','cavity','caries','filling','root canal','denture','gum','periodont','odont','enamel','crown','bridge'];
+        return keys.some(k => p.includes(k));
+      }
+      function inDateRange(a){
+        if (!from.value && !to.value) return true;
+        try{
+          const d = new Date(a.date);
+          if (from.value){ const f = new Date(from.value); if (d < f) return false; }
+          if (to.value){ const t = new Date(to.value); if (d > t) return false; }
+          return true;
+        }catch{ return true; }
+      }
+      function audienceMatch(a){
+        if (aud.value === 'All') return true;
+        const role = String(a.role||'').toLowerCase();
+        const yc = String(a.year_course||'');
+        const looksStudent = role.includes('student') || yc.length>0;
+        const looksFaculty = role.includes('faculty') || role.includes('teacher');
+        const looksStaff = role.includes('staff');
+        if (aud.value==='Student') return looksStudent;
+        if (aud.value==='Faculty') return looksFaculty;
+        if (aud.value==='Staff') return looksStaff;
+        return true;
+      }
+      function deptMatch(a){
+        const v = dept.value || '';
+        if (!v) return true;
+        return String(a.department||'') === v;
+      }
+      function studentExtraMatch(a){
+        if (aud.value !== 'Student') return true;
+        const yc = String(a.year_course||'');
+        let yearOk = true, courseOk = true;
+        if (yearSel.value) yearOk = yc.startsWith(yearSel.value+" ") || yc.includes(`Year ${yearSel.value}`) || yc.startsWith(yearSel.value);
+        const c = course.value.trim().toLowerCase();
+        if (c) courseOk = yc.toLowerCase().includes(c);
+        return yearOk && courseOk;
+      }
+
+      aud.addEventListener('change', ()=>{
+        const isStudent = aud.value==='Student';
+        yearWrap.style.display = isStudent ? 'block' : 'none';
+        courseWrap.style.display = isStudent ? 'block' : 'none';
+      });
+
+      async function generate(){
+        msg.textContent = 'Loading...'; out.innerHTML = '';
+        try{
+          const res = await fetch('../../backend/api/appointments_new.php?action=list');
+          const data = await res.json();
+          const rows = Array.isArray(data.appointments) ? data.appointments : [];
+          const filtered = rows.filter(a => isDental(a) && inDateRange(a) && audienceMatch(a) && deptMatch(a) && studentExtraMatch(a));
+          if (filtered.length === 0){ msg.textContent='No matching records.'; return; }
+          msg.textContent = '';
+          // Summary counts by status
+          const byStatus = filtered.reduce((acc,a)=>{
+            const s = (a.status||'scheduled').toLowerCase(); acc[s]=(acc[s]||0)+1; return acc;
+          },{});
+          const total = filtered.length;
+          const summaryHtml = `
+            <div id="printArea">
+              <h2 style="color:#1e40af;margin-bottom:8px;">Dental Appointments Summary</h2>
+              <div style="color:#64748b;margin-bottom:8px;">${from.value?('From '+from.value):''} ${to.value?('to '+to.value):''}</div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                <span><strong>Total:</strong> ${total}</span>
+                <span><strong>Scheduled:</strong> ${byStatus['scheduled']||0}</span>
+                <span><strong>Accepted:</strong> ${byStatus['accepted']||0}</span>
+                <span><strong>Declined:</strong> ${byStatus['declined']||0}</span>
+                <span><strong>Completed:</strong> ${byStatus['completed']||0}</span>
+                <span><strong>Cancelled:</strong> ${byStatus['cancelled']||0}</span>
+              </div>
+              <table class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Time</th><th>Name</th><th>Role</th><th>Year/Course</th><th>Department</th><th>Purpose</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filtered.map(a=>`<tr>
+                    <td>${a.date||''}</td>
+                    <td>${String(a.time||'').slice(0,5)}</td>
+                    <td>${a.name||''}</td>
+                    <td>${a.role||''}</td>
+                    <td>${a.year_course||''}</td>
+                    <td>${a.department||''}</td>
+                    <td>${a.purpose||''}</td>
+                    <td>${a.status||''}</td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+          out.innerHTML = summaryHtml;
+        } catch(e){
+          msg.textContent = 'Failed to generate summary.';
+        }
+      }
+
+      genBtn.addEventListener('click', generate);
+      printBtn.addEventListener('click', ()=>{
+        const area = document.getElementById('printArea');
+        if (!area){ alert('Generate the report first.'); return; }
+        const w = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150');
+  w.document.write('<html><head><title>DocuMed</title>');
+        w.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">');
+        w.document.write('</head><body>');
+        w.document.write(area.outerHTML);
+        w.document.write('</body></html>');
+        w.document.close(); w.focus();
+        w.print(); w.close();
+      });
+    })();
+  </script>
+</body>
+</html>

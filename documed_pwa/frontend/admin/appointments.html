@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+    body {
+      background: #f3f4f6;
+      color: #111;
+    }
+    .main-content {
+      background: #fff;
+      /* border-radius: 18px; */
+      box-shadow: 0 8px 32px rgba(37,99,235,0.14);
+      /* padding: 36px 32px;
+      margin: 32px 0;
+      min-height: 80vh; */
+    }
+    h1 {
+      color: #111;
+      font-size: 2rem;
+      margin-bottom: 24px;
+      text-align: center;
+      letter-spacing: 1px;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(37,99,235,0.08);
+    }
+    #appointments-list {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+    #appointmentsTable {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fff;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    #appointmentsTable th, #appointmentsTable td {
+      padding: 12px 10px;
+      text-align: left;
+      color: #111;
+      font-size: 0.98rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    #appointmentsTable th {
+      background: #f3f4f6;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #111;
+      border-bottom: 2px solid #2563eb;
+    }
+    #appointmentsTable tr:last-child td {
+      border-bottom: none;
+    }
+    .sidebar {
+      box-shadow: 0 4px 24px rgba(37,99,235,0.10);
+    }
+    .profile-photo {
+      box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+    }
+.sidebar-link.active {
+      background: #1e40af;
+      color: #ffffff !important;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+    }
+    .sidebar-link {
+      color: #ffffff;
+      font-weight: 500;
+    }
+    .logout {
+      background: #ef4444;
+      color: #fff !important;
+      box-shadow: 0 2px 8px rgba(239,68,68,0.10);
+    }
+    @media (max-width: 900px) {
+      .main-content {
+        padding: 18px 4px;
+      }
+      #appointmentsTable th, #appointmentsTable td {
+        padding: 8px 4px;
+        font-size: 0.92rem;
+      }
+    }
+    /* Match Doc/Nurse controls sizing */
+    #appointmentsControls .form-select,
+    #appointmentsControls .form-control { height: 42px; }
+    #appointmentsControls .btn { height: 42px; display:inline-flex; align-items:center; padding:10px 18px; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+  <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+          <nav class="sidebar-nav">
+    <a href="dashboard.html" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+    <a href="patients.html" class="sidebar-link "><i class="bi bi-people me-2"></i>Patients</a>
+    <a href="appointments.html" class="sidebar-link active"><i class="bi bi-calendar-check me-2"></i>Appointments</a>
+    <a href="manage_users.html" class="sidebar-link "><i class="bi bi-person-gear me-2"></i>Manage user</a>
+    <a href="audit_trail.html" class="sidebar-link"><i class="bi bi-clock-history me-2"></i>Activity log</a> 
+    <a href="medicine_inventory.html" class="sidebar-link"><i class="bi bi-capsule me-2"></i>Medicine</a>
+  <a href="reports.html" class="sidebar-link"><i class="bi bi-graph-up me-2"></i>Reports</a>
+  <a href="settings.html" class="sidebar-link"><i class="bi bi-gear me-2"></i>Settings</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+  <div class="dashboard-topbar" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;gap:18px;">
+    <button id="dashboardSettingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.7rem;color:#2563eb;display:flex;align-items:center;">
+    </button>
+    <div class="dashboard-profile-dropdown" style="position:relative;">
+      <button id="dashboardProfileBtn" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+  <img src="../assets/images/documed_logo.png" alt="DocuMed Logo" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+      </button>
+      <div id="dashboardProfileMenu" style="display:none;position:absolute;right:0;top:110%;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:10px;min-width:160px;z-index:20;">
+        <a href="#" id="profileInfoMenu" style="display:block;padding:12px 18px;color:#2563eb;text-decoration:none;font-weight:500;border-bottom:1px solid #f3f4f6;">Profile Info</a>
+        <a href="admin_login.html" id="logoutMenu" style="display:block;padding:12px 18px;color:#e11d48;text-decoration:none;font-weight:500;">Logout</a>
+      </div>
+    </div>
+  </div>
+      <h1>Appointments</h1>
+      <div class="d-flex flex-wrap gap-2 align-items-center px-3" id="appointmentsControls">
+        <input type="text" id="apptSearch" class="form-control" placeholder="Search by name/date/purpose" style="max-width:320px;height:42px;">
+        <select id="statusFilter" class="form-select" style="width:180px;height:42px;">
+          <option value="all">All statuses</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="pending">Pending</option>
+          <option value="accepted">Accepted</option>
+        </select>
+        <label for="orderFilter" class="form-label mb-0 ms-2">Sort:</label>
+        <select id="orderFilter" class="form-select" style="width:160px;height:42px;">
+          <option value="newest" selected>Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+          <button id="resetFiltersBtn" class="btn btn-light" style="height:42px;">Reset</button>
+          <a href="appointments_archive.html" class="btn btn-outline-secondary" style="height:42px;display:inline-flex;align-items:center;" title="View archived bookings">View Archived Bookings</a>
+      </div>
+      <div id="appointments-list">
+        <table id="appointmentsTable">
+          <thead>
+            <tr>
+              <th>Booked</th>
+              <th>Patient</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="appointmentsMsg" style="margin-top:12px;"></div>
+      </div>
+    </main>
+  </div>
+  <!-- Reschedule Modal -->
+  <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rescheduleModalLabel">Reschedule Appointment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info small" id="reschedWindowInfo" style="display:none;"></div>
+          <!-- New Date/Time removed. Use the 3-day window flow below. -->
+          <hr/>
+          <div class="mb-2">
+            <div class="form-label">Or propose a 3-day window</div>
+            <div class="d-flex gap-2 align-items-center">
+              <input type="date" id="reschedWindowStart" class="form-control" style="max-width:220px;">
+              <button type="button" class="btn btn-outline-primary" id="reschedProposeBtn">Propose Window</button>
+            </div>
+            <div class="form-text">Start date inclusive; user can pick within 3 days. We'll show available times for each day.</div>
+          </div>
+          <div id="reschedError" class="text-danger small"></div>
+          <div id="reschedWindowPreview" class="mt-3" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="form-label mb-0">Available times (12-hour)</div>
+            </div>
+            <div id="windowDays" class="row g-2"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle for modal functionality -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/appointments.js"></script>
+  <script>
+    (function(){
+      const baseUrl = window.location.pathname.split('/frontend/')[0];
+      const apiUrl = `${baseUrl}/backend/api/appointments_new.php`;
+      const proposeBtn = document.getElementById('reschedProposeBtn');
+      const startEl = document.getElementById('reschedWindowStart');
+      const preview = document.getElementById('reschedWindowPreview');
+      const daysWrap = document.getElementById('windowDays');
+  // Removed time format select; always 12-hour labels
+      const info = document.getElementById('reschedWindowInfo');
+      let currentReschedId = null;
+      document.addEventListener('click', (ev)=>{
+        const b = ev.target.closest('.resched-btn');
+        if (!b) return; currentReschedId = parseInt(b.getAttribute('data-appt-id')||'0',10)||null; preview.style.display='none'; info.style.display='none';
+        // Prefill the window start date with the current appointment date
+        try {
+          const appt = (window.apptById||{})[currentReschedId];
+          if (startEl && appt && appt.date) startEl.value = String(appt.date);
+        } catch {}
+      });
+      if (proposeBtn) proposeBtn.addEventListener('click', async ()=>{
+        const err = document.getElementById('reschedError');
+        if (!currentReschedId) { err.textContent = 'No appointment selected.'; return; }
+        const start = (startEl?.value||'').trim();
+        if (!start) { err.textContent = 'Start date is required.'; return; }
+        err.textContent = 'Proposing window...';
+        try {
+          const form = new URLSearchParams();
+          form.set('action','propose_reschedule_window');
+          form.set('id', String(currentReschedId));
+          form.set('start_date', start);
+          try { const aid = localStorage.getItem('admin_id'); if (aid) form.set('admin_id', String(aid)); } catch(_){ }
+          const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: form.toString()});
+          const data = await resp.json();
+          if (!data.success) { err.textContent = data.message||'Failed to propose window'; return; }
+          err.textContent = '';
+          info.textContent = `Proposed range: ${data.start_date} to ${data.end_date}. User will choose.`;
+          info.style.display = 'block';
+          // Update local cache to reflect Pending status immediately
+          if (window.updateApptStatus) { try { window.updateApptStatus(currentReschedId, 'pending'); } catch(_){} }
+          // Load available times for each day in range (hourly 8:00am-5:00pm)
+          const dates = [data.start_date];
+          const d0 = new Date(data.start_date);
+          for (let i=1;i<3;i++){ const d=new Date(d0); d.setDate(d0.getDate()+i); dates.push(d.toISOString().slice(0,10)); }
+          daysWrap.innerHTML = '';
+          preview.style.display = 'block';
+          const labelLower = (t)=>{ const [hh,mm]=t.split(':'); let h=parseInt(hh,10); const am=h<12; if(h===0)h=12; if(h>12)h-=12; return `${h}:${mm}${am?'am':'pm'}`; };
+          const fetchDay = async (date)=>{
+            try {
+              const f = new URLSearchParams(); f.set('action','check_slots'); f.set('date', date);
+              const r = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: f.toString()});
+              const dj = await r.json();
+              const booked = dj.success ? (dj.booked_slots||{}) : {};
+              const slotElems = [];
+              for (let h=8; h<=16; h++) {
+                const hh = String(h).padStart(2,'0');
+                const start = `${hh}:00`;
+                const end = `${String(h+1).padStart(2,'0')}:00`;
+                  const label = `${labelLower(start)}-${labelLower(end)}`;
+                  if (h === 12) {
+                    slotElems.push(`<span class=\"badge bg-secondary\" style=\"margin:2px;\">${label} (lunch break)</span>`);
+                  } else {
+                    const full = (booked[start]||0) >= 2;
+                    slotElems.push(`<span class=\"badge ${full?'bg-secondary':'bg-success'}\" style=\"margin:2px;\">${label}${full?' (full)':''}</span>`);
+                  }
+              }
+              const col = document.createElement('div'); col.className='col-12';
+              col.innerHTML = `<div class="card"><div class="card-header">${date}</div><div class="card-body">${slotElems.join(' ')||'<span class=\'text-muted\'>No slots</span>'}</div></div>`;
+              daysWrap.appendChild(col);
+            } catch { /* ignore */ }
+          };
+          for (const d of dates) { await fetchDay(d); }
+        } catch { document.getElementById('reschedError').textContent = 'Network error'; }
+      });
+    })();
+  </script>
+  <script src="../assets/js/settings_dropdown.js"></script>
+  <script src="../assets/js/dashboard_interactive.js"></script>
+</body>
+</html>

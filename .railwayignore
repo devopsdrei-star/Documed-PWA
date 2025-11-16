@@ -1,0 +1,25 @@
+# Ignore heavy/local directories to reduce upload size and avoid timeouts
+# Composer deps will be installed during build by Nixpacks
+vendor/
+node_modules/
+
+# Caches and temp
+.tmp/
+tmp/
+documed_pwa/tmp/
+documed_pwa/backend/tmp/
+
+# VCS and system files
+.git/
+.gitignore
+.DS_Store
+Thumbs.db
+
+# Logs and artifacts
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# IDE/editor
+.vscode/
+.idea/

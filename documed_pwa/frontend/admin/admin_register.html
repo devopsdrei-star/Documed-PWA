@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <div class="container login-card">
+    <h1>Admin Registration</h1>
+    <form id="adminRegisterForm">
+      <div class="input-group">
+        <label for="school_id"><span class="icon">🏫</span> School ID</label>
+        <input type="text" id="school_id" name="school_id" placeholder="Enter school/employee ID">
+      </div>
+      <div class="input-group">
+        <label for="name"><span class="icon">👤</span> Name</label>
+        <input type="text" id="name" name="name" required placeholder="Enter your name">
+      </div>
+      <div class="input-group">
+        <label for="email"><span class="icon">📧</span> Email</label>
+        <input type="email" id="email" name="email" required placeholder="Enter admin email">
+      </div>
+      <div class="input-group">
+        <label for="password"><span class="icon">🔒</span> Password</label>
+        <input type="password" id="password" name="password" required placeholder="Create a password">
+      </div>
+      <button type="submit" class="btn" style="width:100%;margin-top:16px;">Register</button>
+      <div id="adminRegisterMsg" style="margin-top:12px;"></div>
+      
+    </form>
+    <div style="margin-top:8px;">
+        <button type="button" class="btn" style="width:100%;margin-top:-2px;" onclick="window.location.href='admin_login.html'">Back to Login</button>
+    </div>
+  </div>
+  <script src="../assets/js/admin_register.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="manifest" href="../../manifest-landing.json">
+  <link rel="apple-touch-icon" href="../assets/images/documed_logo.png">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+</head>
+<body>
+  <div class="container login-card">
+    <h1>Login to Continue</h1>
+    <form id="userLoginForm">
+      <div class="input-group">
+  <label for="email"><span class="icon">📧</span> Email or School ID</label>
+  <input type="text" id="email" name="email" required placeholder="Enter email or School ID">
+      </div>
+      <div class="input-group">
+        <label for="password"><span class="icon">🔒</span> Password</label>
+        <input type="password" id="password" name="password" required placeholder="Enter your password">
+      </div>
+      <button type="submit" class="btn" style="width:100%;margin-top:16px;">Login</button>
+      <div id="userLoginMsg" style="margin-top:12px;"></div>
+    </form>
+    <div style="margin-top:12px;">
+      <button type="button" id="qrLoginBtn" class="btn" style="width:100%;background:#0ea5e9;">Login with QR</button>
+    </div>
+    <div class="small" style="margin-top:8px;text-align:center;">
+      <a href="forgot_password.html" style="color:#2563eb;text-decoration:underline;">Forgot password?</a>
+    </div>
+     <div style="margin-top:8px;">
+        <button type="button" class="btn" style="width:100%;margin-top:-2px;" onclick="window.location.href='user_register.html'">Create an Account</button>
+    </div>
+  </div>
+  <script src="../assets/js/pwa.js"></script>
+  <script src="../assets/js/login_sid_helper.js"></script>
+  <script src="../assets/js/user_login.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+  <script src="../assets/js/qr_login.js"></script>
+</body>
+</html>

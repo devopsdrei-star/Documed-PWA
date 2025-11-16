@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>DocuMed</title>
+    <link rel="manifest" href="../../manifest-landing.json">
+    <link rel="apple-touch-icon" href="../assets/images/documed_logo.png">
+    <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/appointment.css">
+    <link rel="stylesheet" href="../assets/css/appointment-form.css">
+    <style>
+         .main-wrapper {
+      background: #fff;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+      max-width: 100vw;
+      width: 100vw;
+      min-height: 100vh;
+      padding: 0;
+      overflow: hidden;
+      position: relative;
+    }
+        .top-nav { position: sticky; top: 0; z-index: 1000; }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      font-weight: 500;
+      font-size: 1.08rem;
+    }
+    .nav-links a {
+      color: #222;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: #00d1c7;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+        .booking-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.1);
+            padding: 32px;
+        }
+        .calendar-section {
+            background: #f8fafc;
+            padding: 24px;
+            border-radius: 8px;
+        }
+        .booking-form {
+            padding: 24px;
+            background: #fff; /* ensure white form card */
+            border-radius: 8px;
+        }
+        .calendar-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-label {
+            color: #2563eb;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .form-control, .form-select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #2563eb;
+        }
+        .time-slot-select {
+            margin-top: 20px;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1rem;
+        }
+        .conditional-fields {
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8fafc;
+            margin-top: 10px;
+        }
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin: 24px 0;
+            text-align: center;
+        }
+        /* Calendar Styling */
+        .flatpickr-calendar {
+            width: 100% !important;
+            max-width: 400px !important;
+            margin: 0 auto;
+            box-shadow: none !important;
+        }
+        /* Calendar Layout Fixes */
+        .flatpickr-rContainer {
+            width: 100% !important;
+        }
+        .flatpickr-days {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+        }
+        .dayContainer {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            display: grid !important;
+            grid-template-columns: repeat(7, 1fr) !important;
+            gap: 2px !important;
+            justify-items: center !important;
+        }
+        /* Weekend columns styling */
+        .flatpickr-day:nth-child(7n),
+        .flatpickr-day:nth-child(7n+1) {
+            background-color: #f3f4f6 !important;
+            color: #9ca3af !important;
+        }
+        /* Time slots styling */
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+        }
+        .time-slot-btn {
+            padding: 10px;
+            border: 2px solid #2563eb;
+            border-radius: 6px;
+            background: white;
+            color: #2563eb;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .time-slot-btn:hover:not(.disabled) {
+            background: #2563eb;
+            color: white;
+        }
+        .time-slot-btn.selected {
+            background: #2563eb;
+            color: white;
+        }
+        .time-slot-btn.disabled {
+            border-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+            background: #f9fafb;
+        }
+        .flatpickr-day {
+            height: 40px !important;
+            line-height: 40px !important;
+            border-radius: 8px !important;
+            margin: 3px !important;
+            font-size: 1rem !important;
+        }
+        .flatpickr-day.selected {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+        }
+        .flatpickr-day.today {
+            border: 2px solid #2563eb !important;
+            color: #2563eb !important;
+        }
+        .flatpickr-months .flatpickr-month {
+            background: transparent !important;
+        }
+        .flatpickr-current-month {
+            color: #000 !important;
+            font-weight: 600 !important;
+        }
+        .flatpickr-weekday {
+            color: #2563eb !important;
+            font-weight: 600 !important;
+        }
+                /* Responsive time slots */
+                @media (max-width: 1200px) {
+                    .time-slots { grid-template-columns: repeat(2, 1fr); }
+                }
+                @media (max-width: 520px) {
+                    .time-slots { grid-template-columns: 1fr; }
+                }
+        .time-slot-btn {
+            padding: 12px;
+            border: 1px solid #2563eb;
+            border-radius: 8px;
+            background: white;
+            color: #2563eb;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .time-slot-btn:hover {
+            background: #e0e7ff;
+        }
+        .time-slot-btn.selected {
+            background: #2563eb;
+            color: white;
+        }
+        .time-slot-btn.disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: not-allowed;
+            background: #f8f9fa;
+        }
+        /* Alert Messages */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-danger {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #b91c1c;
+        }
+        .alert-success {
+            background-color: #dcfce7;
+            border: 1px solid #22c55e;
+            color: #15803d;
+        }
+                /* Mobile nav behavior — match other pages */
+                @media (max-width: 768px) {
+                    .top-nav { height: 60px; padding: 0 12px; }
+                    .top-nav > .d-flex.align-items-center, .top-nav .nav-right { height: 60px; }
+                    .nav-burger { display: flex; margin-left: 8px; }
+                    .nav-actions { display: none; }
+                    .nav-links {
+                        display: none !important; /* hidden by default on mobile */
+                        position: fixed;
+                        left: 0; right: 0;
+                        top: 60px;
+                        background: #fff;
+                        border-bottom: 1px solid #e0e7ff;
+                        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+                        flex-direction: column;
+                        gap: 10px;
+                        padding: 12px 16px;
+                        z-index: 1100;
+                        max-height: calc(100vh - 60px);
+                        overflow-y: auto;
+                        -webkit-overflow-scrolling: touch;
+                        overscroll-behavior: contain;
+                        padding-bottom: env(safe-area-inset-bottom, 16px);
+                    }
+                    .top-nav.nav-open .nav-links { display: flex !important; }
+                    body.menu-open { overflow: hidden; }
+                        }
+
+                        /* Layout responsiveness */
+                        .booking-container { padding-bottom: 120px; } /* avoid PWA install button overlap */
+                        @media (max-width: 992px) {
+                            .booking-grid { grid-template-columns: 1fr; padding: 20px; gap: 16px; }
+                            .calendar-section { order: 1; }
+                            .booking-form { order: 2; }
+                            .booking-container { margin: 20px auto; }
+                        }
+                        @media (max-width: 600px) {
+                            .calendar-wrapper { padding: 12px; }
+                            .page-title { font-size: 1.5rem; margin: 12px 0; }
+                        }
+    </style>
+</head>
+<body>
+        <nav class="top-nav">
+        <div class="d-flex align-items-center">
+            <div class="nav-logo">
+                <img src="../assets/images/documed_logo.png" alt="DocuMed Logo">
+            </div>
+                <button class="nav-burger" aria-label="Toggle navigation"><span></span></button>
+                    <div class="nav-links">
+                <a href="user_dashboard.html">Home</a>
+                <a href="appointments.html">Appointment</a>
+                <a href="medical_history.html">Medical History</a>
+                <a href="profile.html">Profile</a>
+                <a href="user_dashboard.html#services" id="navServices">Services</a>
+                <a href="user_dashboard.html#about" id="navAbout">About Us</a>
+                <a href="user_dashboard.html#contact" id="navContact">Contact</a>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="nav-actions" id="navActions">
+                <!-- Dynamic login/profile actions here -->
+            </div>
+        </div>
+    </nav>
+
+    <div class="booking-container">
+        <h1 class="page-title">Book an Appointment</h1>
+        
+        <div class="booking-grid">
+            <!-- Calendar Section -->
+            <div class="calendar-section">
+                <div class="calendar-wrapper">
+                    <div id="calendar"></div>
+                    <div id="timeSlots" class="time-slots mt-4">
+                        <!-- Time slots will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Form Section -->
+            <div class="booking-form">
+                <form id="appointmentForm" class="needs-validation" novalidate>
+                    <div id="formMsg" class="alert d-none"></div>
+                    
+                    <div class="mb-4">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control form-control-lg" id="name" name="name" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control form-control-lg" id="email" name="email" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select form-select-lg" id="role" name="role" required>
+                            <option value="">Select Role</option>
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="non-teaching">Non-Teaching Staff</option>
+                        </select>
+                    </div>
+
+                    <!-- Student Fields -->
+                    <div id="studentFields" class="mb-4" style="display:none;">
+                        <label for="yearCourse" class="form-label">Year & Course</label>
+                        <input type="text" class="form-control form-control-lg" id="yearCourse" 
+                               name="year_course" placeholder="e.g., IV-BSIT">
+                    </div>
+
+                    <!-- Staff Fields -->
+                    <div id="staffFields" class="mb-4" style="display:none;">
+                        <label for="department" class="form-label">Department</label>
+                        <select class="form-select form-select-lg" id="department" name="department">
+                            <option value="">Select Department</option>
+                            <option value="CCS">CCS</option>
+                            <option value="CASL">CASL</option>
+                            <option value="CBPA">CBPA</option>
+                            <option value="CTHM">CTHM</option>
+                            <option value="CTE">CTE</option>
+                            <option value="CIT">CIT</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="purpose" class="form-label">Purpose of Visit</label>
+                        <textarea class="form-control form-control-lg" id="purpose" name="purpose" 
+                                rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="timeSlot" class="form-label">Selected Time Slot</label>
+                        <input type="text" class="form-control form-control-lg" id="selectedTimeDisplay" 
+                               readonly disabled>
+                        <input type="hidden" id="selectedTime" name="time_slot">
+                        <input type="hidden" id="selectedDate" name="date">
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Book Appointment</button>
+                        <a href="appointments.html" class="btn btn-light btn-lg">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../assets/js/appointment-modal.js"></script>
+    <script src="../assets/js/mobile-nav.js"></script>
+    <script src="../assets/js/notifications.js"></script>
+    <script src="../assets/js/pwa.js"></script>
+    <script src="../assets/js/booking.js"></script>
+<script>
+// Inject reCAPTCHA token from sessionStorage into form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('appointmentForm');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+        // Get token from sessionStorage
+        const recaptchaToken = sessionStorage.getItem('recaptchaToken');
+        if (recaptchaToken) {
+            // Add token to form as hidden input
+            let tokenInput = document.getElementById('recaptchaToken');
+            if (!tokenInput) {
+                tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = 'g-recaptcha-response';
+                tokenInput.id = 'recaptchaToken';
+                form.appendChild(tokenInput);
+            }
+            tokenInput.value = recaptchaToken;
+        }
+    });
+});
+</script>
+</body>
+    <!-- AI Chatbot Floating Button and Chat Window -->
+    <div id="aiChatbotBtn" style="position:fixed;bottom:100px;right:32px;z-index:9999;">
+        <button style="background:#2563eb;color:#fff;border:none;border-radius:50%;width:60px;height:60px;box-shadow:0 4px 16px rgba(37,99,235,0.18);font-size:2rem;cursor:pointer;" title="Chat with AI">
+            💬
+        </button>
+    </div>
+    <div id="aiChatbotWindow" style="display:none;position:fixed;bottom:170px;right:32px;width:350px;max-width:95vw;height:480px;z-index:10000;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(37,99,235,0.18);overflow:hidden;flex-direction:column;">
+        <div style="background:#2563eb;color:#fff;padding:16px 20px;font-weight:600;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between;">
+            <span>AI Assistant</span>
+            <button id="aiChatbotClose" style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">&times;</button>
+        </div>
+        <div id="aiChatbotMessages" style="flex:1;overflow-y:auto;padding:16px 12px 12px 12px;height:340px;background:#f8fafc;"></div>
+        <form id="aiChatbotForm" style="display:flex;padding:12px 12px 12px 12px;background:#f3f6fc;gap:8px;">
+            <input id="aiChatbotInput" type="text" placeholder="Type your question..." style="flex:1;padding:10px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1rem;outline:none;" required autocomplete="off" />
+            <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0 18px;font-size:1rem;font-weight:600;">Send</button>
+        </form>
+    </div>
+    <script>
+        // AI Chatbot UI logic
+        const aiBtn = document.getElementById('aiChatbotBtn');
+        const aiWin = document.getElementById('aiChatbotWindow');
+        const aiClose = document.getElementById('aiChatbotClose');
+        aiBtn.onclick = () => { aiWin.style.display = 'flex'; };
+        aiClose.onclick = () => { aiWin.style.display = 'none'; };
+        // Minimize on outside click
+        document.addEventListener('mousedown', function(e) {
+            if (aiWin.style.display === 'flex' && !aiWin.contains(e.target) && !aiBtn.contains(e.target)) {
+                aiWin.style.display = 'none';
+            }
+        });
+        // Chatbot messaging logic (OpenAI integration to be added next)
+        const aiForm = document.getElementById('aiChatbotForm');
+        const aiInput = document.getElementById('aiChatbotInput');
+        const aiMsgs = document.getElementById('aiChatbotMessages');
+        function appendMsg(sender, text) {
+            const div = document.createElement('div');
+            div.style.margin = '8px 0';
+            div.style.textAlign = sender === 'user' ? 'right' : 'left';
+            div.innerHTML = `<span style="display:inline-block;max-width:80%;padding:10px 14px;border-radius:12px;background:${sender==='user'?'#2563eb':'#e0e7ff'};color:${sender==='user'?'#fff':'#222'};font-size:1rem;">${text.replace(/</g,'&lt;')}</span>`;
+            aiMsgs.appendChild(div);
+            aiMsgs.scrollTop = aiMsgs.scrollHeight;
+        }
+        aiForm.onsubmit = function(e) {
+            e.preventDefault();
+            const msg = aiInput.value.trim();
+            if (!msg) return;
+            appendMsg('user', msg);
+            aiInput.value = '';
+            appendMsg('ai', '...'); // Placeholder, will be replaced by OpenAI response
+            // OpenAI API integration will be added in the next step
+        };
+    </script>
+</html>

@@ -1,0 +1,27 @@
+<?php
+// Copy this file to email.local.php and fill in your credentials.
+return [
+    // Gmail SMTP (use an App Password): https://myaccount.google.com/apppasswords
+    'SMTP_HOST' => 'smtp.gmail.com',
+    'SMTP_PORT' => 587,           // 587 = TLS, 465 = SSL
+    'SMTP_SECURE' => 'tls',       // 'tls' or 'ssl'
+    'SMTP_USER' => 'your.address@gmail.com',
+    'SMTP_PASS' => 'your-app-password-here',
+    'SMTP_FROM' => 'your.address@gmail.com',
+    'SMTP_FROM_NAME' => 'DocuMed',
+
+    // Optional debugging and testing
+    'DEV_EMAIL_DEBUG' => true,    // when true, logs SMTP conversation to PHP error_log
+    'SMTP_ALLOW_SELF_SIGNED' => false, // set true if your local PHP environment has SSL issues
+    'SMTP_TEST_KEY' => 'set-a-strong-random-key', // used by test_email.php for authorization
+
+    // Digest/notifications (for medicine_notify.php)
+    // Protect the endpoint with a shared secret key
+    'DIGEST_KEY' => 'set-another-strong-key',
+    // Optional fixed recipient list (else all active admins)
+    // 'DIGEST_RECIPIENTS' => ['admin@example.com','nurse@example.com'],
+    // Include orientation block derived from trends
+    'DIGEST_SEND_ORIENTATION' => true,
+    // Minimum minutes between digests (throttling)
+    'DIGEST_MIN_INTERVAL_MINUTES' => 60,
+];

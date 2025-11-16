@@ -1,0 +1,63 @@
+/* Form field styles */
+.form-control,
+.form-select {
+    font-size: 16px !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    background-color: #fff !important;
+    transition: border-color 0.15s ease-in-out !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Form labels */
+.form-label {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #4b5563 !important;
+    margin-bottom: 8px !important;
+}
+
+/* Purpose textarea */
+textarea.form-control {
+    min-height: 100px !important;
+}
+
+/* Selected time slot display */
+#selectedTimeDisplay {
+    font-size: 16px !important;
+    background-color: #f8fafc !important;
+}
+
+/* Form section spacing */
+.form-group {
+    margin-bottom: 20px !important;
+}
+
+/* Error message styling */
+.alert-danger {
+    font-size: 14px !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    background-color: #fee2e2 !important;
+    border: 1px solid #fecaca !important;
+    color: #991b1b !important;
+}
+
+/* Buttons */
+.btn-primary {
+    font-size: 16px !important;
+    padding: 12px 24px !important;
+    font-weight: 500 !important;
+}
+
+.btn-secondary {
+    font-size: 16px !important;
+    padding: 12px 24px !important;
+    font-weight: 500 !important;
+}

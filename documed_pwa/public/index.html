@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d6efd" />
+    <meta
+      name="description"
+      content="DocMed PWA for managing patient records and appointments"
+    />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/../frontend/assets/images/documed_logo.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <title>DocuMed</title>
+    <style>
+      #pwa-install-btn { position:fixed; bottom:1rem; right:1rem; background:#0d6efd; color:#fff; border:none; padding:.75rem 1rem; border-radius:6px; font-size:.9rem; box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer; display:none; z-index:9999; }
+      #pwa-install-btn:active { transform:translateY(1px); }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <button id="pwa-install-btn" aria-label="Install DocMed app">Install App</button>
+    <script src="%PUBLIC_URL%/pwa-install.js" defer></script>
+  </body>
+</html>

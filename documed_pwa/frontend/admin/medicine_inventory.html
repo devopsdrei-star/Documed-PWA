@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+    body { background:#f3f4f6; color:#111; }
+    .main-content { background:#fff; box-shadow:0 8px 32px rgba(37,99,235,0.14); }
+    h1 { color:#111; font-size:2rem; margin-bottom:24px; text-align:center; letter-spacing:1px; font-weight:700; text-shadow:0 2px 8px rgba(37,99,235,0.08); }
+    .sidebar { box-shadow:0 4px 24px rgba(37,99,235,0.10); }
+    .profile-photo { box-shadow:0 2px 8px rgba(37,99,235,0.10); }
+    .sidebar-link.active { background:#1e40af; color:#ffffff !important; box-shadow:0 2px 8px rgba(37,99,235,0.10); }
+    .sidebar-link { color:#ffffff; font-weight:500; }
+    .logout { background:#ef4444; color:#fff !important; box-shadow:0 2px 8px rgba(239,68,68,0.10); }
+
+    /* Table styling to match appointments page */
+    #medTable { width:100%; border-collapse:separate; border-spacing:0; background:#fff; box-shadow:0 4px 16px rgba(37,99,235,0.08); border-radius:12px; overflow:hidden; }
+    #medTable th, #medTable td { padding:12px 10px; text-align:left; color:#111; font-size:0.98rem; border-bottom:1px solid #e5e7eb; background:#fff; }
+    #medTable th { background:#f3f4f6; font-weight:600; letter-spacing:0.5px; color:#111; border-bottom:2px solid #2563eb; }
+    #medTable tr:last-child td { border-bottom:none; }
+
+    /* Status badges */
+    .tag { display:inline-block; padding:2px 8px; border-radius:14px; font-size:0.78rem; }
+    .tag-exp { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+    .row-low td { background:#fff7ed; }
+
+    @media (max-width: 900px) {
+      .main-content { padding:18px 4px; }
+      #medTable th, #medTable td { padding:8px 4px; font-size:0.92rem; }
+    }
+    /* Controls sizing to match */
+    #medControls .form-select, #medControls .form-control { height:42px; }
+    #medControls .btn { height:42px; display:inline-flex; align-items:center; padding:10px 18px; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+        <a href="patients.html" class="sidebar-link"><i class="bi bi-people me-2"></i>Patients</a>
+        <a href="appointments.html" class="sidebar-link"><i class="bi bi-calendar-check me-2"></i>Appointments</a>
+        <a href="manage_users.html" class="sidebar-link"><i class="bi bi-person-gear me-2"></i>Manage user</a>
+        <a href="audit_trail.html" class="sidebar-link"><i class="bi bi-clock-history me-2"></i>Activity log</a>
+        <a href="medicine_inventory.html" class="sidebar-link active"><i class="bi bi-capsule me-2"></i>Medicine</a>
+        <a href="reports.html" class="sidebar-link"><i class="bi bi-graph-up me-2"></i>Reports</a>
+        <a href="settings.html" class="sidebar-link"><i class="bi bi-gear me-2"></i>Settings</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <div class="dashboard-topbar" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;gap:18px;">
+        <button id="dashboardSettingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.7rem;color:#2563eb;display:flex;align-items:center;"></button>
+        <div class="dashboard-profile-dropdown" style="position:relative;">
+          <button id="dashboardProfileBtn" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+            <img src="../assets/images/documed_logo.png" alt="DocuMed Logo" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+          </button>
+          <div id="dashboardProfileMenu" style="display:none;position:absolute;right:0;top:110%;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:10px;min-width:160px;z-index:20;">
+            <a href="#" id="profileInfoMenu" style="display:block;padding:12px 18px;color:#2563eb;text-decoration:none;font-weight:500;border-bottom:1px solid #f3f4f6;">Profile Info</a>
+            <a href="admin_login.html" id="logoutMenu" style="display:block;padding:12px 18px;color:#e11d48;text-decoration:none;font-weight:500;">Logout</a>
+          </div>
+        </div>
+      </div>
+
+      <h1>Medicine Inventory (Lingayen)</h1>
+      <div class="d-flex flex-wrap gap-2 align-items-center px-3" id="medControls">
+        <input id="q" class="form-control" placeholder="Search medicine..." style="max-width:320px;height:42px;">
+        <button class="btn btn-primary" onclick="loadList()">Search</button>
+        <button class="btn btn-outline-warning" onclick="showAlerts()">Show Alerts</button>
+  <!-- Suggestions now load automatically and show an actions banner -->
+        <div class="ms-auto"></div>
+        <button class="btn btn-success" onclick="openCreateModal()"><i class="bi bi-plus-circle me-1"></i>Add Medicine</button>
+      </div>
+
+      <div id="inventory-list" class="mt-2">
+        <table id="medTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Qty</th>
+              <th>Threshold</th>
+              <th>Nearest Expiry</th>
+              <th style="width:200px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="panel" style="margin-top:12px;"></div>
+        <div id="actionsPanel" class="mt-2"></div>
+      </div>
+      
+      <!-- Create / Edit Medicine Modal -->
+      <div class="modal fade" id="medModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="medModalTitle">Add Medicine</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="medForm" class="row g-2">
+                <input type="hidden" id="medId">
+                <div class="col-12">
+                  <label class="form-label">Name</label>
+                  <input type="text" id="medName" class="form-control" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Quantity</label>
+                  <input type="number" id="medQty" class="form-control" min="0" value="0">
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Reorder %</label>
+                  <input type="number" id="medPercent" class="form-control" min="1" max="100" value="20">
+                </div>
+                <div class="col-4">
+                  <label class="form-label">Unit</label>
+                  <input type="text" id="medUnit" class="form-control" placeholder="tabs, ml, etc.">
+                </div>
+                <div class="col-4">
+                  <label class="form-label">Form</label>
+                  <input type="text" id="medFormField" class="form-control" placeholder="tablet, drops">
+                </div>
+                <div class="col-4">
+                  <label class="form-label">Strength</label>
+                  <input type="text" id="medStrength" class="form-control" placeholder="500mg">
+                </div>
+                <input type="hidden" id="medCampus" value="Lingayen">
+              </form>
+              <div id="medFormMsg" class="text-danger small mt-1"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="medSaveBtn">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manage Batches Modal -->
+      <div class="modal fade" id="batchModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="batchModalTitle">Batches</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <form id="batchForm" class="row g-2 align-items-end">
+                  <input type="hidden" id="batchMedicineId">
+                  <div class="col-2">
+                    <label class="form-label">Qty</label>
+                    <input type="number" id="batchQty" class="form-control" min="1" value="1">
+                  </div>
+                  <div class="col-3">
+                    <label class="form-label">Expiry</label>
+                    <input type="date" id="batchExpiry" class="form-control">
+                  </div>
+                  <div class="col-3">
+                    <label class="form-label">Received</label>
+                    <input type="date" id="batchReceived" class="form-control">
+                  </div>
+                  <div class="col-2">
+                    <label class="form-label">Batch #</label>
+                    <input type="text" id="batchNo" class="form-control" placeholder="optional">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Notes</label>
+                    <input type="text" id="batchNotes" class="form-control" placeholder="optional">
+                  </div>
+                  <div class="col-12">
+                    <button type="button" class="btn btn-success" id="batchAddBtn"><i class="bi bi-plus-circle me-1"></i>Add Batch</button>
+                    <span id="batchFormMsg" class="text-danger small ms-2"></span>
+                  </div>
+                </form>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm" id="batchTable">
+                  <thead>
+                    <tr>
+                      <th>ID</th><th>Qty</th><th>Expiry</th><th>Received</th><th>Batch #</th><th>Notes</th><th></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const api = '../../backend/api/medicine.php';
+    let medModal, batchModal;
+    document.addEventListener('DOMContentLoaded', ()=>{
+      medModal = new bootstrap.Modal(document.getElementById('medModal'));
+      batchModal = new bootstrap.Modal(document.getElementById('batchModal'));
+      document.getElementById('medSaveBtn').addEventListener('click', saveMedicine);
+      document.getElementById('batchAddBtn').addEventListener('click', addBatch);
+    });
+    async function loadList() {
+      try {
+        const q = document.getElementById('q').value.trim();
+        const url = api + '?action=list&campus=Lingayen' + (q ? ('&q=' + encodeURIComponent(q)) : '');
+        const res = await fetch(url);
+        const data = await res.json();
+        const tbody = document.querySelector('#medTable tbody');
+        tbody.innerHTML = '';
+        (data.medicines || []).forEach(m => {
+          const tr = document.createElement('tr');
+          if (m.low_stock) tr.classList.add('row-low');
+          const expTag = m.expiring_soon ? '<span class="tag tag-exp">Expiring soon</span>' : (m.nearest_expiry ? m.nearest_expiry : '');
+          const actions = `
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-outline-primary" onclick="openEditModal(${m.id}, '${encodeURIComponent(JSON.stringify(m)).replace(/'/g,"&#39;")}')">Edit</button>
+              <button class="btn btn-outline-secondary" onclick="openBatches(${m.id}, '${String(m.name).replace(/'/g,"&#39;")}')">Batches</button>
+              <button class="btn btn-outline-danger" onclick="confirmDelete(${m.id}, '${String(m.name).replace(/'/g,"&#39;")}')">Delete</button>
+            </div>`;
+          tr.innerHTML = `<td>${m.name}</td><td>${m.quantity}</td><td>${m.threshold_qty}</td><td>${expTag}</td><td>${actions}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        document.getElementById('panel').innerHTML = '<div class="alert alert-danger">Failed to load inventory.</div>';
+      }
+    }
+
+    function openCreateModal(){
+      document.getElementById('medModalTitle').textContent = 'Add Medicine';
+      document.getElementById('medId').value = '';
+      document.getElementById('medName').value = '';
+      document.getElementById('medQty').value = 0;
+      document.getElementById('medPercent').value = 20;
+      document.getElementById('medUnit').value = '';
+      document.getElementById('medFormField').value = '';
+      document.getElementById('medStrength').value = '';
+      document.getElementById('medFormMsg').textContent = '';
+      medModal.show();
+    }
+
+    function openEditModal(id, mJson){
+      let m;
+      try { m = JSON.parse(decodeURIComponent(mJson)); } catch { m = { id }; }
+      document.getElementById('medModalTitle').textContent = 'Edit Medicine';
+      document.getElementById('medId').value = m.id || id;
+      document.getElementById('medName').value = m.name || '';
+      document.getElementById('medQty').value = m.quantity ?? 0;
+      document.getElementById('medPercent').value = m.reorder_threshold_percent ?? 20;
+      document.getElementById('medUnit').value = m.unit || '';
+      document.getElementById('medFormField').value = m.form || '';
+      document.getElementById('medStrength').value = m.strength || '';
+      document.getElementById('medFormMsg').textContent = '';
+      medModal.show();
+    }
+
+    async function saveMedicine(){
+      const err = document.getElementById('medFormMsg');
+      err.textContent = '';
+      const id = document.getElementById('medId').value.trim();
+      const name = document.getElementById('medName').value.trim();
+      const qty = document.getElementById('medQty').value.trim();
+      const percent = document.getElementById('medPercent').value.trim();
+      const unit = document.getElementById('medUnit').value.trim();
+      const form = document.getElementById('medFormField').value.trim();
+      const strength = document.getElementById('medStrength').value.trim();
+      const campus = document.getElementById('medCampus').value.trim();
+      if (!name){ err.textContent = 'Name is required.'; return; }
+      const body = new URLSearchParams();
+      if (id){
+        body.set('action','update'); body.set('id', id);
+        body.set('name', name); body.set('quantity', qty||'0'); body.set('reorder_threshold_percent', percent||'20');
+        if (unit) body.set('unit', unit); if (form) body.set('form', form); if (strength) body.set('strength', strength); if (campus) body.set('campus', campus);
+      } else {
+        body.set('action','create'); body.set('name', name); body.set('quantity', qty||'0'); body.set('reorder_threshold_percent', percent||'20'); body.set('campus', campus);
+        if (unit) body.set('unit', unit); if (form) body.set('form', form); if (strength) body.set('strength', strength);
+      }
+      try {
+        const res = await fetch(api, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString()});
+        const data = await res.json();
+        if (!data.success){ err.textContent = data.message || 'Save failed'; return; }
+        medModal.hide();
+        await loadList();
+      } catch (e) {
+        err.textContent = 'Network error';
+      }
+    }
+
+    function confirmDelete(id, name){
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      deleteMedicine(id);
+    }
+
+    async function deleteMedicine(id){
+      try {
+        const body = new URLSearchParams(); body.set('action','delete'); body.set('id', String(id));
+        const res = await fetch(api, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString()});
+        const data = await res.json();
+        if (!data.success){ alert(data.message||'Delete failed'); return; }
+        await loadList();
+      } catch (e) { alert('Network error'); }
+    }
+
+    function openBatches(id, name){
+      document.getElementById('batchModalTitle').textContent = `Batches — ${name}`;
+      document.getElementById('batchMedicineId').value = String(id);
+      document.getElementById('batchFormMsg').textContent = '';
+      loadBatches(id);
+      batchModal.show();
+    }
+
+    async function loadBatches(id){
+      try {
+        const res = await fetch(`${api}?action=list_batches&medicine_id=${id}`);
+        const data = await res.json();
+        const tbody = document.querySelector('#batchTable tbody');
+        tbody.innerHTML = '';
+        (data.batches||[]).forEach(b=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${b.id}</td><td>${b.qty}</td><td>${b.expiry_date||''}</td><td>${b.received_at||''}</td><td>${b.batch_no||''}</td><td>${b.notes||''}</td>
+            <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="deleteBatch(${b.id}, ${b.medicine_id})">Delete</button></td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        document.getElementById('batchFormMsg').textContent = 'Failed to load batches';
+      }
+    }
+
+    async function addBatch(){
+      const msg = document.getElementById('batchFormMsg');
+      msg.textContent='';
+      const medicine_id = document.getElementById('batchMedicineId').value;
+      const qty = document.getElementById('batchQty').value;
+      const expiry_date = document.getElementById('batchExpiry').value;
+      const received_at = document.getElementById('batchReceived').value;
+      const batch_no = document.getElementById('batchNo').value;
+      const notes = document.getElementById('batchNotes').value;
+      if (!medicine_id || !qty || Number(qty) <= 0){ msg.textContent='Qty is required.'; return; }
+      const body = new URLSearchParams();
+      body.set('action','add_batch'); body.set('medicine_id', medicine_id); body.set('qty', qty);
+      if (expiry_date) body.set('expiry_date', expiry_date);
+      if (received_at) body.set('received_at', received_at);
+      if (batch_no) body.set('batch_no', batch_no);
+      if (notes) body.set('notes', notes);
+      try {
+        const res = await fetch(api, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString()});
+        const data = await res.json();
+        if (!data.success){ msg.textContent = data.message || 'Add failed'; return; }
+        // reset quick fields
+        document.getElementById('batchQty').value = 1; document.getElementById('batchExpiry').value=''; document.getElementById('batchReceived').value=''; document.getElementById('batchNo').value=''; document.getElementById('batchNotes').value='';
+        await loadBatches(medicine_id);
+        await loadList();
+      } catch (e) { msg.textContent = 'Network error'; }
+    }
+
+    async function deleteBatch(batchId, medicineId){
+      if (!confirm('Delete this batch?')) return;
+      try {
+        const body = new URLSearchParams(); body.set('action','delete_batch'); body.set('batch_id', String(batchId));
+        const res = await fetch(api, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString()});
+        const data = await res.json();
+        if (!data.success){ alert(data.message||'Delete failed'); return; }
+        await loadBatches(medicineId);
+        await loadList();
+      } catch (e) { alert('Network error'); }
+    }
+    async function showAlerts() {
+      try {
+        const res = await fetch(api + '?action=alerts&campus=Lingayen&expiring_within_days=60');
+        const data = await res.json();
+        const p = document.getElementById('panel');
+        const low = (data.low_stock || []).map(m => `• ${m.name} — ${m.quantity} left (threshold ${m.quantity < 1 ? 1 : m.threshold_qty})`).join('<br>') || 'None';
+        const exp = (data.expiring || []).map(m => `• ${m.name} — expires ${m.nearest_expiry}`).join('<br>') || 'None';
+        p.innerHTML = `<div class="card"><div class="card-header">Alerts</div><div class="card-body"><b>Low stock:</b><br>${low}<br><br><b>Expiring within 60 days:</b><br>${exp}</div></div>`;
+      } catch (e) {
+        document.getElementById('panel').innerHTML = '<div class="alert alert-danger">Failed to load alerts.</div>';
+      }
+    }
+    async function showSuggestions() {
+      try {
+        const res = await fetch(api + '?action=suggestions&days=30');
+        const data = await res.json();
+        const p = document.getElementById('panel');
+        const sug = (data.suggestions || []).map(s => {
+          const meds = s.recommendations.map(r => `<li>${r.name} ${r.in_inventory ? `— stock ${r.quantity}${r.low_stock ? ' (low)' : ''}` : '— not in inventory'}</li>`).join('');
+          return `<div class="mb-2"><b>${s.condition}</b> — ${s.cases} cases<ul class="mb-0">${meds}</ul></div>`;
+        }).join('');
+        p.innerHTML = `<div class="card"><div class="card-header">Decision Suggestions</div><div class="card-body"><div class="mb-2">${data.narrative || ''}</div>${sug || '<span class="text-muted">No suggestions</span>'}</div></div>`;
+        // Actions banner (auto decision hints)
+        const act = data.actions || { };
+        const orient = (act.orientation||[]).map(a=>`<li>${a.condition}: ${a.month_cases} this month (${a.week_cases} in last 7d) — ${a.reason}</li>`).join('') || '<li class="text-muted">None</li>';
+        const restock = (act.restock||[]).map(r=>`<li>${r.name} ${r.in_inventory? (r.low_stock?'— low stock':'— in stock') : '— not in inventory'} (for ${r.linked_condition})</li>`).join('') || '<li class="text-muted">None</li>';
+        const monitor = (act.monitor||[]).map(m=>`<li>${m.condition}: ${m.month_cases} (${m.week_cases}/7d) — ${m.reason}</li>`).join('') || '<li class="text-muted">None</li>';
+        document.getElementById('actionsPanel').innerHTML = `
+          <div class="card">
+            <div class="card-header"><i class="bi bi-activity me-1"></i>Auto Actions</div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4"><h6>Orientation suggested</h6><ul class="mb-2">${orient}</ul></div>
+                <div class="col-md-4"><h6>Restock suggested</h6><ul class="mb-2">${restock}</ul></div>
+                <div class="col-md-4"><h6>Monitor</h6><ul class="mb-2">${monitor}</ul></div>
+              </div>
+            </div>
+          </div>`;
+      } catch (e) {
+        document.getElementById('panel').innerHTML = '<div class="alert alert-danger">Failed to load suggestions.</div>';
+      }
+    }
+    // Auto load inventory and decision suggestions, refresh every 10 minutes
+    loadList();
+    showSuggestions();
+    setInterval(showSuggestions, 10 * 60 * 1000);
+  </script>
+  <script src="../assets/js/settings_dropdown.js"></script>
+  <script src="../assets/js/dashboard_interactive.js"></script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="manifest" href="../../manifest-landing.json">
+  <link rel="apple-touch-icon" href="../assets/images/documed_logo.png">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+  <style>
+    body {
+      background: #f8f9fa;
+    }
+ .main-wrapper {
+      background: #fff;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+      max-width: 100vw;
+      width: 100vw;
+      min-height: 100vh;
+      padding: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .top-nav { position: sticky; top: 0; z-index: 1000; }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      font-weight: 500;
+      font-size: 1.08rem;
+    }
+    .nav-links a {
+      color: #222;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: #00d1c7;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    /* Burger hidden on desktop, shown on mobile */
+    .nav-burger { display: none; background: none; border: 0; width: 44px; height: 44px; border-radius: 10px; align-items: center; justify-content: center; }
+    body.menu-open { overflow: hidden; }
+
+    @media (max-width: 768px) {
+  .top-nav { padding: 0 12px; height: 60px; }
+      .nav-actions { display: none; }
+      .nav-burger { display: flex; margin-left: 8px; }
+      .nav-links {
+        display: none; /* mobile dropdown hidden by default */
+        position: fixed;
+        left: 0; right: 0;
+        top: 60px;
+        background: #fff;
+        border-bottom: 1px solid #e0e7ff;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 16px;
+        z-index: 1100;
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+      }
+      .top-nav.nav-open .nav-links { display: flex; }
+    }
+    .history-table {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 32px;
+    }
+    .table th, .table td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .table thead th {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+      background-color: #f2f6fc;
+    }
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2563eb;
+      margin-top: 24px;
+        margin-bottom: -24px;
+        text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-wrapper">
+    <nav class="top-nav">
+      <div class="d-flex align-items-center">
+        <div class="nav-logo">
+          <img src="../assets/images/documed_logo.png" alt="DocuMed Logo">
+        </div>
+        <button class="nav-burger" aria-label="Toggle navigation"><span></span></button>
+        <div class="nav-links">
+          <a href="user_dashboard.html">Home</a>
+          <a href="appointments.html">Appointment</a>
+          <a href="medical_history.html">Medical History</a>
+          <a href="profile.html">Profile</a>
+          <a href="user_dashboard.html#services" id="navServices">Services</a>
+          <a href="user_dashboard.html#about" id="navAbout">About Us</a>
+          <a href="user_dashboard.html#contact" id="navContact">Contact</a>
+          <a href="#" id="navHelp">Help</a>
+        </div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-actions" id="navActions">
+          <!-- Dynamic login/profile actions here -->
+        </div>
+      </div>
+    </nav>
+    <div class="page-title">Medical Record</div>
+    <div class="history-table">
+      <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Doctor/Nurse</th>
+            <th>Notes</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="medicalHistoryBody">
+          <!-- Medical history rows will be dynamically loaded here -->
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <!-- View Record Modal -->
+    <div class="modal fade" id="viewRecordModal" tabindex="-1" aria-labelledby="viewRecordLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px;">
+          <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:12px 12px 0 0;">
+            <h5 class="modal-title" id="viewRecordLabel">Medical Record Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="viewRecordBody">
+              <div class="text-muted">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/mobile-nav.js"></script>
+  <script src="../assets/js/notifications.js"></script>
+  <script src="../assets/js/pwa.js"></script>
+  <script src="../assets/js/help_modal.js"></script>
+  <script src="../assets/js/profile.js"></script>
+  <script>
+    // Fetch medical history for logged-in user (requires School ID)
+    document.addEventListener('DOMContentLoaded', function() {
+      const tbody = document.getElementById('medicalHistoryBody');
+      // Prefer student_faculty_id from stored user
+      let sid = '';
+      try {
+        const u = JSON.parse(localStorage.getItem('documed_user') || 'null');
+        if (u && u.student_faculty_id) sid = u.student_faculty_id;
+      } catch(_) {}
+      if (!sid) sid = localStorage.getItem('student_faculty_id') || sessionStorage.getItem('student_faculty_id') || '';
+
+      if (!sid) {
+        // No SID means we cannot scope records; show empty state
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6">Sign in to view your medical history.</td></tr>';
+        return;
+      }
+
+      const url = `../../backend/api/checkup.php?action=list&student_faculty_id=${encodeURIComponent(sid)}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (!tbody) return;
+          tbody.innerHTML = '';
+          if (data.success && Array.isArray(data.checkups) && data.checkups.length > 0) {
+            data.checkups.forEach(row => {
+              const statusLabel = (row.follow_up && String(row.follow_up) !== '0') ? 'With Follow-up' : 'Completed';
+              const id = row.id || '';
+              const downloadUrl = id ? `../../backend/api/download_medical_record.php?id=${encodeURIComponent(id)}&as=pdf` : '';
+              const btn = id ? `<button type="button" class="btn btn-xs btn-outline-primary view-record" data-id="${id}" style="padding:2px 8px;font-size:.8rem;">View</button>` : '';
+              tbody.innerHTML += `<tr>
+                <td>${row.created_at}</td>
+                <td>${row.type || 'General'}</td>
+                <td>${row.doctor_nurse || '-'}</td>
+                <td>${row.remarks || ''}</td>
+                <td>${row.status || statusLabel}</td>
+                <td>${btn}</td>
+              </tr>`;
+            });
+            // QR thumbs removed from table per request
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6">No medical history found.</td></tr>';
+          }
+        })
+        .catch(() => {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="6">Unable to load medical history right now.</td></tr>';
+        });
+
+      // Delegate click for View buttons
+      document.body.addEventListener('click', function(e) {
+        const t = e.target;
+        if (!t || !t.classList || !t.classList.contains('view-record')) return;
+        const id = t.getAttribute('data-id');
+        if (!id) return;
+        const bodyEl = document.getElementById('viewRecordBody');
+        if (bodyEl) bodyEl.innerHTML = '<div class="text-muted">Loading...</div>';
+
+        fetch(`../../backend/api/checkup.php?action=view&id=${encodeURIComponent(id)}`)
+          .then(r => r.json())
+          .then(d => {
+            if (!bodyEl) return;
+            if (d.success && d.patient) {
+              const p = d.patient;
+              const fu = (p.follow_up && String(p.follow_up) !== '0');
+              const fuDate = p.follow_up_date ? ` (${p.follow_up_date})` : '';
+              const dlUrl = p.id ? `../../backend/api/download_medical_record.php?id=${encodeURIComponent(p.id)}&as=pdf` : '';
+              bodyEl.innerHTML = `
+                <div class="container-fluid">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div><strong>Date:</strong> ${p.created_at || ''}</div>
+                      <div><strong>Type:</strong> ${p.type || 'General'}</div>
+                      <div><strong>Doctor/Nurse:</strong> ${p.doctor_nurse || '-'}</div>
+                      <div><strong>Status:</strong> ${fu ? 'With Follow-up' : 'Completed'}${fu ? fuDate : ''}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div><strong>Name:</strong> ${p.name || ''}</div>
+                      <div><strong>School ID:</strong> ${p.student_faculty_id || ''}</div>
+                      <div><strong>Role:</strong> ${p.role_effective || p.role || ''}</div>
+                    </div>
+                    <div class="col-12"><hr></div>
+                    <div class="col-12 position-relative" style="padding-right: 160px;">
+                      <div id="qrWrap" class="position-absolute" style="right:0; top:0; text-align:right;">
+                        <div style="font-size:.85rem;color:#6b7280;margin-bottom:4px;">Scan to download</div>
+                        <div style="display:none;"><a href="${dlUrl}" target="_blank" rel="noopener" style="font-size:.85rem;word-break:break-all;">${dlUrl}</a></div>
+                        <img id="qrInModal" alt="QR" style="width:120px;height:120px;object-fit:contain;border:1px solid #e5e7eb;border-radius:6px;padding:4px;"/>
+                      </div>
+                      <div><strong>Assessment:</strong><br>${p.assessment || ''}</div>
+                    </div>
+                    <div class="col-12" style="margin-top: 8px;"><strong>Remarks/Notes:</strong><br>${p.remarks || ''}</div>
+                    ${p.laboratory_results ? `<div class="col-12"><strong>Laboratory Results:</strong><br>${p.laboratory_results}</div>` : ''}
+                  </div>
+                </div>
+              `;
+              // Generate QR for the download link
+              if (dlUrl) {
+                fetch(`../../backend/api/qr.php?action=generate_link&text=${encodeURIComponent(dlUrl)}&key=${encodeURIComponent('view_'+p.id)}`)
+                  .then(r=>r.json()).then(q=>{
+                    const img = document.getElementById('qrInModal');
+                    if (q.success && q.qr_path && img) img.src = q.qr_path;
+                  });
+              }
+            } else {
+              bodyEl.innerHTML = '<div class="text-danger">Record not found.</div>';
+            }
+          })
+          .catch(() => {
+            if (bodyEl) bodyEl.innerHTML = '<div class="text-danger">Failed to load record.</div>';
+          });
+
+        const modalEl = document.getElementById('viewRecordModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+      });
+    });
+  </script>
+</body>
+  <!-- AI Chatbot Floating Button and Chat Window -->
+  <div id="aiChatbotBtn" style="position:fixed;bottom:100px;right:32px;z-index:9999;">
+    <button style="background:#2563eb;color:#fff;border:none;border-radius:50%;width:60px;height:60px;box-shadow:0 4px 16px rgba(37,99,235,0.18);font-size:2rem;cursor:pointer;" title="Chat with AI">
+      💬
+    </button>
+  </div>
+  <div id="aiChatbotWindow" style="display:none;position:fixed;bottom:170px;right:32px;width:350px;max-width:95vw;height:480px;z-index:10000;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(37,99,235,0.18);overflow:hidden;flex-direction:column;">
+    <div style="background:#2563eb;color:#fff;padding:16px 20px;font-weight:600;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between;">
+      <span>AI Assistant</span>
+      <button id="aiChatbotClose" style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+    <div id="aiChatbotMessages" style="flex:1;overflow-y:auto;padding:16px 12px 12px 12px;height:340px;background:#f8fafc;"></div>
+    <form id="aiChatbotForm" style="display:flex;padding:12px 12px 12px 12px;background:#f3f6fc;gap:8px;">
+      <input id="aiChatbotInput" type="text" placeholder="Type your question..." style="flex:1;padding:10px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1rem;outline:none;" required autocomplete="off" />
+      <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0 18px;font-size:1rem;font-weight:600;">Send</button>
+    </form>
+  </div>
+  <script>
+    // AI Chatbot UI logic
+    const aiBtn = document.getElementById('aiChatbotBtn');
+    const aiWin = document.getElementById('aiChatbotWindow');
+    const aiClose = document.getElementById('aiChatbotClose');
+    aiBtn.onclick = () => { aiWin.style.display = 'flex'; };
+    aiClose.onclick = () => { aiWin.style.display = 'none'; };
+    // Minimize on outside click
+    document.addEventListener('mousedown', function(e) {
+      if (aiWin.style.display === 'flex' && !aiWin.contains(e.target) && !aiBtn.contains(e.target)) {
+        aiWin.style.display = 'none';
+      }
+    });
+    // Chatbot messaging logic (OpenAI integration to be added next)
+    const aiForm = document.getElementById('aiChatbotForm');
+    const aiInput = document.getElementById('aiChatbotInput');
+    const aiMsgs = document.getElementById('aiChatbotMessages');
+    function appendMsg(sender, text) {
+      const div = document.createElement('div');
+      div.style.margin = '8px 0';
+      div.style.textAlign = sender === 'user' ? 'right' : 'left';
+      div.innerHTML = `<span style="display:inline-block;max-width:80%;padding:10px 14px;border-radius:12px;background:${sender==='user'?'#2563eb':'#e0e7ff'};color:${sender==='user'?'#fff':'#222'};font-size:1rem;">${text.replace(/</g,'&lt;')}</span>`;
+      aiMsgs.appendChild(div);
+      aiMsgs.scrollTop = aiMsgs.scrollHeight;
+    }
+    aiForm.onsubmit = function(e) {
+      e.preventDefault();
+      const msg = aiInput.value.trim();
+      if (!msg) return;
+      appendMsg('user', msg);
+      aiInput.value = '';
+      // Call backend to get OpenAI response
+      fetch('../../backend/api/chatbot.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      })
+      .then(res => res.json())
+      .then(data => {
+        // Remove placeholder
+        aiMsgs.lastChild.remove();
+        if (data.reply) {
+          appendMsg('ai', data.reply);
+        } else {
+          appendMsg('ai', data.error || 'Sorry, I could not get a response.');
+        }
+      })
+      .catch(() => {
+        aiMsgs.lastChild.remove();
+        appendMsg('ai', 'Network error. Please try again.');
+      });
+    };
+  </script>
+</html>

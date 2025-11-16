@@ -1,0 +1,776 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="manifest" href="../../manifest-landing.json">
+  <link rel="apple-touch-icon" href="../assets/images/documed_logo.png">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .calendar-wrapper {
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.1);
+            margin-bottom: 20px;
+        }
+
+        .flatpickr-calendar {
+            width: 100% !important;
+            max-width: 600px !important;
+            height: auto;
+            margin: 0 auto;
+            font-family: inherit;
+            padding: 20px;
+            border: none;
+            box-shadow: none !important;
+        }
+
+        .flatpickr-day {
+            height: 50px !important;
+            line-height: 50px !important;
+            border-radius: 8px !important;
+            margin: 3px !important;
+            font-size: 1.1rem !important;
+        }
+        .flatpickr-day.selected {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+        }
+
+        .time-slot-select {
+            margin-top: 20px;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1rem;
+        }
+
+        .conditional-fields {
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8fafc;
+            margin-top: 10px;
+        }
+
+        .modal-dialog {
+            max-width: 1000px !important;
+        }
+
+        .form-label {
+            color: #2563eb;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #2563eb;
+        }
+
+        .modal-header {
+            background: #2563eb;
+            color: white;
+            border-radius: 0;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+        }
+    .appointment-form {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 32px;
+      max-width: 480px;
+      margin: 32px auto;
+    }
+    .appointment-form label {
+      font-weight: 600;
+      color: #2563eb;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .appointment-form select, .appointment-form input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #2563eb;
+      background: #fff;
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+    .appointment-form button {
+      background: #2563eb;
+      color: #fff;
+      padding: 12px 32px;
+      border-radius: 10px;
+      font-size: 1.08rem;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .appointment-form button:hover {
+      background: #1742b0;
+      box-shadow: 0 4px 16px #2563eb33;
+    }
+
+    .table th, .table td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .table thead th {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+      background-color: #f2f6fc;
+    }
+    .user-appointments-table {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 32px;
+    }
+        .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2563eb;
+      margin-top: 24px;
+        margin-bottom: -24px;
+        text-align: center;
+    }
+
+     .main-wrapper {
+      background: #fff;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+      max-width: 100%;
+      width: 100%;
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: visible;
+      position: relative;
+    }
+  .top-nav { padding: 0 24px; width: 100%; }
+/* use shared .nav-logo sizing from global stylesheet */
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      font-weight: 500;
+      font-size: 1.08rem;
+    }
+    .nav-links a {
+      color: #222;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: #00d1c7;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    /* Ensure desktop shows links, but mobile uses dropdown */
+  .top-nav { position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid #e0e7ff; box-sizing: border-box; }
+  /* use shared header height from global CSS */
+    .nav-burger { display: none; background: none; border: 0; width: 44px; height: 44px; border-radius: 10px; align-items: center; justify-content: center; }
+    body.menu-open { overflow: hidden; }
+
+    @media (max-width: 768px) {
+      .top-nav { height: 60px; padding: 0 12px; }
+      .top-nav > .d-flex.align-items-center, .top-nav .nav-actions { height: 60px; }
+      .nav-actions { display: none; }
+      .nav-burger { display: flex; margin-left: 8px; }
+      .nav-links {
+        display: none; /* hidden by default */
+        position: fixed;
+        left: 0; right: 0;
+        top: 60px;
+        background: #fff;
+        border-bottom: 1px solid #e0e7ff;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 16px;
+        z-index: 1100;
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+      }
+      .top-nav.nav-open .nav-links { display: flex; }
+    }
+
+    .success-msg { color: #22c55e; text-align: center; font-weight: 600; margin-bottom: 12px; }
+    .error-msg { color: #e11d48; text-align: center; font-weight: 600; margin-bottom: 12px; }
+
+    .history-table {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 32px;
+      margin-top: 24px;
+    }
+    .history-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .history-table th, .history-table td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #e0e7ff;
+    }
+    .history-table th {
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+    }
+    .history-table tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    .btn-primary {
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover {
+      background: #1742b0;
+    }
+    .resched-banner { background:#fff7ed; border:1px solid #fdba74; padding:14px; border-radius:10px; margin-top:16px; }
+    .resched-banner h6 { margin:0 0 8px; color:#c2410c; font-weight:700; }
+    .resched-banner .badge { font-size:0.92rem; }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+    <nav class="top-nav">
+      <div class="d-flex align-items-center">
+        <div class="nav-logo">
+          <img src="../assets/images/documed_logo.png" alt="DocuMed Logo">
+        </div>
+        <button class="nav-burger" aria-label="Toggle navigation"><span></span></button>
+        <div class="nav-links">
+          <a href="user_dashboard.html">Home</a>
+          <a href="appointments.html">Appointment</a>
+          <a href="medical_history.html">Medical History</a>
+          <a href="profile.html">Profile</a>
+          <a href="user_dashboard.html#services" id="navServices">Services</a>
+          <a href="user_dashboard.html#about" id="navAbout">About Us</a>
+          <a href="user_dashboard.html#contact" id="navContact">Contact</a>
+          <a href="#" id="navHelp">Help</a>
+        </div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-actions" id="navActions">
+          <!-- Dynamic login/profile actions here -->
+        </div>
+      </div>
+    </nav>
+    <div class="page-title">Dental Appointment Details</div>
+    <div class="history-table">
+      <div id="userReschedBanner" class="resched-banner" style="display:none;">
+        <h6>Reschedule requested</h6>
+        <div id="userReschedRange" class="small text-muted"></div>
+        <div class="mt-2" id="userReschedDays"></div>
+        <div class="mt-2">
+          <label class="form-label">Pick a day and time</label>
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <select id="userReschedDate" class="form-select"></select>
+            </div>
+            <div class="col-6 col-md-3">
+              <select id="userReschedTime" class="form-select"></select>
+            </div>
+            <div class="col-12 col-md-3">
+              <button id="userReschedSubmit" class="btn btn-primary w-100">Confirm</button>
+            </div>
+          </div>
+          <div id="userReschedError" class="small text-danger mt-1"></div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end mb-3">
+  <button id="bookAppointmentBtn" class="btn btn-primary btn-lg">Book Dental Appointment</button>
+      </div>
+      <!-- Pre-booking reCAPTCHA container -->
+      <!-- recaptcha removed -->
+      <div class="table-responsive">
+      <!-- recaptcha modal removed -->
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Purpose</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsBody">
+          <!-- Appointments will be dynamically loaded here -->
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <!-- Booking Modal -->
+    <div class="modal fade" id="bookAppointmentModal" aria-labelledby="bookAppointmentModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="border-radius:0;">
+          <div class="modal-header" style="background:#2563eb;color:#fff;border:none;padding:20px 32px;">
+            <h5 class="modal-title" id="bookAppointmentModalLabel" style="font-weight:600;font-size:1.5rem;">Book an Appointment</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="row g-0">
+              <!-- Calendar Column -->
+              <div class="col-md-6 p-4" style="background:#f8fafc; height: 100%;">
+                <div class="calendar-wrapper" style="height: 100%;">
+                  <div id="calendarContainerModal" style="height: 100%;"></div>
+                  <div class="time-slots mt-4"></div>
+                </div>
+              </div>
+              <!-- Form Column -->
+              <div class="col-md-6 p-4">
+                <form id="appointmentFormModal" class="needs-validation" novalidate>
+                  <!-- Google reCAPTCHA v2 -->
+                  <div class="g-recaptcha" data-sitekey="6LejFOsrAAAAAHdGaGHj9crHVF-Gja-GiNR0I5dC"></div>
+                  <div id="formMsgModal" class="alert d-none"></div>
+                  
+                  <div class="mb-4">
+            <label for="nameModal" class="form-label text-success fw-500">Full Name</label>
+            <input type="text" class="form-control form-control-lg" id="nameModal" name="name" required style="font-size: 1.25rem; padding: 0.8rem 1rem;">
+          </div>
+
+                  <div class="mb-4">
+                    <label for="emailModal" class="form-label text-success fw-500">Email</label>
+                    <input type="email" class="form-control form-control-lg" id="emailModal" name="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" required oninvalid="this.setCustomValidity('Please enter a valid email address with @ symbol')" oninput="this.setCustomValidity('')">
+                    <div class="invalid-feedback">Please enter a valid email address (must contain @)</div>
+                  </div>
+
+                  <div class="mb-4">
+                    <label for="roleModal" class="form-label text-success fw-500">Role</label>
+                    <select class="form-select form-select-lg" id="roleModal" name="role" required>
+                      <option value="">Select Role</option>
+                      <option value="student">Student</option>
+                      <option value="teacher">Teacher</option>
+                      <option value="non-teaching">Non-Teaching Staff</option>
+                    </select>
+                  </div>
+
+                  <!-- Conditional Fields -->
+                  <div id="studentFieldsModal" class="mb-4" style="display:none;">
+                    <label for="yearCourseModal" class="form-label text-success fw-500">Year & Course</label>
+                    <input type="text" class="form-control form-control-lg" id="yearCourseModal" name="year_course" placeholder="e.g., IV-BSIT" style="font-size: 1.25rem; padding: 0.8rem 1rem;">
+                  </div>
+
+                  <div id="staffFieldsModal" class="mb-4" style="display:none;">
+                    <label for="departmentModal" class="form-label text-success fw-500">Department</label>
+                    <select class="form-select form-select-lg" id="departmentModal" name="department">
+                      <option value="">Select Department</option>
+                      <option value="CCS">CCS</option>
+                      <option value="CASL">CASL</option>
+                      <option value="CBPA">CBPA</option>
+                      <option value="CTHM">CTHM</option>
+                      <option value="CTE">CTE</option>
+                      <option value="CIT">CIT</option>
+                    </select>
+                  </div>                  <div class="mb-4">
+                    <label for="purposeModal" class="form-label text-success fw-500">Purpose of Visit</label>
+                    <textarea class="form-control form-control-lg" id="purposeModal" name="purpose" rows="3" required style="font-size: inherit;"></textarea>
+                  </div>
+
+                  <div class="mb-4">
+                    <label for="timeModal" class="form-label text-success fw-500">Time Slot</label>
+                    <select class="form-select form-select-lg" id="timeModal" name="time_slot" required>
+                      <option value="">Select Time Slot</option>
+                    </select>
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-lg btn-light flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-lg btn-primary flex-grow-1">Book Appointment</button>
+                  </div>
+                </form>
+                <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <script>
+    // Removed legacy reCAPTCHA modal logic and bookBtn reference
+  </script>
+                <!-- Removed legacy reCAPTCHA form submit logic -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+    .calendar-wrapper {
+      padding: 20px;
+      background: #fff;
+      height: 100%;
+      min-height: 500px;
+      display: flex;
+      align-items: start;
+      justify-content: center;
+    }
+    .flatpickr-calendar {
+      width: 100% !important;
+      max-width: 400px !important;
+      height: auto;
+      background: transparent;
+      border: none !important;
+      box-shadow: none !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .flatpickr-months {
+      position: relative;
+      padding: 10px 0;
+    }
+    .flatpickr-month {
+      background: transparent !important;
+    }
+    .flatpickr-current-month {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      padding: 0 !important;
+    }
+    .flatpickr-current-month .cur-month {
+      font-size: 1.2rem !important;
+      font-weight: 600 !important;
+      color: #000 !important;
+    }
+    .cur-year {
+      color: #666 !important;
+      margin-left: 5px !important;
+    }
+    .flatpickr-months {
+      margin-bottom: 15px;
+      position: relative;
+    }
+    .flatpickr-months .flatpickr-month {
+      height: 50px !important;
+      color: #2c3e50;
+    }
+    .flatpickr-current-month {
+      font-size: 1.4rem !important;
+      font-weight: 600 !important;
+      padding-top: 0 !important;
+    }
+    .flatpickr-monthDropdown-months {
+      font-weight: 600 !important;
+      color: #2c3e50 !important;
+    }
+    .flatpickr-weekdays {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      height: 40px !important;
+    }
+    .flatpickr-weekday {
+      font-size: 1rem !important;
+      font-weight: 600 !important;
+      color: #2563eb !important;
+    }
+    .flatpickr-day {
+      height: 40px !important;
+      line-height: 40px !important;
+      margin: 2px !important;
+      border-radius: 4px !important;
+      font-size: 0.95rem !important;
+      font-weight: 400;
+      color: #333;
+      border: none !important;
+      background: #f8f9fa;
+    }
+    .flatpickr-day.selected {
+      background: #1a73e8 !important;
+      color: white !important;
+    }
+    .flatpickr-day:hover:not(.disabled):not(.selected) {
+      background: #e8f0fe !important;
+      color: #1a73e8 !important;
+    }
+    .flatpickr-day.disabled {
+      color: #ccc !important;
+      background: #f8f9fa !important;
+      cursor: not-allowed;
+    }
+    .flatpickr-day.today {
+      border: 2px solid #1a73e8 !important;
+      color: #1a73e8 !important;
+    }
+    .flatpickr-weekdays {
+      margin: 10px 0;
+    }
+    .flatpickr-weekday {
+      color: #5f6368 !important;
+      font-size: 0.9rem !important;
+      font-weight: 500 !important;
+    }
+    /* Hide days that belong to previous/next month - show blank cells only for current month days */
+    .flatpickr-day.prevMonthDay,
+    .flatpickr-day.nextMonthDay {
+      color: transparent !important;
+      background: transparent !important;
+      pointer-events: none;
+    }
+    /* Ensure leading/trailing cells keep the grid spacing but appear blank */
+    .flatpickr-day.prevMonthDay::after,
+    .flatpickr-day.nextMonthDay::after {
+      content: "" !important;
+    }
+    .flatpickr-months .flatpickr-prev-month, 
+    .flatpickr-months .flatpickr-next-month {
+      height: 34px !important;
+      padding: 5px !important;
+    }
+    .flatpickr-months .flatpickr-prev-month svg,
+    .flatpickr-months .flatpickr-next-month svg {
+      fill: #5f6368 !important;
+    }
+    .flatpickr-day.today {
+      border-color: #2563eb !important;
+      color: #2563eb !important;
+    }
+    .flatpickr-months .flatpickr-prev-month, 
+    .flatpickr-months .flatpickr-next-month {
+      top: 8px !important;
+      padding: 5px !important;
+    }
+    .flatpickr-months .flatpickr-prev-month svg,
+    .flatpickr-months .flatpickr-next-month svg {
+      width: 16px !important;
+      height: 16px !important;
+    }
+    /* Availability markers */
+    .flatpickr-day.has-slots {
+      background: #e6f7ea !important; /* light green */
+      color: #0b7a3a !important; /* dark green text */
+      box-shadow: none !important;
+    }
+    .flatpickr-day.no-slots {
+      background: #fdecea !important; /* light red */
+      color: #c1272d !important; /* dark red text */
+      box-shadow: none !important;
+    }
+    /* Make the calendar container a bit wider to match the design */
+    #calendarContainerModal {
+      max-width: 480px;
+      width: 100%;
+    }
+    /* Hide the left-side day/weekday strip inside the booking modal only */
+    #bookAppointmentModal .flatpickr-weekwrapper { display: none !important; }
+    #bookAppointmentModal .flatpickr-weekdays { display: none !important; }
+    /* Tweak spacing after hiding weekday row */
+    #bookAppointmentModal .flatpickr-months { margin-bottom: 8px !important; }
+    /* Time Slots Styling */
+    .time-slots {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .time-slot-btn {
+      padding: 12px;
+      border: 1px solid #2563eb;
+      border-radius: 8px;
+      background: white;
+      color: #2563eb;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .time-slot-btn:hover {
+      background: #e0e7ff;
+    }
+    .time-slot-btn.selected {
+      background: #2563eb;
+      color: white;
+    }
+    .time-slot-btn.disabled {
+      border-color: #ccc;
+      color: #ccc;
+      cursor: not-allowed;
+      background: #f8f9fa;
+    }
+    </style>
+    </main>
+  <!-- AI Chatbot Floating Button and Chat Window -->
+  <div id="aiChatbotBtn" style="position:fixed;bottom:100px;right:32px;z-index:9999;">
+    <button style="background:#2563eb;color:#fff;border:none;border-radius:50%;width:60px;height:60px;box-shadow:0 4px 16px rgba(37,99,235,0.18);font-size:2rem;cursor:pointer;" title="Chat with AI">
+      💬
+    </button>
+  </div>
+  <div id="aiChatbotWindow" style="display:none;position:fixed;bottom:170px;right:32px;width:350px;max-width:95vw;height:480px;z-index:10000;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(37,99,235,0.18);overflow:hidden;flex-direction:column;">
+    <div style="background:#2563eb;color:#fff;padding:16px 20px;font-weight:600;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between;">
+      <span>AI Assistant</span>
+      <button id="aiChatbotClose" style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+    <div id="aiChatbotMessages" style="flex:1;overflow-y:auto;padding:16px 12px 12px 12px;height:340px;background:#f8fafc;"></div>
+    <form id="aiChatbotForm" style="display:flex;padding:12px 12px 12px 12px;background:#f3f6fc;gap:8px;">
+      <input id="aiChatbotInput" type="text" placeholder="Type your question..." style="flex:1;padding:10px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1rem;outline:none;" required autocomplete="off" />
+      <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0 18px;font-size:1rem;font-weight:600;">Send</button>
+    </form>
+  </div>
+  </div>
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="../assets/js/mobile-nav.js"></script>
+  <script src="../assets/js/notifications.js"></script>
+  <script src="../assets/js/help_modal.js"></script>
+  <script>
+    (function(){
+      const baseUrl = window.location.pathname.split('/frontend/')[0];
+      const apiUrl = `${baseUrl}/backend/api/appointments_new.php`;
+      const banner = document.getElementById('userReschedBanner');
+      const rangeEl = document.getElementById('userReschedRange');
+      const daysEl = document.getElementById('userReschedDays');
+      const dateSel = document.getElementById('userReschedDate');
+      const timeSel = document.getElementById('userReschedTime');
+      const errEl = document.getElementById('userReschedError');
+      const btn = document.getElementById('userReschedSubmit');
+      let active = null; // {appointment_id, start_date, end_date}
+  function fmt12(t){ const [hh,mm]=t.split(':'); let h=parseInt(hh,10); const am=h<12; if(h===0)h=12; if(h>12)h-=12; return `${h}:${mm}${am?'am':'pm'}`; }
+      async function loadWindows(){
+        try{
+          let email = ''; try{ const u=JSON.parse(localStorage.getItem('documed_user')); email = u && u.email || ''; }catch{}
+          if (!email) return;
+          const r = await fetch(`${apiUrl}?action=get_reschedule_windows&email=${encodeURIComponent(email)}`);
+          const dj = await r.json();
+          if (!dj.success) return;
+          const wins = dj.windows||[];
+          if (!wins.length) return;
+          const w = wins[0];
+          active = { appointment_id: w.appointment_id, start_date: w.start_date, end_date: w.end_date };
+          banner.style.display = 'block';
+          rangeEl.textContent = `Please select a new schedule between ${w.start_date} and ${w.end_date}.`;
+          // build day options and previews
+          const dates = [w.start_date]; const d0 = new Date(w.start_date);
+          for (let i=1;i<3;i++){ const d=new Date(d0); d.setDate(d0.getDate()+i); dates.push(d.toISOString().slice(0,10)); }
+          dateSel.innerHTML = dates.map(d=>`<option value="${d}">${d}</option>`).join('');
+          // preview badges
+          daysEl.innerHTML = '';
+          for (const d of dates){
+            try{
+              const f = new URLSearchParams(); f.set('action','check_slots'); f.set('date', d);
+              const rr = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: f.toString()});
+              const data = await rr.json();
+              const booked = data.success?(data.booked_slots||{}):{};
+              const badges=[]; for (let h=8; h<=16; h++){ const start=`${String(h).padStart(2,'0')}:00`; const end=`${String(h+1).padStart(2,'0')}:00`; if (h===12){ badges.push(`<span class=\"badge bg-secondary\" style=\"margin:2px;\">${fmt12(start)}-${fmt12(end)} (lunch break)</span>`); } else { const full=(booked[start]||0)>=2; badges.push(`<span class=\"badge ${full?'bg-secondary':'bg-success'}\" style=\"margin:2px;\">${fmt12(start)}-${fmt12(end)}${full?' (full)':''}</span>`); } }
+              const div = document.createElement('div'); div.className='small'; div.innerHTML = `<div><strong>${d}</strong></div><div class=\"mt-1\">${badges.join(' ')}</div>`; daysEl.appendChild(div);
+            } catch {}
+          }
+          // initial times for first day
+          await loadTimes();
+        } catch {}
+      }
+      async function loadTimes(){
+        const d = (dateSel?.value||'').trim(); timeSel.innerHTML='<option value="">-- select time --</option>'; if (!d) return;
+        const f = new URLSearchParams(); f.set('action','check_slots'); f.set('date', d);
+  try{ const r = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: f.toString()}); const dj=await r.json(); const booked = dj.success?(dj.booked_slots||{}):{}; for (let h=8; h<=16; h++){ const start = `${String(h).padStart(2,'0')}:00`; const end = `${String(h+1).padStart(2,'0')}:00`; const opt=document.createElement('option'); opt.value=start; if (h===12){ opt.textContent = `${fmt12(start)}-${fmt12(end)} (lunch break)`; opt.disabled = true; } else { const full=(booked[start]||0)>=2; opt.textContent = `${fmt12(start)}-${fmt12(end)}${full?' (full)':''}`; if (full) opt.disabled = true; } timeSel.appendChild(opt);} } catch {}
+      }
+      if (dateSel) dateSel.addEventListener('change', loadTimes);
+      if (btn) btn.addEventListener('click', async ()=>{
+        errEl.textContent=''; if (!active) return;
+        const d=(dateSel?.value||'').trim(); const t=(timeSel?.value||'').trim(); if (!d||!t){errEl.textContent='Select date/time.'; return;}
+        try{
+          const form = new URLSearchParams(); form.set('action','user_select_reschedule'); form.set('id', String(active.appointment_id)); form.set('date', d); form.set('time', t);
+          const r = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: form.toString()});
+          const dj = await r.json(); if (!dj.success){ errEl.textContent = dj.message||'Failed to select time'; return; }
+          banner.style.display='none';
+          alert('Your new schedule is confirmed.');
+          try {
+            // If there is a table script loaded, trigger a refresh to reflect status 'rescheduled'
+            if (window.loadUserAppointmentsTable) { window.loadUserAppointmentsTable(); }
+          } catch {}
+        } catch { errEl.textContent='Network error'; }
+      });
+      document.addEventListener('DOMContentLoaded', loadWindows);
+    })();
+  </script>
+  <script src="../assets/js/pwa.js"></script>
+    <script src="../assets/js/user_appointments.js"></script>
+    <script src="../assets/js/user_appointments_table.js"></script>
+    <script src="../assets/js/appointment-form.js"></script>
+  <!-- <script src="../assets/js/appointment-modal.js"></script> -->
+  <script>
+    // recaptcha logic removed
+  document.getElementById('bookAppointmentBtn').onclick = function() {
+    window.location.href = 'recaptcha.html';
+  };
+  </script>
+    <script src="../assets/js/appointment-validation.js"></script>
+  <script>
+    // AI Chatbot UI logic
+    const aiBtn = document.getElementById('aiChatbotBtn');
+    const aiWin = document.getElementById('aiChatbotWindow');
+    const aiClose = document.getElementById('aiChatbotClose');
+    aiBtn.onclick = () => { aiWin.style.display = 'flex'; };
+    aiClose.onclick = () => { aiWin.style.display = 'none'; };
+    // Minimize on outside click
+    document.addEventListener('mousedown', function(e) {
+      if (aiWin.style.display === 'flex' && !aiWin.contains(e.target) && !aiBtn.contains(e.target)) {
+        aiWin.style.display = 'none';
+      }
+    });
+    // Chatbot messaging logic (OpenAI integration to be added next)
+    const aiForm = document.getElementById('aiChatbotForm');
+    const aiInput = document.getElementById('aiChatbotInput');
+    const aiMsgs = document.getElementById('aiChatbotMessages');
+    function appendMsg(sender, text) {
+      const div = document.createElement('div');
+      div.style.margin = '8px 0';
+      div.style.textAlign = sender === 'user' ? 'right' : 'left';
+      div.innerHTML = `<span style="display:inline-block;max-width:80%;padding:10px 14px;border-radius:12px;background:${sender==='user'?'#2563eb':'#e0e7ff'};color:${sender==='user'?'#fff':'#222'};font-size:1rem;">${text.replace(/</g,'&lt;')}</span>`;
+      aiMsgs.appendChild(div);
+      aiMsgs.scrollTop = aiMsgs.scrollHeight;
+    }
+    aiForm.onsubmit = function(e) {
+      e.preventDefault();
+      const msg = aiInput.value.trim();
+      if (!msg) return;
+      appendMsg('user', msg);
+      aiInput.value = '';
+      // Call backend to get OpenAI response
+      fetch('../../backend/api/chatbot.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      })
+      .then(res => res.json())
+      .then(data => {
+        // Remove placeholder
+        aiMsgs.lastChild.remove();
+        if (data.reply) {
+          appendMsg('ai', data.reply);
+        } else {
+          appendMsg('ai', data.error || 'Sorry, I could not get a response.');
+        }
+      })
+      .catch(() => {
+        aiMsgs.lastChild.remove();
+        appendMsg('ai', 'Network error. Please try again.');
+      });
+    };
+  </script>
+  </body>
+</html>

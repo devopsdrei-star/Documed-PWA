@@ -1,0 +1,64 @@
+<?php
+require_once dirname(__DIR__) . '/config/db.php';
+header('Content-Type: application/json');
+
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+
+if ($action === 'list') {
+    // Optional filters: start_date, end_date (YYYY-MM-DD), admin (id or name), q (search in action/details), limit
+    $start = $_GET['start_date'] ?? $_POST['start_date'] ?? '';
+    $end = $_GET['end_date'] ?? $_POST['end_date'] ?? '';
+    $admin = $_GET['admin'] ?? $_POST['admin'] ?? '';
+    $q = $_GET['q'] ?? $_POST['q'] ?? '';
+    $limit = intval($_GET['limit'] ?? $_POST['limit'] ?? 200);
+    $adminsOnly = $_GET['admins_only'] ?? $_POST['admins_only'] ?? '1';
+    if ($limit <= 0 || $limit > 1000) $limit = 200;
+
+    $where = [];
+    $params = [];
+    if ($start) { $where[] = 'a.timestamp >= ?'; $params[] = $start . ' 00:00:00'; }
+    if ($end) { $where[] = 'a.timestamp <= ?'; $params[] = $end . ' 23:59:59'; }
+    if ($admin) {
+        // allow numeric id or name partial
+        if (ctype_digit($admin)) {
+            $where[] = 'a.admin_id = ?';
+            $params[] = (int)$admin;
+        } else {
+            $where[] = 'ad.name LIKE ?';
+            $params[] = '%' . $admin . '%';
+        }
+    }
+    if ($q) {
+        $where[] = '(a.action LIKE ? OR a.details LIKE ?)';
+        $params[] = '%' . $q . '%';
+        $params[] = '%' . $q . '%';
+    }
+    $sql = "SELECT a.*, ad.name AS admin_name FROM audit_trail a LEFT JOIN admins ad ON a.admin_id=ad.id";
+    if ($where) { $sql .= ' WHERE ' . implode(' AND ', $where); }
+    // When admins_only flag is truthy, restrict to rows that have a matching admin
+    if ($adminsOnly && $adminsOnly !== '0' && $adminsOnly !== 'false') {
+        $sql .= ($where ? ' AND ' : ' WHERE ') . 'ad.id IS NOT NULL';
+    }
+    $sql .= ' ORDER BY a.timestamp DESC LIMIT ' . $limit;
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'logs' => $logs]);
+    exit;
+}
+
+if ($action === 'add') {
+    $admin_id = $_POST['admin_id'] ?? '';
+    $action_txt = $_POST['action_txt'] ?? '';
+    $details = $_POST['details'] ?? '';
+    if (!$admin_id || !$action_txt) {
+        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+        exit;
+    }
+    $stmt = $pdo->prepare("INSERT INTO audit_trail (admin_id, action, details) VALUES (?, ?, ?)");
+    $stmt->execute([$admin_id, $action_txt, $details]);
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+echo json_encode(['error' => 'Invalid action']);

@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>DeepSeek Debug</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>body{font-family:Segoe UI,Arial;padding:20px} pre{background:#f3f4f6;padding:12px;border-radius:6px;overflow:auto}</style>
+</head>
+<body>
+  <h1>DeepSeek Debug</h1>
+  <p>View recent debug log entries and run a live test against DeepSeek.</p>
+  <label>Debug token: <input type="text" id="token" placeholder="enter token"></label>
+  <button id="reload">Reload Logs</button>
+  <button id="runTest">Run Live Test</button>
+  <div style="margin-top:12px">
+    <h3>Last logs</h3>
+    <pre id="logs">Loading...</pre>
+  </div>
+  <div style="margin-top:12px">
+    <h3>Live test result</h3>
+    <pre id="test">No test run yet.</pre>
+  </div>
+
+  <script>
+    async function loadLogs(){
+      const t = document.getElementById('token').value;
+      const r = await fetch('../../backend/api/deepseek_status.php?t=' + encodeURIComponent(t));
+      if (r.status === 403) {
+        document.getElementById('logs').textContent = '<forbidden - invalid token>';
+        return;
+      }
+      const d = await r.text();
+      document.getElementById('logs').textContent = d || '<no log file>'; 
+    }
+    document.getElementById('reload').addEventListener('click', loadLogs);
+    document.getElementById('runTest').addEventListener('click', async function(){
+      const t = document.getElementById('token').value;
+      if (!t) { alert('Enter debug token'); return; }
+      document.getElementById('test').textContent = 'Running...';
+      const r = await fetch('../../backend/api/deepseek_run_test.php', { method: 'POST', headers: { 'X-Debug-Token': t } });
+      if (r.status === 403) {
+        document.getElementById('test').textContent = '<forbidden - invalid token>';
+        return;
+      }
+      const d = await r.text();
+      document.getElementById('test').textContent = d;
+      loadLogs();
+    });
+    // Prefill token for local dev convenience
+    document.getElementById('token').value = 'local-debug-token-please-change';
+    loadLogs();
+  </script>
+</body>
+</html>

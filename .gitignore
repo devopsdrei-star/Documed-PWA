@@ -1,0 +1,31 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Dependencies and builds
+vendor/
+node_modules/
+dist/
+build/
+
+# Caches / temp
+.tmp/
+tmp/
+documed_pwa/tmp/
+documed_pwa/backend/tmp/
+
+# Env / secrets
+*.env
+*.local
+documed_pwa/backend/config/email.local.php
+documed_pwa/backend/config/openai_key.php
+documed_pwa/backend/config/deepseek_debug_token.php
+documed_pwa/backend/api/admin_openai_key.php
+documed_pwa/backend/config/faq_admin_token.php
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*

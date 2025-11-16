@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <div class="container login-card" style="box-shadow: 0 8px 32px rgba(37,99,235,0.18); border-radius: 18px; max-width: 420px;">
+    <h1>Admin Login</h1>
+    <form id="adminLoginForm">
+      <div class="input-group">
+  <label for="email"><span class="icon">📧</span> Email or School ID</label>
+  <input type="text" id="email" name="email" required placeholder="Enter admin email or School ID">
+      </div>
+      <div class="input-group">
+        <label for="password"><span class="icon">🔒</span> Password</label>
+        <input type="password" id="password" name="password" required placeholder="Enter password">
+      </div>
+      <button type="submit" class="btn" style="width:100%;margin-top:16px;">Login</button>
+      <div id="adminLoginMsg" style="margin-top:12px;"></div>
+    </form>
+    <div style="margin-top:8px;">
+        <button type="button" class="btn" style="width:100%;margin-top:-2px;" onclick="window.location.href='admin_register.html'">Register Admin</button>
+    </div>
+  </div>
+  <script src="../assets/js/admin_login.js"></script>
+</body>
+</html>

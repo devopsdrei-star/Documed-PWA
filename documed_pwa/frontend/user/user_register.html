@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="manifest" href="../../manifest-landing.json">
+  <link rel="apple-touch-icon" href="../assets/images/documed_logo.png">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+  <style>
+    body {
+      background: url('../assets/images/documed_logo.png') no-repeat center center fixed;
+      background-size: 260px 260px;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .container {
+      max-width: 900px;
+      margin: 48px auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.18);
+      padding: 32px;
+    }
+    h1 {
+      text-align: center;
+      color: #2563eb;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 28px;
+      letter-spacing: 1px;
+    }
+    .input-group {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+    .input-group label {
+      font-weight: 500;
+      color: #23272f;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      background: #f8fafc;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 1.05rem;
+      margin-bottom: 2px;
+      transition: box-shadow 0.2s, border 0.2s;
+      color: #23272f;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border: 1.5px solid #2563eb;
+      box-shadow: 0 0 0 2px #2563eb22;
+      background: #fff;
+    }
+    .input-group input::placeholder,
+    .input-group select::placeholder {
+      color: #a3a3a3;
+      font-weight: 400;
+      font-size: 1rem;
+      letter-spacing: 0.2px;
+    }
+    button.btn {
+      background: #2563eb;
+      color: #fff;
+      padding: 12px 0;
+      border: none;
+      border-radius: 7px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      width: 100%;
+      margin-top: 18px;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 8px #23272f22;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    button.btn:hover {
+      background: #2563eb;
+    }
+    #userRegisterMsg {
+      margin-top: 12px;
+      text-align: center;
+      color: #065f46;
+      font-weight: 500;
+      font-size: 1.05rem;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 16px 14px 18px 14px; margin: 28px 12px; }
+      .input-group {
+        margin-bottom: 12px;
+      }
+    }
+
+    /* Terms & Conditions modal styles */
+    .terms-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 12px;
+    }
+    .terms-backdrop.show { display: flex; }
+    .terms-modal {
+      background: #fff;
+      width: 100%;
+      max-width: 760px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      max-height: 85vh;
+    }
+    .terms-modal header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .terms-modal header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #2563eb;
+    }
+    .terms-modal .content {
+      padding: 16px 18px;
+      overflow: auto;
+    }
+    .terms-modal footer {
+      padding: 12px 18px;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .terms-button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .terms-button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .terms-link { color: #2563eb; text-decoration: underline; }
+    /* T&C alignment helpers */
+    .terms-agree .terms-row { display:flex; align-items:center; gap:10px; flex-wrap: wrap; }
+    .terms-agree input[type="checkbox"] { width:18px; height:18px; margin:0; }
+    .terms-agree .terms-label { margin:0; font-weight:500; color:#111827; }
+    .terms-note { color:#6b7280; }
+  </style>
+</head>
+<body>
+  <div class="container login-card" style="max-width:700px;">
+    <h1 style="text-align:center;color:#2563eb;font-size:2rem;font-weight:700;margin-bottom:28px;letter-spacing:1px;">Registration to Login</h1>
+    <form id="userRegisterForm" enctype="multipart/form-data">
+
+  <!-- Google reCAPTCHA v2 -->
+  <div class="g-recaptcha" data-sitekey="6LejFOsrAAAAAHdGaGHj9crHVF-Gja-GiNR0I5dC"></div>
+  <div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;margin-bottom:2px;">
+            <div class="input-group">
+              <label for="last_name">Last Name</label>
+              <input type="text" id="last_name" name="last_name" placeholder="Enter last name" required>
+            </div>
+            <div class="input-group">
+              <label for="first_name">First Name</label>
+              <input type="text" id="first_name" name="first_name" placeholder="Enter first name" required>
+            </div>
+            <div class="input-group">
+              <label for="middle_initial">M.I.</label>
+              <input type="text" id="middle_initial" name="middle_initial" maxlength="2" placeholder="M.I.">
+            </div>
+            <div class="input-group">
+              <label for="age">Age</label>
+              <input type="number" id="age" name="age" min="0" placeholder="Auto-calculated from birthdate" readonly>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="address">Address</label>
+            <input type="text" id="address" name="address" placeholder="House No., Street, City" required>
+          </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"></div>
+            <div class="input-group">
+              <label for="civil_status">Civil Status</label>
+              <select id="civil_status" name="civil_status" aria-label="Select civil status" required>
+              <option value="">Select civil status</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+              <option value="Widowed">Widowed</option>
+              <option value="Separated">Separated</option>
+              <option value="Divorce">Divorce</option>
+              <option value="Annuled">Annuled</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="gender">Gender</label>
+              <select id="gender" name="gender" aria-label="Select gender" required>
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="nationality">Nationality</label>
+              <input type="text" id="nationality" name="nationality" list="nationalityOptions" placeholder="Select or type nationality" required>
+              <datalist id="nationalityOptions">
+                <option value="Filipino"></option>
+                <option value="American"></option>
+                <option value="Chinese"></option>
+                <option value="Indian"></option>
+                <option value="Japanese"></option>
+                <option value="Korean"></option>
+              </datalist>
+            </div>
+
+            <div class="input-group">
+              <label for="religion">Religion</label>
+              <input type="text" id="religion" name="religion" list="religionOptions" placeholder="Select or type religion" required>
+              <datalist id="religionOptions">
+                <option value="Roman Catholic"></option>
+                <option value="Christian (Protestant)"></option>
+                <option value="Islam"></option>
+                <option value="Iglesia ni Cristo"></option>
+                <option value="Buddhism"></option>
+                <option value="Hinduism"></option>
+                <option value="Judaism"></option>
+              </datalist>
+            </div>
+            </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="input-group">
+              <label for="date_of_birth">Date of Birth</label>
+              <input type="date" id="date_of_birth" name="date_of_birth" placeholder="YYYY-MM-DD" required>
+            </div>
+            <div class="input-group">
+              <label for="place_of_birth">Place of Birth</label>
+              <input type="text" id="place_of_birth" name="place_of_birth" placeholder="City, Province" required>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="input-group">
+              <label for="contact_person">Contact Person</label>
+              <input type="text" id="contact_person" name="contact_person" placeholder="Full name of contact person" required>
+            </div>
+            <div class="input-group">
+              <label for="contact_number">Contact No.</label>
+              <input type="text" id="contact_number" name="contact_number" placeholder="11-digit mobile number" inputmode="numeric" pattern="^\d{11}$" maxlength="11" required>
+            </div>
+          </div>
+          
+          <div class="input-group">
+            <label for="client_type" class="form-label">Client Type</label>
+            <select class="form-select" name="client_type" id="client_type" aria-label="Select client type" required>
+              <option value="">Select Client Type</option>
+              <option value="Non-Teaching">Non-Teaching</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Student">Student</option>
+            </select>
+            <input type="hidden" name="client" id="client_legacy" value="">
+          </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="input-group" id="year-course-group" style="display:none;">
+            <label for="year_course">Year and Course</label>
+            <input type="text" id="year_course" name="year_course" placeholder="e.g., 3rd Year BSIT">
+          </div>
+          <div class="input-group" id="department-group" style="display:none;">
+            <label for="department">Department</label>
+            <select id="department" name="department" aria-label="Select department">
+              <option value="">Select Department</option>
+              <option value="CCS">CCS</option>
+              <option value="CASL">CASL</option>
+              <option value="CBPA">CBPA</option>
+              <option value="CTHM">CTHM</option>
+              <option value="CTE">CTE</option>
+              <option value="CIT">CIT</option>
+            </select>
+          </div>
+                    <div class="input-group">
+            <label for="student_faculty_id">School ID Number</label>
+            <input type="text" id="student_faculty_id" name="student_faculty_id" placeholder="10-character School ID" maxlength="10" pattern="^[A-Za-z0-9\-]{1,10}$" required>
+          </div>
+          </div>
+      <div class="input-group" style="margin-top:2px;">
+        <label for="photo">2x2 Photo</label>
+  <input type="file" id="photo" name="photo" accept="image/*" placeholder="Upload 2x2 photo" required>
+      </div>
+        <div class="input-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" placeholder="name@example.com" required>
+            </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="input-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" placeholder="Enter password" required>
+            </div>
+        <div class="input-group">
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
+          </div>
+          </div>
+
+
+      <div class="input-group terms-agree">
+        <div class="terms-row">
+          <input type="checkbox" id="agree_terms" required>
+          <label for="agree_terms" class="terms-label">I agree to the <a href="#" id="openTerms" class="terms-link">Terms & Conditions</a>.</label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn" style="width:100%;margin-top:24px;">Register</button>
+    <div id="userRegisterMsg" style="margin-top:12px;"></div>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    </form>
+    <script>
+      document.getElementById('userRegisterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        grecaptcha.ready(function() {
+          grecaptcha.execute('YOUR_SITE_KEY', {action: 'register'}).then(function(token) {
+            document.getElementById('g-recaptcha-response').value = token;
+            e.target.submit();
+          });
+        });
+      });
+    </script>
+    <div style="margin-top:8px;">
+        <button type="button" class="btn" style="width:100%;margin-top:-2px;" onclick="window.location.href='user_dashboard.html'">Back</button>
+    </div>
+  </div>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="../assets/js/pwa.js"></script>
+  <script src="../assets/js/user_register.js"></script>
+  
+  <!-- Terms & Conditions Modal -->
+  <div id="termsBackdrop" class="terms-backdrop" aria-hidden="true">
+    <div class="terms-modal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+      <header>
+        <h3 id="termsTitle">Terms & Conditions</h3>
+        <button id="termsClose" class="terms-button secondary" type="button" aria-label="Close terms">Close</button>
+      </header>
+      <div class="content">
+        <p style="margin-top:0;">Welcome to DocuMed. Please read these Terms & Conditions carefully before creating an account.</p>
+        <ol style="padding-left:18px;">
+          <li><strong>Eligibility:</strong> You confirm you are a current student, teacher, or non-teaching staff of the institution.</li>
+          <li><strong>Accurate information:</strong> You agree to provide truthful and complete information, including your School ID number.</li>
+          <li><strong>Appointments:</strong> You will book and reschedule responsibly. Duplicate bookings are blocked while you have a scheduled, pending, or rescheduled appointment.</li>
+          <li><strong>Time slots:</strong> Standard clinic hours are 8:00am–5:00pm. The 12:00pm–1:00pm lunch break is unavailable for booking.</li>
+          <li><strong>Notifications:</strong> You consent to receive system notifications related to your appointments and medical records updates.</li>
+          <li><strong>Privacy:</strong> Your data will be handled according to institutional policies and applicable law. Do not share your account.</li>
+          <li><strong>Conduct:</strong> Abusive behavior or misuse may result in access restrictions.</li>
+        </ol>
+        <p>By clicking “I Agree,” you accept these terms.</p>
+      </div>
+      <footer>
+        <button id="termsAgree" type="button" class="terms-button">I Agree</button>
+        <button id="termsDismiss" type="button" class="terms-button secondary">Close</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+  const roleEl = document.getElementById('client_type');
+  const legacyEl = document.getElementById('client_legacy');
+      const yearCourseGroup = document.getElementById('year_course').parentElement;
+      const yearCourseEl = document.getElementById('year_course');
+      const departmentGroup = document.getElementById('department-group');
+      const departmentEl = document.getElementById('department');
+
+      function applyRoleVisibility() {
+  const role = roleEl.value;
+        if (role === 'Student') {
+          yearCourseGroup.style.display = 'block';
+          yearCourseEl.required = true;
+          departmentGroup.style.display = 'none';
+          departmentEl.required = false;
+          departmentEl.value = '';
+        } else if (role === 'Teacher' || role === 'Non-Teaching') {
+          yearCourseGroup.style.display = 'none';
+          yearCourseEl.required = false;
+          yearCourseEl.value = '';
+          departmentGroup.style.display = 'block';
+          departmentEl.required = true;
+        } else {
+          yearCourseGroup.style.display = 'none';
+          yearCourseEl.required = false;
+          yearCourseEl.value = '';
+          departmentGroup.style.display = 'none';
+          departmentEl.required = false;
+          departmentEl.value = '';
+        }
+      }
+
+      roleEl.addEventListener('change', function(){
+        if (legacyEl) legacyEl.value = roleEl.value;
+        applyRoleVisibility();
+      });
+      // Initialize on load
+      if (legacyEl) legacyEl.value = roleEl.value;
+      applyRoleVisibility();
+    })();
+
+    const passwordField = document.getElementById('password');
+    const confirmPasswordField = document.getElementById('confirm_password');
+
+    confirmPasswordField.addEventListener('input', function() {
+      if (confirmPasswordField.value === passwordField.value) {
+        confirmPasswordField.style.borderColor = 'green';
+      } else {
+        confirmPasswordField.style.borderColor = 'red';
+      }
+    });
+
+    // Terms modal logic (vanilla JS)
+    (function() {
+      const openBtn = document.getElementById('openTerms');
+      const backdrop = document.getElementById('termsBackdrop');
+      const closeBtn = document.getElementById('termsClose');
+      const dismissBtn = document.getElementById('termsDismiss');
+      const agreeBtn = document.getElementById('termsAgree');
+      const agreeChk = document.getElementById('agree_terms');
+
+      function openModal() {
+        backdrop.classList.add('show');
+        backdrop.setAttribute('aria-hidden', 'false');
+      }
+      function closeModal() {
+        backdrop.classList.remove('show');
+        backdrop.setAttribute('aria-hidden', 'true');
+      }
+
+      openBtn?.addEventListener('click', function(e) {
+        e.preventDefault();
+        openModal();
+      });
+      closeBtn?.addEventListener('click', closeModal);
+      dismissBtn?.addEventListener('click', closeModal);
+      agreeBtn?.addEventListener('click', function() {
+        if (agreeChk) agreeChk.checked = true;
+        closeModal();
+      });
+      backdrop?.addEventListener('click', function(e) {
+        if (e.target === backdrop) closeModal();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+      });
+    })();
+  </script>
+  <script>
+    // Compute age from date_of_birth and enforce valid date selection
+    (function(){
+      const dobEl = document.getElementById('date_of_birth');
+      const ageEl = document.getElementById('age');
+      function computeAge(d){
+        if (!d) return '';
+        const today = new Date();
+        const dob = new Date(d + 'T00:00:00');
+        if (isNaN(dob.getTime())) return '';
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        return age < 0 || age > 150 ? '' : String(age);
+      }
+      // Set max date to today
+      const todayStr = new Date().toISOString().slice(0,10);
+      if (dobEl && !dobEl.max) dobEl.max = todayStr;
+      function syncAge(){
+        const v = dobEl?.value || '';
+        const a = computeAge(v);
+        ageEl.value = a;
+      }
+      dobEl?.addEventListener('change', syncAge);
+      // Initialize on load
+      syncAge();
+    })();
+  </script>
+</body>
+</html>

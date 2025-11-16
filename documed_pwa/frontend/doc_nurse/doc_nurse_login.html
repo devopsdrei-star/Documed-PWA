@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>
+    try {
+      // Clear storage on back-forward navigation to avoid stale sessions
+      if (window.performance && window.performance.navigation && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+        localStorage.clear();
+        sessionStorage.clear();
+        document.cookie.split(";").forEach(function(c) { 
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+      }
+      // Ensure any stale session is cleared on login page access
+      if (!localStorage.getItem('documed_doc_nurse')) {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+    } catch(_) { /* ignore */ }
+  </script>
+  <style>
+    body { background: #f8f9fa; }
+    .main-wrapper { max-width: 420px; margin: 48px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 12px #2563eb22; padding: 36px 32px; }
+    .form-title { font-size: 1.7rem; font-weight: 700; color: #2563eb; margin-bottom: 24px; text-align: center; }
+    .form-label { font-weight: 600; color: #2563eb; margin-bottom: 6px; }
+    .form-control { border-radius: 8px; border: 1.5px solid #2563eb; margin-bottom: 18px; font-size: 1rem; }
+    .btn-primary { background: #2563eb; border-radius: 8px; font-weight: 600; padding: 10px 0; }
+    .btn-primary:hover { background: #1742b0; }
+    .form-msg { text-align: center; margin-bottom: 12px; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="main-wrapper">
+    <div class="form-title">Login Doctor / Nurse</div>
+    <form id="docNurseLoginForm">
+  <label class="form-label"> <span class="icon">👤</span> Email or School ID</label>
+  <input type="text" name="email" class="form-control" placeholder="Enter your email or School ID" required>
+      <label class="form-label"><span class="icon">🔒</span> Password</label>
+      <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+      <button type="submit" class="btn btn-primary w-100">Log In</button>
+      <div id="loginMsg" class="form-msg"></div>
+    </form>
+    <div class="mt-3 text-center">
+      <!-- <button id="forgotPwdBtn" class="btn btn-link" style="color:#2563eb;text-decoration:underline;padding:0;">Forgot password?</button> -->
+      <a href="doc_nurse_register.html" style="color:#2563eb;font-weight:500;text-decoration:underline;">Don't have an account? Register</a>
+    </div>
+  </div>
+  <!-- Simple Reset Password Modal
+  <div id="resetModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#fff;width:min(480px,92vw);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:1.1rem;color:#111827;font-weight:700;">Reset Password</h3>
+        <button id="resetClose" class="btn btn-sm btn-light">Close</button>
+      </div>
+      <div style="padding:16px;">
+        <label class="form-label">Email or School ID</label>
+        <input type="text" id="resetIdentifier" class="form-control" placeholder="Enter email or School ID" />
+        <small style="display:block;color:#6b7280;margin-top:6px;">We will generate a temporary password for your account.</small>
+        <div id="resetMsg" class="form-msg" style="margin-top:8px;"></div>
+        <button id="resetSubmit" class="btn btn-primary w-100" style="margin-top:12px;">Generate Temporary Password</button>
+      </div>
+    </div>
+  </div> -->
+  <script>
+    (function(){
+      const form = document.getElementById('docNurseLoginForm');
+      const msg = document.getElementById('loginMsg');
+      const submitBtn = form.querySelector('button[type="submit"]');
+      function setMsg(t, ok){ if(!msg) return; msg.textContent = t||''; msg.style.color = ok ? '#22c55e' : '#e11d48'; }
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        const email = (form.querySelector('input[name="email"]').value||'').trim();
+        const password = (form.querySelector('input[name="password"]').value||'').trim();
+        if (!email || !password) { setMsg('Please enter email and password.', false); return; }
+        const base = window.location.pathname.split('/frontend/')[0];
+        const api = base + '/backend/api/manage_user.php?action=login_doc_nurse';
+        const data = new FormData();
+        data.append('email', email);
+        data.append('password', password);
+        const orig = submitBtn.textContent; submitBtn.disabled = true; submitBtn.textContent = 'Logging in…'; setMsg('');
+        fetch(api, { method:'POST', body:data })
+          .then(res => res.json())
+          .then(d => {
+            if (d && d.success) {
+              setMsg('Login successful!', true);
+              localStorage.setItem('documed_doc_nurse', JSON.stringify(d.user));
+              setTimeout(()=>{ window.location.replace('dashboard.html'); }, 600);
+            } else {
+              setMsg((d && (d.message||d.error)) || 'Login failed.', false);
+            }
+          })
+          .catch(() => { setMsg('Network error. Please try again.', false); })
+          .finally(()=>{ submitBtn.disabled = false; submitBtn.textContent = orig; });
+      });
+      // Forgot password wiring
+      const forgotBtn = document.getElementById('forgotPwdBtn');
+      const resetModal = document.getElementById('resetModal');
+      const resetClose = document.getElementById('resetClose');
+      const resetSubmit = document.getElementById('resetSubmit');
+      const resetIdentifier = document.getElementById('resetIdentifier');
+      const resetMsg = document.getElementById('resetMsg');
+      function setResetMsg(t, ok){ if(!resetMsg) return; resetMsg.textContent = t||''; resetMsg.style.color = ok ? '#22c55e' : '#e11d48'; }
+      if (forgotBtn && resetModal) {
+        forgotBtn.addEventListener('click', function(){
+          setResetMsg(''); resetIdentifier.value=''; resetModal.style.display='flex';
+        });
+      }
+      if (resetClose) { resetClose.addEventListener('click', function(){ resetModal.style.display='none'; }); }
+      if (resetSubmit) {
+        resetSubmit.addEventListener('click', function(){
+          const ident = (resetIdentifier.value||'').trim();
+          if (!ident) { setResetMsg('Please enter your email or School ID.', false); return; }
+          const base = window.location.pathname.split('/frontend/')[0];
+          const api = base + '/backend/api/manage_user.php?action=reset_password_doc_nurse_by_identifier';
+          const data = new FormData();
+          data.append('identifier', ident);
+          const origText = resetSubmit.textContent; resetSubmit.disabled=true; resetSubmit.textContent='Generating…'; setResetMsg('');
+          fetch(api, { method:'POST', body:data })
+            .then(r=>r.json())
+            .then(d=>{
+              if (d && d.success && d.new_password) {
+                setResetMsg('Temporary password generated. Please copy it and log in, then change your password in Profile.', true);
+                // Show the new password inline for simplicity
+                const pw = d.new_password;
+                // Remove previous temp password box if any
+                const existing = document.getElementById('tempPwdBox'); if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+                const out = document.createElement('div');
+                out.id = 'tempPwdBox';
+                out.style.marginTop='8px'; out.style.padding='10px'; out.style.border='1px dashed #93c5fd'; out.style.borderRadius='8px'; out.style.background='#eff6ff'; out.style.color='#1e3a8a';
+                out.textContent = 'Temp password: ' + pw;
+                const parent = resetMsg.parentNode; if (parent) parent.appendChild(out);
+              } else {
+                setResetMsg((d && d.message) || 'Account not found.', false);
+              }
+            })
+            .catch(()=> setResetMsg('Network error. Please try again.', false))
+            .finally(()=>{ resetSubmit.disabled=false; resetSubmit.textContent=origText; });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

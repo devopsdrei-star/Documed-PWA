@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>DocuMed</title>
+	<link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+	<link rel="stylesheet" href="../assets/css/style.css" />
+	<style>
+		.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+		.btn{padding:8px 14px;border:none;border-radius:8px;cursor:pointer}
+		.btn-primary{background:#2563eb;color:#fff}
+		.btn-muted{background:#6b7280;color:#fff}
+		table{width:100%;border-collapse:collapse}
+		th,td{text-align:left;padding:8px;border-bottom:1px solid #f3f4f6}
+		.muted{color:#6b7280}
+	</style>
+</head>
+<body>
+	<div class="main-content" style="max-width:none;margin:0 auto;background:#fff;padding:24px 32px;min-height:100vh;box-sizing:border-box;">
+		<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+			<div>
+				<h1 id="title" style="margin:0;color:#111827;font-size:1.8rem">Medical Record</h1>
+				<div id="subtitle" class="muted">Loading…</div>
+			</div>
+			<div style="display:flex;gap:10px;flex-wrap:wrap">
+				<button id="btnBack" class="btn btn-muted">Back</button>
+				<button id="btnCheckup" class="btn btn-primary">New Check-Up</button>
+			</div>
+		</div>
+
+		<div id="record" class="card"></div>
+	</div>
+
+	<script>
+		const params = new URLSearchParams(window.location.search);
+		const id = params.get('id');
+		if (!id) {
+			document.getElementById('record').innerHTML = '<p class="muted">Missing record id.</p>';
+		}
+
+		fetch(`../../backend/api/checkup.php?action=view&id=${encodeURIComponent(id)}`)
+			.then(r => r.json())
+			.then(data => {
+				if (!data || !data.success || !data.patient) {
+					document.getElementById('record').innerHTML = '<p class="muted">Record not found.</p>';
+					return;
+				}
+				const p = data.patient;
+				const sid = p.student_faculty_id || '';
+				const title = document.getElementById('title');
+				const subtitle = document.getElementById('subtitle');
+			if (title) title.textContent = 'Check-Up Record';
+			if (subtitle) subtitle.textContent = '';
+
+				const btnBack = document.getElementById('btnBack');
+				if (btnBack) btnBack.onclick = () => window.history.back();
+			const btnCheck = document.getElementById('btnCheckup');
+			if (btnCheck) btnCheck.onclick = () => { if (sid) { try{ sessionStorage.setItem('documed_checkup_sid', sid); }catch(_){} window.location.href = `dn_patient.html?action=checkup`; } };
+
+				const physicalItems = [];
+				if (p.physical_exam_general_survey) physicalItems.push('General Survey');
+				if (p.physical_exam_skin) physicalItems.push('Skin');
+				if (p.physical_exam_heart) physicalItems.push('Heart');
+				if (p.physical_exam_chest_lungs) physicalItems.push('Chest/Lungs');
+				if (p.physical_exam_abdomen) physicalItems.push('Abdomen');
+				if (p.physical_exam_genitourinary) physicalItems.push('Genitourinary');
+				if (p.physical_exam_musculoskeletal) physicalItems.push('Musculoskeletal');
+
+				const dateStr = (() => {
+					const dt = p.created_at || p.updated_at || '';
+					if (!dt) return '';
+					const d = new Date(dt);
+					return isNaN(d) ? dt : d.toLocaleString();
+				})();
+
+						document.getElementById('record').innerHTML = `
+							<table>
+								<tr><th>Record ID</th><td>${p.id || ''}</td></tr>
+								<tr><th>Date</th><td>${dateStr}</td></tr>
+								<tr><th>Assessment</th><td>${p.assessment || ''}</td></tr>
+								<tr><th>History of Past Illness</th><td>${p.history_past_illness || ''}</td></tr>
+								<tr><th>Present Illness</th><td>${p.present_illness || ''}</td></tr>
+								<tr><th>Operations/Hospitalizations</th><td>${p.operations_hospitalizations || ''}</td></tr>
+								<tr><th>Immunization History</th><td>${p.immunization_history || ''}</td></tr>
+								<tr><th>Social/Environmental History</th><td>${p.social_environmental_history || ''}</td></tr>
+								<tr><th>OB/Gynecological History</th><td>${p.ob_gyne_history || ''}</td></tr>
+								<tr><th>Physical Exam</th><td>${physicalItems.join(', ')}</td></tr>
+								<tr><th>Neurological Exam</th><td>${p.neurological_exam || ''}</td></tr>
+								<tr><th>Laboratory Results</th><td>${p.laboratory_results || ''}</td></tr>
+								<tr><th>Remarks</th><td>${p.remarks || ''}</td></tr>
+								<tr><th>Performed By</th><td>${p.doctor_nurse || '-'}</td></tr>
+								<tr><th>Follow-up Needed</th><td>${p.follow_up_needed ? 'Yes' : 'No'}</td></tr>
+								<tr><th>Follow-up Date</th><td>${p.follow_up_date || ''}</td></tr>
+							</table>
+						`;
+			})
+			.catch(() => {
+				document.getElementById('record').innerHTML = '<p class="muted">Failed to load record.</p>';
+			});
+	</script>
+</body>
+</html>

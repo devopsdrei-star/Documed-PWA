@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    @media (max-width: 720px) {
+      #pvDetailsGrid { grid-template-columns: 1fr !important; gap: 16px !important; }
+      .pvColDivider { display: none !important; }
+    }
+    @media print {
+      #pvPhoto { width: 2in !important; height: 2in !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .main-content { padding: 0 !important; }
+    }
+    .pvColDivider { width: 1px; background: #e5e7eb; align-self: stretch; }
+  </style>
+</head>
+<body>
+  <div class="main-content" style="max-width:none;margin:0 auto;background:#fff;padding:24px 32px;min-height:100vh;box-sizing:border-box;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+      <div>
+        <h1 id="pvTitle" style="color:#111827;margin:0;font-size:1.8rem;">Patient Master Record</h1>
+        <div id="pvSubtitle" style="color:#6b7280;">Loading…</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button id="btnBack" style="background:#6b7280;color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">Back</button>
+      </div>
+    </div>
+    <div id="patientInfo" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;"></div>
+    <div id="checkupHistory" style="margin-top:16px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;"></div>
+    <div id="followupHistory" style="margin-top:16px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;"></div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (!id) {
+      const subtitle = document.getElementById('pvSubtitle');
+      if (subtitle) subtitle.textContent = 'Missing record id.';
+      const info = document.getElementById('patientInfo');
+      if (info) info.textContent = 'Cannot load patient without a record id.';
+    } else {
+      fetch(`../../backend/api/checkup.php?action=view&id=${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.patient) {
+            const p = data.patient;
+            const sid = p.student_faculty_id;
+            const title = document.getElementById('pvTitle');
+            const subtitle = document.getElementById('pvSubtitle');
+            if (title) title.textContent = p.name ? p.name : 'Patient Master Record';
+            if (subtitle) subtitle.textContent = sid ? `School ID: ${sid}` : '';
+            const btnBack = document.getElementById('btnBack'); if (btnBack) btnBack.onclick = ()=>window.history.back();
+
+            (function renderPatientCard(){
+              const info = document.getElementById('patientInfo');
+              if (!info) return;
+              const safe = v => (v == null ? '' : v);
+              const role = p.role_effective || p.role || '';
+              const photoFallback = '../assets/images/user_photo.png';
+              const basePhoto = p.photo || '';
+
+              const headerHtml = (ph) => `
+              <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;text-align:center;">
+                  <img id="pvPhoto" src="${ph || photoFallback}" alt="Photo" style="width:192px;height:192px;border-radius:12px;object-fit:cover;border:1px solid #e5e7eb;background:#f9fafb;"/>
+                  <div style="font-weight:800;color:#111827;font-size:1.4rem;">${safe(p.name)}</div>
+                  <div style="color:#6b7280;margin-top:2px;font-size:1rem;">School ID: ${safe(p.student_faculty_id)}</div>
+                  <div id="pvRole" style="color:#6b7280;margin-top:0;font-size:1rem;">Role: ${safe(role)}</div>
+                </div>`;
+
+              const line = (label, value) => `
+                <div style="display:flex;gap:10px;align-items:baseline;margin:10px 0;text-align:left;">
+                  <div style="min-width:180px;color:#2563eb;font-weight:700;font-size:1rem;">${label}:</div>
+                  <div style="color:#111827;font-size:1.05rem;">${safe(value)}</div>
+                </div>`;
+
+              const detailsHtml = `
+                <div id="pvDetailsGrid" style="display:grid;grid-template-columns:1fr 1px 1fr;column-gap:32px;max-width:900px;margin:0 auto; align-items:start;">
+                  <div>
+                    ${line('AGE', p.age)}
+                    ${line('CONTACT NO.', p.contact_number)}
+                    ${line('CIVIL STATUS', p.civil_status)}
+                    ${line('RELIGION', p.religion)}
+                    ${line('ADDRESS', p.address)}
+                    ${line('CONTACT PERSON', p.contact_person)}
+                  </div>
+                  <div class="pvColDivider" aria-hidden="true"></div>
+                  <div style="display:flex; flex-direction:column; align-items:right;">
+                    ${line('BIRTHDATE', p.date_of_birth)}
+                    ${line('PLACE OF BIRTH', p.place_of_birth)}
+                    ${line('NATIONALITY', p.nationality)}
+                    ${line('YEAR & COURSE', p.year_and_course)}
+                  </div>
+                </div>`;
+
+              info.innerHTML = headerHtml(basePhoto) + detailsHtml;
+              if (sid) {
+                fetch('../../backend/api/auth.php?action=get_user_by_sid', {
+                  method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ sid })
+                }).then(r=>r.json()).then(uRes=>{
+                  const u = (uRes && uRes.success) ? uRes.user : null;
+                  const ph = (u && u.photo) ? u.photo : (basePhoto || photoFallback);
+                  const img = document.getElementById('pvPhoto'); if (img) img.src = ph;
+                  const roleEl = document.getElementById('pvRole');
+                  if (roleEl) {
+                    let effRole = (u && (u.role_effective || u.role)) || (p.role_effective || p.role) || '';
+                    const map = { 'Teacher': 'Faculty', 'Non-Teaching': 'Staff' };
+                    if (effRole && map[effRole]) effRole = map[effRole];
+                    if (effRole) roleEl.textContent = `Role: ${effRole}`;
+                  }
+                }).catch(()=>{});
+              }
+            })();
+
+            if (sid) {
+              fetch(`../../backend/api/checkup.php?action=list&student_faculty_id=${encodeURIComponent(sid)}`)
+                .then(r => r.json())
+                .then(list => {
+                  const arr = Array.isArray(list.checkups) ? list.checkups : [];
+                  const container = document.getElementById('checkupHistory');
+                  if (!container) return;
+                  if (!arr.length) {
+                    container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Patient Check-Up History</h2><p style="color:#6b7280;">No check-up records found.</p>';
+                    return;
+                  }
+                  arr.sort((a,b)=>{
+                    const da=a&&a.created_at?new Date(a.created_at):null; const db=b&&b.created_at?new Date(b.created_at):null;
+                    if(da && db && !isNaN(da) && !isNaN(db)) return db-da;
+                    const ia=Number(a&&a.id); const ib=Number(b&&b.id); if(isFinite(ia)&&isFinite(ib)) return ib-ia; return 0;
+                  });
+                  const rows = arr.map((it, idx) => {
+                    const dt = it.created_at || it.updated_at || '';
+                    const dateStr = dt ? new Date(dt).toLocaleDateString() : '';
+                    const performer = it.doctor_nurse || '-';
+                    return `<tr>
+                      <td style="padding:8px;">${idx+1}</td>
+                      <td style="padding:8px;">${dateStr}</td>
+                      <td style="padding:8px;">${it.assessment || ''}</td>
+                      <td style="padding:8px;">${performer}</td>
+                      <td style="padding:8px;"><a href="../doc_nurse/medical_exam_report.html?id=${encodeURIComponent(it.id)}" style="color:#2563eb;text-decoration:none;">View</a></td>
+                    </tr>`;
+                  }).join('');
+                  container.innerHTML = `
+                    <h2 style="margin:16px 0 8px;color:#374151;">Patient Check-Up History</h2>
+                    <div style="overflow:auto;">
+                      <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                          <tr>
+                            <th style="text-align:left;padding:8px;">#</th>
+                            <th style="text-align:left;padding:8px;">Date</th>
+                            <th style="text-align:left;padding:8px;">Assessment</th>
+                            <th style="text-align:left;padding:8px;">By</th>
+                            <th style="text-align:left;padding:8px;">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                      </table>
+                    </div>`;
+                })
+                .catch(() => {
+                  const container = document.getElementById('checkupHistory');
+                  if (container) container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Patient Check-Up History</h2><p style="color:#dc2626;">Failed to load check-up history.</p>';
+                });
+            }
+
+            if (sid) {
+              fetch(`../../backend/api/patient.php?action=list&user_id=${encodeURIComponent(sid)}`)
+                .then(r => r.json())
+                .then(list => {
+                  const arr = Array.isArray(list.patients) ? list.patients : [];
+                  const container = document.getElementById('followupHistory');
+                  if (!container) return;
+                  if (!arr.length) {
+                    container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Follow Up Check-Up History</h2><p style="color:#6b7280;">No follow up records found.</p>';
+                    return;
+                  }
+                  const rows = arr.map((it, idx) => {
+                    const dt = it.date_of_examination || it.last_visit || '';
+                    return `<tr>
+                      <td style="padding:8px;">${idx+1}</td>
+                      <td style="padding:8px;">${(dt||'').toString().slice(0,10)}</td>
+                      <td style="padding:8px;">${it.chief_complaint || ''}</td>
+                      <td style="padding:8px;">${it.bp || ''}</td>
+                      <td style="padding:8px;">${it.temp || ''}</td>
+                      <td style="padding:8px;">${it.impression || ''}</td>
+                      <td style="padding:8px;">${it.treatment || ''}</td>
+                    </tr>`;
+                  }).join('');
+                  container.innerHTML = `
+                    <h2 style="margin:16px 0 8px;color:#374151;">Follow Up Check-Up History</h2>
+                    <div style="overflow:auto;">
+                      <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                          <tr>
+                            <th style="text-align:left;padding:8px;">#</th>
+                            <th style="text-align:left;padding:8px;">Date</th>
+                            <th style="text-align:left;padding:8px;">Chief Complaint</th>
+                            <th style="text-align:left;padding:8px;">BP</th>
+                            <th style="text-align:left;padding:8px;">Temp</th>
+                            <th style="text-align:left;padding:8px;">Impression</th>
+                            <th style="text-align:left;padding:8px;">Treatment</th>
+                          </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                      </table>
+                    </div>`;
+                })
+                .catch(() => {
+                  const container = document.getElementById('followupHistory');
+                  if (container) container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Follow Up Check-Up History</h2><p style="color:#dc2626;">Failed to load follow up history.</p>';
+                });
+            }
+          } else {
+            document.getElementById('patientInfo').textContent = 'Patient not found.';
+          }
+        });
+    }
+  </script>
+</body>
+</html>

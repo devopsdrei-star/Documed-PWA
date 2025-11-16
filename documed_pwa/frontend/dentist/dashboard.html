@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+    .dash-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+    .dash-title { color:#2563eb; font-size:1.8rem; font-weight:800; margin:0; }
+    .dash-sub { color:#64748b; margin:0; }
+    .avatar { width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #2563eb; background:#fff; }
+    .cards { display:grid; grid-template-columns: repeat(4, minmax(200px,1fr)); gap:14px; margin:16px 0 18px; }
+    .card-kpi { background:#fff; border-radius:14px; box-shadow:0 6px 20px rgba(37,99,235,.10); padding:16px; position:relative; overflow:hidden; }
+    .card-kpi .icon { position:absolute; right:12px; top:12px; font-size:1.6rem; color:#93c5fd; }
+    .card-kpi .label { font-weight:600; color:#334155; }
+    .card-kpi .value { font-size:1.8rem; font-weight:800; color:#111827; }
+    .panel { background:#fff; border-radius:14px; box-shadow:0 6px 20px rgba(37,99,235,.08); padding:16px; }
+    .grid-2 { display:grid; grid-template-columns: 1.1fr 1fr; gap:14px; }
+    .table { width:100%; border-collapse:separate; border-spacing:0; }
+    .table th { background:#2563eb; color:#fff; border:none; }
+    .table td, .table th { padding:10px; }
+    .quick-actions { display:grid; grid-template-columns: repeat(2, minmax(180px,1fr)); gap:12px; }
+    .qa { display:flex; align-items:center; gap:10px; padding:14px; border-radius:12px; background:#eff6ff; color:#1e40af; text-decoration:none; font-weight:700; box-shadow:0 4px 16px rgba(30,64,175,.12); }
+    .qa i { font-size:1.3rem; }
+    @media (max-width: 1000px){ .cards{grid-template-columns: repeat(2, 1fr);} .grid-2{grid-template-columns:1fr;} }
+    @media (max-width: 640px){ .cards{grid-template-columns: 1fr;} }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="active"><i class="bi bi-grid"></i> Dashboard</a>
+        <a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a>
+        <a href="settings_profile.html"><i class="bi bi-person-gear"></i> Profile</a>
+        <a href="settings.html"><i class="bi bi-gear"></i> Settings</a>
+        <a href="dentist_login.html" class="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      </nav>
+    </aside>
+    <main class="main-content" style="padding:24px;">
+      <div class="dash-header">
+        <div>
+          <h1 class="dash-title" id="welcomeTitle">Welcome, Dr. <span id="dentistName"></span></h1>
+          <p class="dash-sub">Here’s a quick overview of your dental appointments.</p>
+        </div>
+        <img id="dentistAvatar" class="avatar" src="../assets/images/documed_logo.png" alt="Avatar" />
+      </div>
+
+      <section class="cards" id="cards">
+        <div class="card-kpi">
+          <i class="bi bi-calendar2-week icon"></i>
+          <div class="label">Today’s Dental Appointments</div>
+          <div class="value" id="kpiToday">0</div>
+        </div>
+        <div class="card-kpi">
+          <i class="bi bi-hourglass-split icon"></i>
+          <div class="label">Scheduled</div>
+          <div class="value" id="kpiScheduled">0</div>
+        </div>
+        <div class="card-kpi">
+          <i class="bi bi-check2-square icon"></i>
+          <div class="label">Accepted</div>
+          <div class="value" id="kpiAccepted">0</div>
+        </div>
+        <div class="card-kpi">
+          <i class="bi bi-emoji-smile icon"></i>
+          <div class="label">Completed (7d)</div>
+          <div class="value" id="kpiCompleted">0</div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <h3 style="margin:0;color:#1e40af;">Upcoming Appointments</h3>
+            <a href="appointments.html" class="qa" style="padding:8px 12px;gap:6px;background:#e0f2fe;color:#075985;box-shadow:none;font-weight:600;">
+              <i class="bi bi-box-arrow-up-right"></i> View all
+            </a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Name</th>
+                  <th>Purpose</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="upcomingBody">
+                <tr><td colspan="5">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <h3 style="margin:0 0 8px 0;color:#1e40af;">Status Breakdown</h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <select id="chartRange" class="form-select" style="height:36px;padding:6px 10px;">
+                <option value="all" selected>All</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+              </select>
+              <input type="date" id="chartFrom" class="form-control" style="height:36px;display:none;" />
+              <input type="date" id="chartTo" class="form-control" style="height:36px;display:none;" />
+              <select id="chartAudience" class="form-select" style="height:36px;padding:6px 10px;">
+                <option value="All" selected>All</option>
+                <option value="Student">Student</option>
+                <option value="Faculty">Faculty/Teacher</option>
+                <option value="Staff">Staff</option>
+              </select>
+              <select id="chartDepartment" class="form-select" style="height:36px;padding:6px 10px;min-width:180px;">
+                <option value="">All Departments</option>
+                <option value="CASL">CASL - Arts, Sciences and Letters</option>
+                <option value="CBPA">CBPA - Business and Public Administration</option>
+                <option value="CCS">CCS - Computing Sciences</option>
+                <option value="CHTM">CHTM - Hospitality and Tourism Management</option>
+                <option value="CTE">CTE - Teacher Education</option>
+                <option value="CIT">CIT - Industrial Technology</option>
+              </select>
+              <select id="chartYear" class="form-select" style="height:36px;padding:6px 10px;display:none;min-width:120px;">
+                <option value="">All Years</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+              <input id="chartCourse" class="form-control" placeholder="Course (optional)" style="height:36px;display:none;min-width:220px;" />
+            </div>
+          </div>
+          <div style="max-width:380px;margin:4px auto 0;">
+            <canvas id="statusChart" style="width:100%;height:auto;aspect-ratio:1/1;"></canvas>
+          </div>
+          <div class="quick-actions" style="margin-top:14px;">
+            <a class="qa" href="appointments.html"><i class="bi bi-calendar2-plus"></i> Manage Appointments</a>
+            <a class="qa" href="settings.html"><i class="bi bi-gear"></i> Settings</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="../assets/js/dentist_nav.js"></script>
+  <script src="../assets/js/dentist_dashboard.js"></script>
+</body>
+</html>

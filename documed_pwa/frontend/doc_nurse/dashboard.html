@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .dashboard-header .search {
+      flex: 1;
+      margin-left: 32px;
+      max-width: 320px;
+    }
+    .dashboard-header .btn {
+      background: #6366f1;
+      color: #fff;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 1.08rem;
+      box-shadow: 0 2px 8px #6366f122;
+      border: none;
+    }
+    .profile-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #6366f122;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 32px;
+      min-width: 260px;
+      max-width: 320px;
+    }
+    .profile-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 12px;
+      background: #e0e7ff;
+    }
+    .profile-name {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: #4f46e5;
+      margin-bottom: 4px;
+    }
+    .profile-role {
+      font-size: 1rem;
+      color: #6366f1;
+      margin-bottom: 12px;
+    }
+    .profile-stats {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .profile-stats .stat {
+      font-size: 0.98rem;
+      color: #222;
+      display: flex;
+      justify-content: space-between;
+    }
+    .activity-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #6366f122;
+      padding: 32px 24px;
+      margin-bottom: 32px;
+      flex: 1;
+    }
+    .activity-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: #4f46e5;
+      margin-bottom: 18px;
+    }
+    .dashboard-row {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+    .dashboard-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .dashboard-table {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #6366f122;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .dashboard-table th {
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      text-align: center;
+    }
+    .dashboard-table td {
+      text-align: center;
+      vertical-align: middle;
+    }
+    .dashboard-table tr {
+      background: #f8f9fa;
+    }
+    .dashboard-table tr:nth-child(even) {
+      background: #e0e7ff;
+    }
+    @media (max-width: 900px) {
+      .dashboard-row { flex-direction: column; gap: 18px; }
+      .profile-card { min-width: 100%; max-width: 100%; margin-bottom: 18px; }
+      .activity-card { padding: 18px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="sidebar">
+      <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="active"><i class="bi bi-grid"></i> Dashboard</a>
+        <!-- <a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointment</a> -->
+        <a href="dn_patient.html"><i class="bi bi-person-lines-fill"></i> Patients</a>
+        <a href="reports.html"><i class="bi bi-file-earmark-text"></i> Reports</a>
+         <a href="settings.html"><i class="bi bi-gear"></i> Profile Info</a>
+        <!-- <a href="#"><i class="bi bi-capsule"></i> Medications</a>
+        <a href="#"><i class="bi bi-folder"></i> Documents</a>
+        <a href="#"><i class="bi bi-gear"></i> Settings</a> -->
+        <button class="logout"><i class="bi bi-box-arrow-right"></i> Logout</button>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <div class="dashboard-header">
+  <div style="font-size:1.3rem;font-weight:700;color:#4f46e5;">Hello Dr./Nurse <span id="docName">[Name]</span></div>
+    <div class="dashboard-topbar" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;gap:18px;">
+    <div class="dashboard-profile-dropdown" style="position:relative;">
+      <button id="dashboardProfileBtn" aria-haspopup="true" aria-expanded="false" title="Open profile menu" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <img src="../assets/images/admin_photo.png" alt="Profile" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+      </button>
+      <div id="dashboardProfileMenu" style="display:none;position:absolute;right:0;top:110%;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:10px;min-width:160px;z-index:20;">
+        <a href="settings.html" id="profileInfoMenu" style="display:block;padding:12px 18px;color:#2563eb;text-decoration:none;font-weight:500;border-bottom:1px solid #f3f4f6;">Profile Info</a>
+        <a href="doc_nurse_login.html" id="logoutMenu" style="display:block;padding:12px 18px;color:#e11d48;text-decoration:none;font-weight:500;">Logout</a>
+      </div>
+    </div>
+  </div>
+      </div>
+      <div class="dashboard-row">
+        <div class="profile-card">
+          <img id="docNursePhoto" src="../assets/images/admin_photo.png" alt="Profile" class="profile-photo">
+          <div class="profile-name" id="docProfileName">Dr./Nurse [Name]</div>
+          <div class="profile-role" id="docProfileRole">[Role]</div>
+          <div class="profile-stats">
+            <div class="stat"><span>Appointments Limit</span> <span id="docLimit">150</span></div>
+            <div class="stat"><span>Appointments</span> <span id="docAppointments">0</span></div>
+            <div class="stat"><span>Today's Patients</span> <span id="docPatients">0</span></div>
+            <div class="stat"><span>Total Patients</span> <span id="docTotalPatients">0</span></div>
+          </div>
+        </div>
+        <div class="activity-card">
+          <div class="activity-title d-flex align-items-center justify-content-between">
+            <span>Activity</span>
+            <select id="analyticsSorter" class="form-select form-select-sm" style="width:160px;">
+              <option value="all" selected>All</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
+          <canvas id="activityChart" height="120"></canvas>
+        </div>
+      </div>
+      <div class="dashboard-row">
+        <div class="dashboard-col">
+          <!-- Moved Today Summary here, replacing Appointment Requests -->
+          <div class="dashboard-table equalize-pair" id="summaryCard">
+            <div style="font-weight:600;color:#4f46e5;margin-bottom:12px;">Today Summary</div>
+            <div class="row text-center g-3">
+              <div class="col-6">
+                <div style="font-size:1.4rem;font-weight:700;color:#2563eb;" id="todayAppointments">0</div>
+                <div style="font-size:0.95rem;color:#222;">Appointments Today</div>
+              </div>
+              <div class="col-6">
+                <div style="font-size:1.4rem;font-weight:700;color:#16a34a;" id="todayCheckups">0</div>
+                <div style="font-size:0.95rem;color:#222;">Checkups Today</div>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-table">
+            <div style="font-weight:600;color:#4f46e5;margin-bottom:12px;">Recent Patients</div>
+            <table class="table">
+              <thead>
+                <tr><th>Name</th><th>Gender</th><th>Age</th><th>Disease</th><th>Status</th></tr>
+              </thead>
+              <tbody id="recentPatientsBody">
+                <!-- Recent patients will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="dashboard-col">
+          <div class="dashboard-table equalize-pair" id="quickStatsCard">
+            <div style="font-weight:600;color:#4f46e5;margin-bottom:12px;">Quick Stats</div>
+            <div class="row text-center">
+              <div class="col-6">
+                <div style="font-size:2rem;font-weight:700;color:#2563eb;" id="maleCount">0</div>
+                <div style="font-size:1rem;color:#222;">Total Male Checked Up</div>
+              </div>
+              <div class="col-6">
+                <div style="font-size:2rem;font-weight:700;color:#e11d48;" id="femaleCount">0</div>
+                <div style="font-size:1rem;color:#222;">Total Female Checked Up</div>
+              </div>
+            </div>
+          </div>
+          <!-- Moved Appointment Requests here to sit beside Recent Patients -->
+          <div class="dashboard-table">
+            <div style="font-weight:600;color:#4f46e5;margin-bottom:12px;">Appointment Requests</div>
+            <table class="table">
+              <thead>
+                <tr><th>Patient</th><th>Date</th><th>Time</th><th>Status</th></tr>
+              </thead>
+              <tbody id="appointmentRequestsBody">
+                <!-- Appointment requests will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/profile_avatar.js"></script>
+  
+  <script>
+// Sidebar navigation active state and logout logic
+document.addEventListener('DOMContentLoaded', function() {
+  // Sidebar active state
+  const links = document.querySelectorAll('.sidebar-nav a');
+  links.forEach(link => {
+    if (window.location.pathname.endsWith(link.getAttribute('href'))) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+  // Fix logout button logic
+  const logoutBtn = document.querySelector('.sidebar .logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        try {
+          // Clear all storage
+          localStorage.clear();
+          sessionStorage.clear();
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+          });
+          
+          // Force a clean redirect to login
+          window.location.replace('doc_nurse_login.html');
+          
+          // Fallback if replace doesn't work
+          setTimeout(() => {
+            window.location.href = 'doc_nurse_login.html';
+            window.location.reload(true);
+          }, 100);
+        } catch (error) {
+          console.error('Logout error:', error);
+          window.location.href = 'doc_nurse_login.html';
+        }
+      }
+    });
+  }
+  // Profile menu toggle and navigation
+  const profileBtn = document.getElementById('dashboardProfileBtn');
+  const profileMenu = document.getElementById('dashboardProfileMenu');
+  const profileInfoLink = document.getElementById('profileInfoMenu');
+  if (profileBtn && profileMenu) {
+    const toggleMenu = (open) => {
+      const willOpen = (typeof open === 'boolean') ? open : (profileMenu.style.display !== 'block');
+      profileMenu.style.display = willOpen ? 'block' : 'none';
+      profileBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    };
+    profileBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleMenu();
+    });
+    profileBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleMenu();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!profileMenu.contains(e.target) && !profileBtn.contains(e.target)) {
+        toggleMenu(false);
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') toggleMenu(false);
+    });
+  }
+  if (profileInfoLink) {
+    profileInfoLink.addEventListener('click', () => { if (profileMenu) profileMenu.style.display = 'none'; });
+  }
+});
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load profile from localStorage
+      let profile = null;
+      try { profile = JSON.parse(localStorage.getItem('documed_doc_nurse')); } catch(e) {}
+      if (profile) {
+        document.getElementById('docNursePhoto').src = profile.dn_photo || '../assets/images/admin_photo.png';
+        document.getElementById('docProfileName').textContent = profile.name;
+        document.getElementById('docProfileRole').textContent = profile.role;
+        document.getElementById('docName').textContent = profile.name;
+      }
+
+      // Fetch all checkups for male/female stats and analytics
+      let allCheckups = [];
+      function updateStatsAndChart(sortType = 'today') {
+        let male = 0, female = 0;
+        let maleCounts = {}, femaleCounts = {};
+        let labels = [];
+        let today = new Date();
+        let filtered = allCheckups;
+        if (sortType === 'today') {
+          let todayStr = today.toISOString().slice(0,10);
+          filtered = allCheckups.filter(c => (c.created_at||'').slice(0,10) === todayStr);
+        } else if (sortType === 'week') {
+          let weekAgo = new Date(today.getTime() - 6*24*60*60*1000);
+          filtered = allCheckups.filter(c => {
+            let d = new Date(c.created_at);
+            return d >= weekAgo && d <= today;
+          });
+        } else if (sortType === 'month') {
+          let monthStr = today.toISOString().slice(0,7);
+          filtered = allCheckups.filter(c => (c.created_at||'').slice(0,7) === monthStr);
+        } else if (sortType === 'year') {
+          let yearStr = today.toISOString().slice(0,4);
+          filtered = allCheckups.filter(c => (c.created_at||'').slice(0,4) === yearStr);
+        } // 'all' shows all
+        for (let c of filtered) {
+          let isFemale = (c.ob_gyne_history !== null && c.ob_gyne_history !== undefined && String(c.ob_gyne_history).trim() !== '' && String(c.ob_gyne_history).toLowerCase() !== 'null');
+          if (isFemale) female++;
+          else male++;
+          let date = (c.created_at || '').slice(0,10);
+          if (!date) continue;
+          if (!labels.includes(date)) labels.push(date);
+          if (isFemale) femaleCounts[date] = (femaleCounts[date]||0)+1;
+          else maleCounts[date] = (maleCounts[date]||0)+1;
+        }
+        document.getElementById('maleCount').textContent = male;
+        document.getElementById('femaleCount').textContent = female;
+        labels.sort();
+        let maleData = labels.map(d => maleCounts[d]||0);
+        let femaleData = labels.map(d => femaleCounts[d]||0);
+        var ctx = document.getElementById('activityChart').getContext('2d');
+        if (window.chartInstance) window.chartInstance.destroy();
+        window.chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Male', data: maleData, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: true },
+              { label: 'Female', data: femaleData, borderColor: '#e11d48', backgroundColor: 'rgba(225,29,72,0.08)', fill: true }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: {
+              y: {
+                min: 0,
+                max: 100,
+                ticks: { stepSize: 5 }
+              }
+            }
+          }
+        });
+      }
+
+      // Fetch all checkups
+      fetch('../../backend/api/checkup.php?action=list')
+        .then(res => res.json())
+        .then(data => {
+          allCheckups = data.checkups || [];
+          updateStatsAndChart('all');
+          // Recent patients: limit to 5 rows for dashboard brevity
+          let recent = allCheckups.slice(0, 5);
+          let tbody = document.getElementById('recentPatientsBody');
+          tbody.innerHTML = recent.map(p => `<tr><td>${p.name}</td><td>${p.gender || ''}</td><td>${p.age}</td><td>${p.present_illness || ''}</td><td>Finished</td></tr>`).join('');
+          // Today checkups count
+          const todayStr = new Date().toISOString().slice(0,10);
+          const todayCheckups = allCheckups.filter(c => (c.created_at||'').slice(0,10) === todayStr).length;
+          const todayCheckupsEl = document.getElementById('todayCheckups');
+          if (todayCheckupsEl) todayCheckupsEl.textContent = todayCheckups;
+        });
+
+      // Sorter logic
+      document.getElementById('analyticsSorter').addEventListener('change', function() {
+        updateStatsAndChart(this.value);
+      });
+
+      // Fetch only today's appointments for requests and counts
+      fetch('../../backend/api/appointments_new.php?action=list_today')
+        .then(res => res.json())
+        .then(data => {
+          let pending = (data.appointments || []).filter(a => a.status === 'scheduled');
+          // Limit to 5 rows for dashboard display
+          pending = pending.slice(0, 5);
+          let tbody = document.getElementById('appointmentRequestsBody');
+          if (!pending.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No appointments scheduled today.</td></tr>';
+          } else {
+            tbody.innerHTML = pending.map(a => {
+            const name = a.name || a.patient_name || a.email || a.patient_id || '';
+            const time = (a.time && a.time.length>5) ? a.time.slice(0,5) : (a.time||'');
+            return `<tr><td>${name}</td><td>${a.date}</td><td>${time}</td><td>${a.status}</td></tr>`;
+            }).join('');
+          }
+          document.getElementById('docAppointments').textContent = pending.length;
+          // Today appointments count (any status) for the summary card
+          const todayAppointments = (data.appointments || []).length;
+          const todayApptEl = document.getElementById('todayAppointments');
+          if (todayApptEl) todayApptEl.textContent = todayAppointments;
+          // Equalize heights once data is in
+          setTimeout(equalizeSummaryQuickStats, 0);
+        });
+
+      // Fetch total patient count
+      fetch('../../backend/api/checkup.php?action=count')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('docTotalPatients').textContent = data.count || 0;
+          // Equalize in case of layout changes
+          setTimeout(equalizeSummaryQuickStats, 0);
+        });
+
+      // Search bar logic
+      const searchBarEl = document.getElementById('searchBar');
+      if (searchBarEl) searchBarEl.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        // Filter recent patients and appointments
+        let filteredPatients = allCheckups.filter(p => (p.name||'').toLowerCase().includes(q) || (p.present_illness||'').toLowerCase().includes(q));
+        let tbody = document.getElementById('recentPatientsBody');
+        tbody.innerHTML = filteredPatients.slice(0,5).map(p => `<tr><td>${p.name}</td><td>${p.gender || ''}</td><td>${p.age}</td><td>${p.present_illness || ''}</td><td>Finished</td></tr>`).join('');
+      });
+    });
+    // Equalize Summary and Quick Stats card heights
+    function equalizeSummaryQuickStats() {
+      const a = document.getElementById('summaryCard');
+      const b = document.getElementById('quickStatsCard');
+      if (!a || !b) return;
+      // Reset
+      a.style.minHeight = '';
+      b.style.minHeight = '';
+      const h = Math.max(a.offsetHeight, b.offsetHeight);
+      a.style.minHeight = h + 'px';
+      b.style.minHeight = h + 'px';
+    }
+    window.addEventListener('load', equalizeSummaryQuickStats);
+    window.addEventListener('resize', () => { setTimeout(equalizeSummaryQuickStats, 100); });
+  </script>
+</body>
+</html>

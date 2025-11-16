@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+    body { background: #f3f4f6; color: #111; }
+    .main-content { background: #fff; box-shadow: 0 8px 32px rgba(37,99,235,0.14); }
+    h1 { color: #111; font-size: 2rem; margin-bottom: 24px; text-align: center; letter-spacing: 1px; font-weight: 700; text-shadow: 0 2px 8px rgba(37,99,235,0.08); }
+    #audit-list { overflow-x: auto; margin-top: 12px; }
+    #auditTrailTable { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; box-shadow: 0 4px 16px rgba(37,99,235,0.08); border-radius: 12px; overflow: hidden; }
+    #auditTrailTable th, #auditTrailTable td { padding: 12px 10px; text-align: left; color: #111; font-size: 0.98rem; border-bottom: 1px solid #e5e7eb; background: #fff; }
+    #auditTrailTable th { background: #f3f4f6; font-weight: 600; letter-spacing: 0.5px; color: #111; border-bottom: 2px solid #2563eb; }
+    #auditTrailTable tr:last-child td { border-bottom: none; }
+    .sidebar { box-shadow: 0 4px 24px rgba(37,99,235,0.10); }
+    .profile-photo { box-shadow: 0 2px 8px rgba(37,99,235,0.10); }
+    .sidebar-link.active { background: #1e40af; color: #ffffff !important; box-shadow: 0 2px 8px rgba(37,99,235,0.10); }
+    .sidebar-link { color: #ffffff; font-weight: 500; }
+    .logout { color: #fff !important; box-shadow: 0 2px 8px rgba(239,68,68,0.10); }
+    @media (max-width: 900px) { .main-content { padding: 18px 4px; } #auditTrailTable th, #auditTrailTable td { padding: 8px 4px; font-size: 0.92rem; } }
+  </style>
+</head>
+<body>
+  <div class="admin-layout" style="box-shadow: 0 8px 32px rgba(37,99,235,0.18); border-radius: 18px; width: 100vw; min-height: 100vh; margin: 0; max-width: none;">
+    <aside class="sidebar">
+  <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+     <nav class="sidebar-nav">
+    <a href="dashboard.html" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+    <a href="patients.html" class="sidebar-link"><i class="bi bi-people me-2"></i>Patients</a>
+    <a href="appointments.html" class="sidebar-link"><i class="bi bi-calendar-check me-2"></i>Appointments</a>
+    <a href="manage_users.html" class="sidebar-link"><i class="bi bi-person-gear me-2"></i>Manage user</a>
+    <a href="audit_trail.html" class="sidebar-link active"><i class="bi bi-clock-history me-2"></i>Activity log</a> 
+    <a href="medicine_inventory.html" class="sidebar-link"><i class="bi bi-capsule me-2"></i>Medicine</a>
+  <a href="reports.html" class="sidebar-link"><i class="bi bi-graph-up me-2"></i>Reports</a>
+  <a href="settings.html" class="sidebar-link"><i class="bi bi-gear me-2"></i>Settings</a>
+      </nav>
+    </aside>
+     <main class="main-content">
+  <div class="dashboard-topbar" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;gap:18px;">
+    <button id="dashboardSettingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.7rem;color:#2563eb;display:flex;align-items:center;">
+    </button>
+    <div class="dashboard-profile-dropdown" style="position:relative;">
+      <button id="dashboardProfileBtn" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+  <img src="../assets/images/documed_logo.png" alt="DocuMed Logo" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+      </button>
+      <div id="dashboardProfileMenu" style="display:none;position:absolute;right:0;top:110%;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:10px;min-width:160px;z-index:20;">
+        <a href="#" id="profileInfoMenu" style="display:block;padding:12px 18px;color:#2563eb;text-decoration:none;font-weight:500;border-bottom:1px solid #f3f4f6;">Profile Info</a>
+        <a href="admin_login.html" id="logoutMenu" style="display:block;padding:12px 18px;color:#e11d48;text-decoration:none;font-weight:500;">Logout</a>
+      </div>
+    </div>
+  </div>
+      <div>
+        <h1 class="mb-2">Activity log</h1>
+        <div class="d-flex flex-wrap gap-2 align-items-end px-3 mb-2">
+          <div>
+            <label class="form-label small mb-1">Start date</label>
+            <input type="date" id="auditStart" class="form-control" style="height:38px;">
+          </div>
+          <div>
+            <label class="form-label small mb-1">End date</label>
+            <input type="date" id="auditEnd" class="form-control" style="height:38px;">
+          </div>
+          <div>
+            <label class="form-label small mb-1">Admin (id or name)</label>
+            <input type="text" id="auditAdmin" class="form-control" placeholder="e.g. 1 or Jane" style="height:38px;">
+          </div>
+          <div class="flex-grow-1">
+            <label class="form-label small mb-1">Search</label>
+            <input type="text" id="auditQ" class="form-control" placeholder="Action or details" style="height:38px;">
+          </div>
+          <div>
+            <label class="form-label small mb-1">Limit</label>
+            <select id="auditLimit" class="form-select" style="height:38px;width:110px;">
+              <option>50</option>
+              <option selected>200</option>
+              <option>500</option>
+            </select>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" id="auditApply" style="height:38px;">Apply</button>
+            <button class="btn btn-outline-secondary" id="auditReset" style="height:38px;">Reset</button>
+          </div>
+        </div>
+        <div id="audit-list">
+          <table id="auditTrailTable">
+            <thead>
+              <tr>
+                <th>Date/Time</th>
+                <th>Admin</th>
+                <th>Action</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Logs will be injected here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/dashboard_interactive.js"></script>
+  <script>
+    async function loadAudit() {
+      const params = new URLSearchParams();
+      params.set('action','list');
+      const s = document.getElementById('auditStart').value.trim();
+      const e = document.getElementById('auditEnd').value.trim();
+      const a = document.getElementById('auditAdmin').value.trim();
+      const q = document.getElementById('auditQ').value.trim();
+      const l = document.getElementById('auditLimit').value;
+      if (s) params.set('start_date', s);
+      if (e) params.set('end_date', e);
+      if (a) params.set('admin', a);
+      if (q) params.set('q', q);
+      if (l) params.set('limit', l);
+      const res = await fetch('../../backend/api/audit_trail.php?' + params.toString());
+      const data = await res.json();
+      if (data.success && data.logs) {
+        const tbody = document.querySelector('#auditTrailTable tbody');
+        tbody.innerHTML = '';
+        data.logs.forEach(log => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${log.timestamp}</td><td>${log.admin_name || log.admin_id}</td><td>${log.action}</td><td>${log.details || ''}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+    document.getElementById('auditApply').addEventListener('click', loadAudit);
+    document.getElementById('auditReset').addEventListener('click', () => {
+      document.getElementById('auditStart').value = '';
+      document.getElementById('auditEnd').value = '';
+      document.getElementById('auditAdmin').value = '';
+      document.getElementById('auditQ').value = '';
+      document.getElementById('auditLimit').value = '200';
+      loadAudit();
+    });
+    loadAudit();
+  </script>
+</body>
+</html>

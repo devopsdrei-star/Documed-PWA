@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+    body {
+      background: #f3f4f6;
+      color: #111;
+    }
+    .main-content {
+      background: #fff;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.14);
+      /* padding: 36px 32px; */
+      /* margin: 32px 0; */
+ 
+    }
+    h1 {
+      color: #111;
+      font-size: 2rem;
+      margin-bottom: 24px;
+      text-align: center;
+      letter-spacing: 1px;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(37,99,235,0.08);
+    }
+    #patients-list {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+    #patientsTable {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fff;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    #patientsTable th, #patientsTable td {
+      padding: 12px 10px;
+      text-align: left;
+      color: #111;
+      font-size: 0.98rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    #patientsTable th {
+      background: #f3f4f6;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #111;
+      border-bottom: 2px solid #2563eb;
+    }
+    #patientsTable tr:last-child td {
+      border-bottom: none;
+    }
+    .sidebar {
+      box-shadow: 0 4px 24px rgba(37,99,235,0.10);
+    }
+    .profile-photo {
+      box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+    }
+    .sidebar-link.active {
+      background: #1e40af;
+      color: #ffffff !important;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+    }
+    .sidebar-link {
+      color: #ffffff;
+      font-weight: 500;
+    }
+    .logout {
+      /* background: #ffffff; */
+      color: #fff !important;
+      box-shadow: 0 2px 8px rgba(239,68,68,0.10);
+    }
+    @media (max-width: 900px) {
+      .main-content {
+        padding: 18px 4px;
+      }
+      #patientsTable th, #patientsTable td {
+        padding: 8px 4px;
+        font-size: 0.92rem;
+      }
+    }
+    .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 32px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+label {
+  font-weight: 500;
+  color: #065f46;
+  margin-bottom: 6px;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+input[type="text"], input[type="date"], input[type="file"], select, textarea {
+  background: #fff;
+  border: 1px solid #2563eb;
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  margin-bottom: 2px;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s;
+}
+input[type="text"]:focus, input[type="date"]:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #2563eb;
+}
+input[type="number"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #2563eb;
+  border-radius: 7px;
+  font-size: 1rem;
+  margin-bottom: 2px;
+  box-sizing: border-box;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+.checkbox-group {
+      grid-column: 1/3;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 8px;
+      margin-top: 20px; /* dagdagan ang space sa taas ng checkbox row */
+    }
+    .checkbox-group label {
+  font-weight: 600;
+  margin-bottom: 16px; /* dagdagan ang space sa ilalim ng label */
+  color: #5b5b5b;
+  font-size: 1.07rem;
+  display: block;
+}
+    .full-width {
+      grid-column: 1/3;
+    }
+    .form-actions {
+      grid-column: 1/3;
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+    }
+.btn-update {
+  background: #047857;
+  color: #fff;
+  padding: 12px 36px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+}
+.btn-update:hover {
+  background: #065f46;
+}
+ @media (max-width: 700px) {
+      .form-bg { padding: 18px 6px; }
+      .form-grid { grid-template-columns: 1fr; gap: 18px 0; }
+      .checkbox-group, .full-width, .form-actions { grid-column: 1/2 !important; }
+      h1 { font-size: 1.3rem; margin-bottom: 18px; }
+    }
+#checkupModal > div {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+  <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+          <nav class="sidebar-nav">
+    <a href="dashboard.html" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+    <a href="patients.html" class="sidebar-link active"><i class="bi bi-people me-2"></i>Patients</a>
+    <a href="appointments.html" class="sidebar-link"><i class="bi bi-calendar-check me-2"></i>Appointments</a>
+    <a href="manage_users.html" class="sidebar-link"><i class="bi bi-person-gear me-2"></i>Manage user</a>
+    <a href="audit_trail.html" class="sidebar-link"><i class="bi bi-clock-history me-2"></i>Activity log</a> 
+    <a href="medicine_inventory.html" class="sidebar-link"><i class="bi bi-capsule me-2"></i>Medicine</a>
+  <a href="reports.html" class="sidebar-link"><i class="bi bi-graph-up me-2"></i>Reports</a>
+  <a href="settings.html" class="sidebar-link"><i class="bi bi-gear me-2"></i>Settings</a>
+      </nav>
+    </aside>
+ <main class="main-content">
+  <div class="dashboard-topbar" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;gap:18px;">
+    <button id="dashboardSettingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.7rem;color:#2563eb;display:flex;align-items:center;">
+    </button>
+    <div class="dashboard-profile-dropdown" style="position:relative;">
+      <button id="dashboardProfileBtn" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+  <img src="../assets/images/documed_logo.png" alt="DocuMed Logo" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+      </button>
+      <div id="dashboardProfileMenu" style="display:none;position:absolute;right:0;top:110%;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:10px;min-width:160px;z-index:20;">
+        <a href="#" id="profileInfoMenu" style="display:block;padding:12px 18px;color:#2563eb;text-decoration:none;font-weight:500;border-bottom:1px solid #f3f4f6;">Profile Info</a>
+        <a href="admin_login.html" id="logoutMenu" style="display:block;padding:12px 18px;color:#e11d48;text-decoration:none;font-weight:500;">Logout</a>
+      </div>
+    </div>
+  </div>
+      <h1>Patient Records</h1>
+      <div id="patients-list">
+          <div style="display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 0; flex-wrap: wrap;">
+            <div id="patientsFiltersRow" style="display:flex; gap:12px; align-items:center; flex-wrap: nowrap;">
+              <input type="text" id="searchPatient" class="form-control" placeholder="Search patient by name or ID..." autocomplete="off" style="width: 520px; max-width: 100%; margin-top: 0;">
+              <select id="roleFilter" class="form-select" style="width: 180px;">
+                <option value="">All roles</option>
+                <option value="Student">Student</option>
+                <option value="Faculty">Faculty</option>
+                <option value="Staff (Non-Teaching)">Staff (Non-Teaching)</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <a class="btn btn-outline-secondary" href="patients_archive.html">View Archived</a>
+              <a class="btn" href="../../backend/api/admin_tools.php?action=export_csv&type=patients" target="_blank">Export Patients (CSV)</a>
+            </div>
+          </div>
+        <table id="patientsTable">
+          <thead>
+            <tr>
+              <th>School ID</th>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Client Type</th>
+              <th>Contact Number</th>
+              <th>Birthdate</th>
+              <th>Assessment</th>
+              <th>Last Check Up</th>
+              <th>Checked by</th>
+              <th>Next Check-Up</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="patientsMsg" style="margin-top:12px;"></div>
+      </div>
+    </main>
+  </div>
+  <style>
+    @media (max-width: 900px){
+      #patientsFiltersRow{ flex-wrap: wrap !important; }
+    }
+  </style>
+  
+  <script src="../assets/js/admin.js"></script>
+  <script src="../assets/js/admin_patients.js"></script>
+  <script src="../assets/js/settings_dropdown.js"></script>
+  <script src="../assets/js/dashboard_interactive.js"></script>
+</body>
+</html>

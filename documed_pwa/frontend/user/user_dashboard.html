@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a6ecb">
+  <link rel="manifest" href="../../manifest-landing.json">
+  <link rel="apple-touch-icon" href="../assets/images/documed_logo.png">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+  <title>DocuMed</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: #0a6ecb;
+      color: #111;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .main-wrapper {
+      background: #fff;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+      max-width: 100%;
+      width: 100%;
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: visible;
+      position: relative;
+    }
+    .top-nav { padding: 0 24px; width: 100%; }
+    /* Use shared .nav-logo sizing from global stylesheet */
+    .nav-links { gap: 32px; font-weight: 500; font-size: 1.08rem; }
+    .nav-links a {
+      color: #222;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: #00d1c7;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .btn-signup {
+      background: #2563eb;
+      color: #fff;
+      border-radius: 24px;
+      padding: 6px 22px;
+      font-weight: 600;
+      border: none;
+      margin-right: 8px;
+      transition: background 0.2s;
+    }
+    .btn-signup:hover {
+      background: #0b5fad;
+    }
+    .btn-login {
+      background: #fff;
+      color: #2563eb;
+      border-radius: 24px;
+      padding: 6px 22px;
+      font-weight: 600;
+      border: 2px solid #2563eb;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-login:hover {
+      background: #2563eb;
+      color: #fff;
+    }
+    @media (max-width: 768px) {
+      .btn-signup, .btn-login { padding: 6px 14px; font-size: 0.95rem; }
+    }
+    .hero-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 48px 64px 24px 64px;
+      gap: 32px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .hero-content {
+      max-width: 550px;
+    }
+    .hero-content h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: #222;
+    }
+    .hero-content h1 .accent {
+      color: #2563eb;
+    }
+    .hero-content p {
+      color: #555;
+      font-size: 1.08rem;
+      margin-bottom: 28px;
+    }
+    .hero-content .btn {
+      margin-right: 12px;
+      font-weight: 600;
+      font-size: 1.08rem;
+      border-radius: 24px;
+      padding: 10px 28px;
+    }
+    .hero-img {
+      width: 380px;
+      height: 220px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 2px 12px #00d1c722;
+    }
+    .info-section {
+      background: #2563eb;
+      color: #fff;
+      padding: 32px 64px;
+      display: flex;
+      align-items: flex-start;
+      gap: 32px;
+      border-radius: 0;
+      width: 100vw;
+      box-sizing: border-box;
+    }
+    .info-form {
+      flex: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+    .info-form .form-control {
+      border-radius: 30px;
+      border: none;
+      padding: 12px 16px;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+    .info-form label {
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .info-hours {
+      flex: 1;
+      padding-left: 32px;
+    }
+    .info-hours h3 {
+      font-size: 1.18rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+    .info-hours .bi {
+      font-size: 1.5rem;
+      margin-right: 8px;
+    }
+    .info-hours-table {
+      width: 100%;
+      font-size: 1.08rem;
+      margin-top: 8px;
+    }
+    .info-hours-table td {
+      padding: 6px 0;
+    }
+    /* Team (Clinic Staff) section */
+    .team-section {
+      background: #2563eb;
+      color: #fff;
+      padding: 48px 64px;
+      border-radius: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .team-wrap { max-width: 1100px; margin: 0 auto; }
+    .team-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      margin: 0 0 18px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .team-title .bi { font-size: 1.5rem; }
+    .team-subtitle { color: #e0f2fe; margin-bottom: 22px; }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .team-card {
+      background: #ffffff;
+      color: #111;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .team-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.12); }
+    .team-photo {
+      width: 68px; height: 68px; border-radius: 12px; object-fit: cover; border: 2px solid #2563eb; background: #fff;
+    }
+    .team-meta .name { font-weight: 700; font-size: 1.05rem; }
+    .team-meta .role { color: #2563eb; font-weight: 600; font-size: .95rem; }
+    .team-meta .desc { color: #445; font-size: .9rem; margin-top: 2px; }
+    @media (max-width: 1100px) { .team-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 900px) { .team-section { padding: 28px 16px; } .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 540px) { .team-grid { grid-template-columns: 1fr; } }
+    /* Staff carousel specific styles */
+  #staffCarousel { margin-top: 8px; }
+  .staff-col { display: flex; }
+  .staff-col .staff-figure { width: 100%; }
+    .staff-figure {
+      position: relative;
+      width: 100%;
+      height: 320px; /* unified portrait height */
+      border-radius: 16px;
+      overflow: hidden;
+      background: #f3f4f6;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+    }
+    .staff-figure img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display:block; transition: transform .2s ease; }
+  /* Per-image focus helpers */
+  .staff-figure img.pos-upper { object-position: 50% 25%; }
+  .staff-figure img.pos-mid { object-position: 50% 35%; }
+  .staff-figure img.pos-low { object-position: 50% 50%; }
+  .staff-figure.portrait-tight { height: 320px; }
+  .staff-figure img.zoom-out { transform: scale(0.92); transform-origin: center top; }
+  .staff-figure img.zoom-out-sm { transform: scale(0.96); transform-origin: center top; }
+  /* Fine-tune for Staff 6: slight zoom-in and upward shift */
+  .staff-figure img.tweak-staff-6 { transform: scale(0.96) translateY(-2%); transform-origin: center top; }
+    .staff-caption {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 10px 12px; color: #fff; font-weight: 600;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 60%, rgba(0,0,0,.75) 100%);
+    }
+    .staff-caption .name { font-size: 1.05rem; line-height: 1.2; }
+    .staff-caption .role { font-size: .9rem; font-weight: 500; opacity: .95; }
+  .group-figure { height: 320px; background: #fff; }
+    .group-figure img { object-fit: contain; object-position: center; background: #fff; }
+    @media (max-width: 900px) {
+      .main-wrapper { max-width: 100vw; margin: 0; border-radius: 0; min-height: 100vh; }
+      .top-nav { padding: 0 12px; }
+      .hero-section, .info-section { flex-direction: column; padding: 24px 12px; gap: 18px; width: 100%; }
+        .hero-img { width: 100%; height: 180px; }
+      .info-section { border-radius: 0; }
+      .info-hours { padding-left: 0; }
+    }
+    @media (max-width: 768px) {
+      .top-nav { flex-wrap: wrap; }
+      .nav-links { display: none; }
+      .top-nav.nav-open .nav-links { display: flex; width: 100%; gap: 16px; padding: 8px 0; }
+      .nav-actions { width: 100%; justify-content: flex-end; padding: 6px 0; }
+    }
+    /* PWA install button */
+  /* Keep below Bootstrap modal (modal ~1055) so it won't block modal buttons */
+  #pwaInstallBtn { position:fixed; bottom:16px; right:16px; background:#0a6ecb; color:#fff; border:none; padding:10px 18px; border-radius:28px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,.25); cursor:pointer; display:none; z-index:1040; }
+    #pwaInstallBtn:active { transform:translateY(1px); }
+  /* Anchor offset for sticky nav */
+  .scroll-offset { scroll-margin-top: 90px; }
+  /* Contact section */
+  .contact-section { background:#fff; padding:48px 16px; }
+  .contact-wrap { max-width:1100px; margin:0 auto; }
+  .contact-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:16px; }
+  .contact-card { background:#f9fafb; border-radius:16px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,.06); }
+  .contact-card h4 { margin:0 0 6px 0; font-size:1.05rem; color:#0a6ecb; }
+  .contact-card .line { font-size:1rem; color:#111; }
+  .contact-card .muted { font-size:.92rem; color:#475569; }
+  @media (max-width: 900px){ .contact-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 600px){ .contact-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <button id="pwaInstallBtn" aria-label="Install DocuMed app">Install App</button>
+  <div class="main-wrapper">
+    <nav class="top-nav">
+      <div class="d-flex align-items-center">
+        <div class="nav-logo">
+          <img src="../assets/images/documed_logo.png" alt="DocuMed Logo">
+        </div>
+        <button class="nav-burger" aria-label="Toggle navigation"><span></span></button>
+        <div class="nav-links" id="navLinks">
+          <a href="user_dashboard.html">Home</a>
+          <a href="#services" id="navServices">Services</a>
+          <a href="#about" id="navAbout">About Us</a>
+          <a href="#contact" id="navContact">Contact</a>
+          <a href="#" id="navHelp">Help</a>
+          <div class="d-md-none" style="border-top:1px solid #e0e7ff;margin:6px 0 0 0;"></div>
+          <a href="user_register.html" class="btn-signup d-md-none" id="signupBtnMobile" style="display:inline-block;padding:8px 12px;border-radius:20px;">Sign Up</a>
+          <a href="#" class="btn-login d-md-none" id="loginBtnMobile" data-bs-toggle="modal" data-bs-target="#loginModal" style="display:inline-block;padding:8px 12px;border-radius:20px;border-width:2px;">Log In</a>
+        </div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-actions" id="navActions">
+          <a href="user_register.html" class="btn-signup d-none d-md-inline" id="signupBtn">Sign Up</a>
+          <button class="btn-login d-none d-md-inline" id="loginBtn" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="bi bi-box-arrow-in-right"></i> Log In</button>
+        </div>
+      </div>
+    </nav>
+  <!-- Dynamic banner from Admin Settings (banner_message) -->
+  <div id="userBanner" style="display:none;background:#e0f2fe;color:#084c61;padding:10px 16px;text-align:center;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
+    <section class="hero-section">
+      <div class="hero-content">
+        <span style="color:#2563eb;font-weight:700;letter-spacing:2px;">WELCOME</span>
+        <h1>Medical Clinic that <span class="accent">You can Trust.</span></h1>
+  <p>DocuMed makes campus healthcare simple and accessible. Book clinic visits and dental services, manage your appointments, and view your records in one place anytime, on any device.</p>
+  <!-- Book Now button removed as requested -->
+  <a href="#about" class="btn btn-outline-primary">More Info</a>
+      </div>
+      <div class="hero-right" style="flex:1;display:flex;justify-content:right;align-items:center;">
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" style="width:100%;max-width:800px;height:350px;">
+          <div class="carousel-inner" style="height:320px;">
+            <div class="carousel-item active" style="height:320px;">
+              <img src="../assets/images/check_up_image.jpg" class="d-block w-100 hero-img" alt="Clinic" style="height:320px;object-fit:cover;">
+            </div>
+            <div class="carousel-item" style="height:320px;">
+              <img src="../assets/images/denta_image.jpg" class="d-block w-100 hero-img" alt="Clinic" style="height:320px;object-fit:cover;">
+            </div>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  
+  <section class="team-section scroll-offset" id="team">
+    <div class="container-fluid p-0 team-wrap">
+      <div class="team-title"><i class="bi bi-people-fill"></i> Meet Our Clinic Staff</div>
+      <div class="team-subtitle">Get to know the dedicated professionals behind our campus healthcare.</div>
+      <div id="staffCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+          <button type="button" data-bs-target="#staffCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Group"></button>
+          <button type="button" data-bs-target="#staffCarousel" data-bs-slide-to="1" aria-label="Staff 1-3"></button>
+          <button type="button" data-bs-target="#staffCarousel" data-bs-slide-to="2" aria-label="Staff 4-6"></button>
+        </div>
+        <div class="carousel-inner">
+          <!-- Slide 1: Group photo with caption -->
+          <div class="carousel-item active">
+            <div class="row g-3 justify-content-center">
+              <div class="col-12 col-lg-10">
+                <figure class="staff-figure group-figure">
+                  <img src="../assets/images/clinic_staff/clinic_staff_group.jpg" alt="PSU-LC Clinic Staff Group">
+                  <figcaption class="staff-caption">
+                    <div class="name">PSU-LC Clinic Staff</div>
+                    <div class="role">Serving the Pangasinan State University - Lingayen Campus</div>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+          <!-- Slide 2: Individual staff 1-3 -->
+          <div class="carousel-item">
+            <div class="row g-3">
+              <div class="col-12 col-md-6 col-lg-4 staff-col">
+                <figure class="staff-figure">
+                  <img src="../assets/images/clinic_staff/staff_1.jpg" alt="Staff Member 1" class="pos-low zoom-out-sm">
+                  <figcaption class="staff-caption"><div class="name">Christia Marie P. Flores, MD</div><div class="role">Head, Medical-Dental Services</div></figcaption>
+                </figure>
+              </div>
+              <div class="col-12 col-md-6 col-lg-4 staff-col">
+                <figure class="staff-figure portrait-tight">
+                  <img src="../assets/images/clinic_staff/staff_2.jpg" alt="Staff Member 2" class="pos-upper">
+                  <figcaption class="staff-caption"><div class="name">Antonio Rafael C. Belen III</div><div class="role">Campus Nurse Designate, Lingayen Campus</div></figcaption>
+                </figure>
+              </div>
+              <div class="col-12 col-md-6 col-lg-4 staff-col">
+                <figure class="staff-figure">
+                  <img src="../assets/images/clinic_staff/staff_3.jpg" alt="Staff Member 3">
+                  <figcaption class="staff-caption"><div class="name">Cristina U. Manansala, DDM</div><div class="role">University Dentist</div></figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+          <!-- Slide 3: Individual staff 4-6 (centered when only two cards) -->
+          <div class="carousel-item">
+            <div class="row g-3 justify-content-center">
+              <div class="col-12 col-md-6 col-lg-4 staff-col">
+                <figure class="staff-figure">
+                  <img src="../assets/images/clinic_staff/staff_4.jpg" alt="Staff Member 4">
+                  <figcaption class="staff-caption"><div class="name">Recto B. Rayos</div><div class="role">Nurse Assistant</div></figcaption>
+                </figure>
+              </div>
+              <div class="col-12 col-md-6 col-lg-4 staff-col">
+                <figure class="staff-figure">
+                  <img src="../assets/images/clinic_staff/staff_5.jpg" alt="Staff Member 5">
+                  <figcaption class="staff-caption"><div class="name">Paz Cheri Ann V. Soriano, RN</div><div class="role">Campus Coordinator, Medical-Dental Services Lingayen Campus</div></figcaption>
+                </figure>
+              </div>
+              <div class="col-12 col-md-6 col-lg-4 staff-col">
+                <figure class="staff-figure">
+                  <img src="../assets/images/clinic_staff/staff_6.jpg" alt="Staff Member 6" class="tweak-staff-6">
+                  <figcaption class="staff-caption"><div class="name">Ma. Asuncion Carino, RN</div><div class="role">Administrative Aide</div></figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#staffCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#staffCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+    </div>
+  </section>
+  
+  <script>
+    // Make staff carousel show one card per slide on small screens
+    document.addEventListener('DOMContentLoaded', function(){
+      const doSplit = () => {
+        const car = document.getElementById('staffCarousel');
+        if (!car) return;
+        const inner = car.querySelector('.carousel-inner');
+        const indicators = car.querySelector('.carousel-indicators');
+        if (!inner) return;
+        const isSmall = window.innerWidth < 768; // mobile & small tablets
+        if (!isSmall || inner.dataset.mobileSplitDone === '1') return;
+        const items = Array.from(inner.querySelectorAll(':scope > .carousel-item'));
+        items.forEach((item, idx) => {
+          const row = item.querySelector('.row');
+          if (!row) return;
+          const cols = Array.from(row.querySelectorAll(':scope > .staff-col, :scope > [class*="col-"]'));
+          if (cols.length <= 1) return;
+          // Keep the first col in the current slide; move the rest to new slides
+          for (let i = 1; i < cols.length; i++) {
+            const newItem = document.createElement('div');
+            newItem.className = 'carousel-item';
+            const newRow = document.createElement('div');
+            newRow.className = 'row g-3 justify-content-center';
+            const col = cols[i];
+            newRow.appendChild(col);
+            newItem.appendChild(newRow);
+            inner.appendChild(newItem);
+          }
+        });
+        // Rebuild indicators based on new slide count
+        const slides = Array.from(inner.querySelectorAll(':scope > .carousel-item'));
+        if (indicators) {
+          indicators.innerHTML = '';
+          slides.forEach((_, i) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.setAttribute('data-bs-target', '#staffCarousel');
+            btn.setAttribute('data-bs-slide-to', String(i));
+            btn.setAttribute('aria-label', 'Slide ' + (i+1));
+            if (i === 0) { btn.className = 'active'; btn.setAttribute('aria-current','true'); }
+            indicators.appendChild(btn);
+          });
+        }
+        // Ensure only the first slide is active
+        const actives = inner.querySelectorAll('.carousel-item.active');
+        actives.forEach((el, idx)=>{ if (idx>0) el.classList.remove('active'); });
+        slides[0]?.classList.add('active');
+        inner.dataset.mobileSplitDone = '1';
+      };
+      doSplit();
+      window.addEventListener('resize', () => { if (window.innerWidth < 768) doSplit(); });
+    });
+  </script>
+  <section class="about-section scroll-offset" id="services" style="background:#fff;padding:48px 64px;">
+    <div class="row justify-content-center align-items-start" style="max-width:1100px;margin:auto;">
+      <h3 style="font-size:1.7rem;font-weight:700;color:#0a6ecb;margin-bottom:32px;text-align:center;">Services Offered</h3>
+      <div class="col-md-4 mb-4 d-flex justify-content-center">
+        <div class="card shadow-lg border-0" style="background:#e0f7fa;border-radius:18px;padding:32px 18px;width:100%;max-width:320px;">
+          <img src="../assets/images/check_up_image.jpg" alt="Check-up" style="width:70px;height:70px;object-fit:cover;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px #00bcd422;display:block;margin-left:auto;margin-right:auto;">
+          <div style="font-size:1.15rem;font-weight:600;color:#2563eb;text-align:center;margin-bottom:8px;"><i class="bi bi-heart-pulse-fill" style="margin-right:6px;"></i>General Check-up</div>
+          <p style="font-size:0.9rem;color:#222;text-align:center;">Comprehensive health assessment and consultation for students, faculty, and staff.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4 d-flex justify-content-center">
+        <div class="card shadow-lg border-0" style="background:#e0f7fa;border-radius:18px;padding:32px 18px;width:100%;max-width:320px;">
+          <img src="../assets/images/denta_image.jpg" alt="Dental" style="width:70px;height:70px;object-fit:cover;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px #00bcd422;display:block;margin-left:auto;margin-right:auto;">
+          <div style="font-size:1.15rem;font-weight:600;color:#2563eb;text-align:center;margin-bottom:8px;"><i class="bi bi-emoji-smile" style="margin-right:6px;"></i>Dental Services</div>
+          <p style="font-size:0.9rem;color:#222;text-align:center;">Dental check-ups, oral health education, and basic dental procedures.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4 d-flex justify-content-center">
+        <div class="card shadow-lg border-0" style="background:#e0f7fa;border-radius:18px;padding:32px 18px;width:100%;max-width:320px;">
+          <img src="../assets/images/med_cert_image.jpg" alt="Medical Certificate" style="width:70px;height:70px;object-fit:cover;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px #00bcd422;display:block;margin-left:auto;margin-right:auto;">
+          <div style="font-size:1.15rem;font-weight:600;color:#2563eb;text-align:center;margin-bottom:8px;"><i class="bi bi-file-earmark-medical" style="margin-right:6px;"></i>Medical Certificates</div>
+          <p style="font-size:0.9rem;color:#222;text-align:center;">Issuance of medical certificates for school, work, and other requirements.</p>
+        </div>
+      </div>
+    </div>
+  <div id="about" class="scroll-offset" style="max-width:900px;margin:48px auto 0 auto; display:flex; flex-direction:column; align-items:center; text-align:center; justify-content:center;">
+      <h2 style="font-size:2rem;font-weight:700;color:#2563eb;margin-bottom:18px;">About DocuMed</h2>
+      <p style="font-size:1.08rem;color:#222;margin-bottom:0;">DocuMed is a campus clinic management system designed to make healthcare services more accessible for students, faculty, and staff. The platform streamlines appointments, medical records, and clinic operations, ensuring a smooth and efficient experience for everyone in the campus community.</p>
+    </div>
+  </section>
+
+  <!-- Contact Section (footer area) -->
+  <section class="contact-section scroll-offset" id="contact">
+    <div class="contact-wrap">
+      <h3 style="font-size:1.7rem;font-weight:700;color:#0a6ecb;margin-bottom:18px;">Contact Us</h3>
+      <p class="muted" style="margin-bottom:16px;color:#334155;">Reach out to the PSU-LC Clinic team through the following channels.</p>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <h4><i class="bi bi-envelope"></i> Email</h4>
+          <div class="line"><a href="mailto:clinic@documed.com">clinic@documed.com</a></div>
+          <div class="muted">General concerns and follow-ups</div>
+        </div>
+        <div class="contact-card">
+          <h4><i class="bi bi-geo-alt"></i> Location</h4>
+          <div class="line"><a href="#" data-bs-toggle="modal" data-bs-target="#campusMapModal" style="text-decoration:underline;">Pangasinan State University - Lingayen Campus</a></div>
+          <div class="muted">Campus Clinic, Lingayen, Pangasinan</div>
+        </div>
+        <div class="contact-card">
+          <h4><i class="bi bi-facebook"></i> Facebook Page</h4>
+          <div class="line"><a href="https://www.facebook.com/profile.php?id=100057343664043&rdid=onQj2HWVtcYxCSQu&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1SgBVSR4Nr%2F#" target="_blank" rel="noopener noreferrer">PSU Main Medical & Dental Services</a></div>
+          <div class="muted">Announcements and updates</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Campus Map Modal -->
+  <div class="modal fade" id="campusMapModal" tabindex="-1" aria-labelledby="campusMapLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+          <h5 class="modal-title" id="campusMapLabel">PSU-LC Location Map</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div class="ratio ratio-16x9">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3834.6410262914414!2d120.22711047523677!3d16.032191784642006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33915e69b8d7bf01%3A0x9974335ec26be4ee!2sPangasinan%20State%20University!5e0!3m2!1sen!2sph!4v1759644619955!5m2!1sen!2sph" style="border:0;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer style="background:#0a6ecb;color:#fff;padding:32px 0 18px 0;margin-top:48px;width:100vw;">
+    <div style="max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;">
+      <div id="footerClinicName" style="font-size:1.15rem;font-weight:600;letter-spacing:1px;">DocuMed Campus Clinic &copy; 2025</div>
+      <div style="font-size:1rem;">For inquiries: <a href="mailto:clinic@documed.com" style="color:#fff;text-decoration:underline;">clinic@documed.com</a></div>
+      <div style="font-size:1rem;">Powered by <span style="color:#00d1c7;font-weight:600;">DocuMed</span></div>
+    </div>
+  </footer>
+  <!-- Login Modal -->
+  <script src="../assets/js/mobile-nav.js"></script>
+  <script src="../assets/js/pwa.js"></script>
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+          <h5 class="modal-title" id="loginModalLabel">User Login</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+       <form id="userLoginFormModal">
+         <div class="mt-2 text-end" style="font-size:0.95rem;color:#334155;margin-bottom:10px;">
+              <span>Are you a </span>
+              <a href="../doc_nurse/doc_nurse_login.html" style="color:#2563eb;font-weight:600;text-decoration:underline;">Doctor/Nurse</a>
+              <span> or </span>
+              <a href="../dentist/dentist_login.html" style="color:#2563eb;font-weight:600;text-decoration:underline;">Dentist</a>
+              <span>?</span>
+            </div>
+            <div class="mb-3" id="loginFieldEmail">
+              <label for="loginEmail" class="form-label">Email or School ID</label>
+              <input type="text" class="form-control" id="loginEmail" name="email" required placeholder="Enter email or School ID">
+            </div>
+            <div class="mb-3" id="loginFieldPassword">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" name="password" required placeholder="Enter your password">
+            </div>
+            <div id="userLoginMsgModal" style="margin-bottom:12px;"></div>
+            <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
+            <div class="d-grid gap-2 mt-2" id="loginQrBtnRow">
+              <button type="button" id="qrLoginChallengeBtn" class="btn btn-info" style="background:#0ea5e9;border-color:#0ea5e9;">Login with QR</button>
+            </div>
+            <!-- Session QR (Shopee-style) -->
+            <div id="qrSessionBox" style="display:none;margin-top:12px;">
+              <div class="text-center" style="padding:8px;border:1px solid #e5e7eb;border-radius:10px;">
+                <img id="qrSessionImg" src="" alt="Session QR" style="width:200px;height:200px;object-fit:contain;" />
+                <div id="qrSessionMsg" class="mt-2" style="font-size:0.95rem;color:#334155;">Scan this QR using your phone to approve login.</div>
+                <div class="d-flex justify-content-between mt-2">
+                  <button type="button" id="qrSessionCancel" class="btn btn-outline-secondary btn-sm">Cancel</button>
+                  <button type="button" id="qrSessionRefresh" class="btn btn-outline-primary btn-sm">New QR</button>
+                </div>
+                <div id="qrSessionTip" class="form-text mt-2">Tip: Buksan ang “Approve Login” page sa phone mo at i-scan ito.</div>
+                <!-- Waiting illustration (shown when scanned) -->
+                <div id="qrWaitingBox" style="display:none;margin-top:12px;">
+                  <style>
+                    .documed-phone { width:90px; height:150px; border:2px solid #cbd5e1; border-radius:16px; background:#f8fafc; position:relative; box-shadow:inset 0 0 0 1px #e2e8f0; }
+                    .documed-screen { position:absolute; left:10px; right:10px; top:18px; bottom:40px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+                    .documed-homebar { position:absolute; left:50%; transform:translateX(-50%); bottom:14px; width:24px; height:3px; border-radius:2px; background:#94a3b8; }
+                    .documed-logo { width:34px; height:34px; object-fit:contain; }
+                  </style>
+                  <div class="d-flex flex-column align-items-center" style="gap:8px;">
+                    <div class="documed-phone">
+                      <div class="documed-screen">
+                        <img src="../assets/images/documed_logo.png" alt="DocuMed" class="documed-logo" />
+                      </div>
+                      <div class="documed-homebar"></div>
+                    </div>
+                    <div style="color:#0f172a;font-weight:600;">Waiting for confirmation on your phone…</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end align-items-center mb-2" style="min-height:32px;" id="loginForgotRow">
+              <a href="forgot_password.html" style="color:#2563eb;font-weight:500;text-decoration:underline;">Forgot password?</a>
+            </div>
+            <div class="mt-3 text-center" id="loginSignupRow">
+              <span style="color:#222;font-size:1rem;">Don't have an account? <a href="user_register.html" style="color:#2563eb;font-weight:500;text-decoration:underline;">Sign Up</a></span>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/user_dashboard.js"></script>
+  <script src="../assets/js/dashboard_modals.js"></script>
+  <script src="../assets/js/login_sid_helper.js"></script>
+  <script src="../assets/js/help_modal.js"></script>
+  <!-- QR scan logic (library loads dynamically with fallbacks) -->
+  <!-- Preload local QR engine to avoid CDN/network issues -->
+  <script src="../assets/js/vendor/html5-qrcode.min.js?v=20251011"></script>
+  <script src="../assets/js/qr_login.js"></script>
+  <script src="../assets/js/qr_challenge.js"></script>
+  <!-- Approve Login Modal (phone/device) -->
+  <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+          <h5 class="modal-title" id="approveModalLabel">Scan to Approve Login</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <style>
+            .scan-box { position: relative; width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background:#000; }
+            .scan-overlay { position: absolute; inset: 0; pointer-events: none; display:none; }
+            .scan-line { position: absolute; left: 8%; right: 8%; height: 3px; border-radius: 2px;
+              background: linear-gradient(90deg, transparent, #22c55e, #22c55e, transparent);
+              box-shadow: 0 0 8px #22c55e;
+              animation: scanY 2.2s linear infinite; }
+            @keyframes scanY { 0% { top: 6%; } 100% { top: 94%; } }
+          </style>
+          <div id="approveMsg" class="text-muted mb-2">Itutok ang camera sa QR na nasa desktop login.</div>
+          <div class="scan-box" id="scanBox">
+            <div id="approveReader"></div>
+            <!-- Native fallback preview -->
+            <video id="approveVideo" playsinline style="display:none;width:100%;"></video>
+            <div class="scan-overlay" id="scanOverlay"><div class="scan-line"></div></div>
+          </div>
+          <!-- Note: Confirmation UI moved to a dedicated modal for Shopee-style flow -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Separate Confirm Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+          <h5 class="modal-title" id="confirmModalLabel">Confirm Login</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="confirmMsg" class="text-muted mb-2"></div>
+          <div class="card" style="border:1px solid #e5e7eb;">
+            <div class="card-body">
+              <div class="mb-2" style="font-weight:700;">Is this you?</div>
+              <div id="confirmDevice" class="mb-2" style="color:#334155;">Device: —</div>
+              <div class="text-muted" style="font-size:0.92rem;">Are you trying to log in on this computer?</div>
+              <div class="d-flex gap-2 mt-3">
+                <button type="button" id="confirmYes" class="btn btn-success">Yes, log me in</button>
+                <button type="button" id="confirmCancel" class="btn btn-outline-secondary">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <!-- Credentials fallback when no personal token is stored -->
+          <div id="confirmCreds" style="display:none;margin-top:12px;">
+            <div class="mb-2" style="font-weight:600;color:#0f172a;">Approve with your password</div>
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <input type="text" id="confirmIdentifier" class="form-control" placeholder="Email or School ID" />
+              </div>
+              <div class="col-12 col-md-6">
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Password" />
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-2 flex-wrap" style="gap:8px;">
+              <button type="button" id="enablePersonalNow2" class="btn btn-outline-secondary btn-sm">Enable One‑Tap Approval</button>
+              <div class="ms-auto"></div>
+              <button type="button" id="confirmSubmit" class="btn btn-primary btn-sm">Approve</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Approve modal logic (opens camera automatically)
+    (function(){
+      const modalEl = document.getElementById('approveModal');
+      const approveMsg = document.getElementById('approveMsg');
+  let qrObj = null;
+  let video = document.getElementById('approveVideo');
+  let stream = null;
+  let rafId = null;
+  let detector = null;
+  let scannedChallenge = '';
+
+      function tryStart(){
+        approveMsg.textContent = 'Loading camera...';
+        const scanOverlay = document.getElementById('scanOverlay');
+        const start = async () => {
+          try {
+            // Prefer native BarcodeDetector if available
+            if ('BarcodeDetector' in window) {
+              try {
+                detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+              } catch (_) { detector = null; }
+            }
+
+            if (detector) {
+              // Start native camera stream
+              stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+              if (!video) video = document.getElementById('approveVideo');
+              const reader = document.getElementById('approveReader');
+              if (reader) reader.style.display = 'none';
+              video.style.display = 'block';
+              video.srcObject = stream;
+              await video.play();
+              approveMsg.textContent = 'Camera ready. Scan the QR on desktop.';
+              if (scanOverlay) scanOverlay.style.display = 'block';
+
+              const scanLoop = async () => {
+                try {
+                  const codes = await detector.detect(video);
+                  if (codes && codes.length) {
+                    const txt = codes[0].rawValue || '';
+                    approveMsg.textContent = 'Naka-scan. Nag-a-approve...';
+                    handleScannedText(txt);
+                    return; // stop loop after first success
+                  }
+                } catch(_) {}
+                rafId = requestAnimationFrame(scanLoop);
+              };
+              rafId = requestAnimationFrame(scanLoop);
+              return;
+            }
+
+            // Fallback to html5-qrcode library
+            const html5 = window.Html5Qrcode;
+            if (!html5) { approveMsg.textContent = 'QR engine not available.'; return; }
+            qrObj = new html5('approveReader');
+            qrObj.start({ facingMode:'environment' }, { fps:10, qrbox: { width:250, height:250 } }, (txt)=>{
+              approveMsg.textContent = 'Naka-scan. Nag-a-approve...';
+              handleScannedText(txt);
+            }, ()=>{}).catch(()=>{ approveMsg.textContent = 'Camera not available.'; });
+          } catch (e) { approveMsg.textContent = 'Unable to start camera.'; }
+        };
+        // Use loader from qr_login.js if present
+        if (window.loadHtml5Qr) {
+          window.loadHtml5Qr().then(start).catch(()=>{ approveMsg.textContent = 'QR engine not available.'; });
+        } else {
+          // Minimal fallback loader if qr_login.js loader is not present
+          const attempts = [];
+          const tryLoad = (url) => new Promise((resolve, reject) => { attempts.push(url); const s=document.createElement('script'); s.src=url; s.async=true; s.onload=()=>resolve(); s.onerror=()=>reject(); document.head.appendChild(s); setTimeout(()=>reject(),8000); });
+          const urls = [
+            '../assets/js/vendor/html5-qrcode.min.js',
+            '/documed_pwa/frontend/assets/js/vendor/html5-qrcode.min.js',
+            '/DocMed/documed_pwa/frontend/assets/js/vendor/html5-qrcode.min.js',
+            'https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js',
+            'https://unpkg.com/html5-qrcode/html5-qrcode.min.js'
+          ];
+          urls.reduce((p,u)=>p.catch(()=>tryLoad(u)), Promise.reject())
+            .then(()=>start())
+            .catch(()=>{ approveMsg.textContent = 'QR engine not available.'; });
+        }
+      }
+      function stopCam(){
+        if (qrObj) { try { qrObj.stop().catch(()=>{}); } catch(_) {} qrObj = null; }
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        if (video) { try { video.pause(); } catch(_) {} video.srcObject = null; }
+        if (stream) { try { stream.getTracks().forEach(t=>t.stop()); } catch(_) {} stream = null; }
+        detector = null;
+        const scanOverlay = document.getElementById('scanOverlay');
+        if (scanOverlay) scanOverlay.style.display = 'none';
+      }
+
+      function handleScannedText(txt){
+        try {
+          const parts = (txt||'').split(':');
+          let challenge = txt;
+          if (parts.length >= 3 && parts[0].toUpperCase()==='DMQR' && (parts[1].toLowerCase()==='chlg' || parts[1].toLowerCase()==='v1')) challenge = (parts[2] || parts[parts.length-1] || '').trim();
+          challenge = (challenge || '').trim();
+          scannedChallenge = challenge;
+          // Move to separate confirmation modal
+          // Stop camera and hide scan modal first
+          stopCam();
+          const scanModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('approveModal'));
+          scanModal.hide();
+          const cmEl = document.getElementById('confirmModal');
+          const cm = bootstrap.Modal.getOrCreateInstance(cmEl);
+          const cMsg = document.getElementById('confirmMsg');
+          const cDev = document.getElementById('confirmDevice');
+          const cCreds = document.getElementById('confirmCreds');
+          if (cCreds) cCreds.style.display = 'none';
+          if (cMsg) cMsg.textContent = 'Fetching device info...';
+          cm.show();
+          fetch('../../backend/api/auth.php?action=qr_challenge_info', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: 'challenge=' + encodeURIComponent(challenge) })
+            .then(r=>r.json())
+            .then(d=>{
+              if (d && d.success) {
+                if (cMsg) cMsg.textContent = 'Review and confirm login';
+                if (cDev) cDev.textContent = 'Device: ' + (d.ua_summary || 'Browser');
+              } else {
+                if (cMsg) cMsg.textContent = (d && (d.message||d.error)) || 'Unable to fetch device info.';
+              }
+            })
+            .catch(()=>{ if (cMsg) cMsg.textContent = 'Network error getting info.'; });
+        } catch (e) { approveMsg.textContent = 'Error processing scan.'; }
+      }
+
+      // Confirm modal handlers
+      document.addEventListener('click', async function(ev){
+        const yes = ev.target && ev.target.id === 'confirmYes';
+        if (!yes) return;
+        ev.preventDefault();
+        if (!scannedChallenge) { const cMsg = document.getElementById('confirmMsg'); if (cMsg) cMsg.textContent = 'Walang na-scan na challenge.'; return; }
+        const cMsg = document.getElementById('confirmMsg');
+        const personal = localStorage.getItem('documed_personal_qr') || '';
+        if (personal) {
+          if (cMsg) cMsg.textContent = 'Approving...';
+          const params = new URLSearchParams(); params.set('challenge', scannedChallenge); params.set('qr', personal);
+          try {
+            const r = await fetch('../../backend/api/auth.php?action=qr_approve_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+            const d = await r.json();
+            if (d && d.success) {
+              if (cMsg) cMsg.textContent = 'Approved! Pwede mo nang i-continue sa desktop.';
+              const cmEl = document.getElementById('confirmModal');
+              if (cmEl) { const cm = bootstrap.Modal.getOrCreateInstance(cmEl); cm.hide(); }
+            } else {
+              if (cMsg) cMsg.textContent = (d&&(d.message||d.error)) || 'Approval failed';
+            }
+          } catch(_) { if (cMsg) cMsg.textContent = 'Network error'; }
+          return;
+        }
+        // No personal token: show creds UI
+        const creds = document.getElementById('confirmCreds');
+        if (creds) creds.style.display = 'block';
+        if (cMsg) cMsg.textContent = 'Walang personal QR token. Puwede mong i-enter ang email/ID at password para i-approve.';
+        try {
+          const u = JSON.parse(localStorage.getItem('documed_user')||'null');
+          const idEl = document.getElementById('confirmIdentifier');
+          if (u && idEl) idEl.value = u.email || u.student_faculty_id || '';
+          const pwEl = document.getElementById('confirmPassword');
+          if (pwEl) pwEl.focus();
+        } catch(_) {}
+      });
+
+      // Cancel from confirm modal
+      document.addEventListener('click', async function(ev){
+        const btn = ev.target && ev.target.id === 'confirmCancel';
+        if (!btn) return; ev.preventDefault();
+        const cMsg = document.getElementById('confirmMsg');
+        if (!scannedChallenge) { if (cMsg) cMsg.textContent = 'Walang na-scan na challenge.'; return; }
+        if (cMsg) cMsg.textContent = 'Cancelling...';
+        try {
+          const r = await fetch('../../backend/api/auth.php?action=qr_cancel_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: 'challenge=' + encodeURIComponent(scannedChallenge) });
+          const d = await r.json();
+          if (cMsg) cMsg.textContent = (d && d.success) ? 'Cancelled.' : ((d&&(d.message||d.error)) || 'Failed to cancel');
+        } catch(_) { if (cMsg) cMsg.textContent = 'Network error'; }
+      });
+
+      // Submit approval with credentials (confirm modal)
+      document.addEventListener('click', function(ev){
+        const btn = ev.target && ev.target.id === 'confirmSubmit';
+        if (!btn) return;
+        ev.preventDefault();
+        const cMsg = document.getElementById('confirmMsg');
+        const idEl = document.getElementById('confirmIdentifier');
+        const pwEl = document.getElementById('confirmPassword');
+        const identifier = (idEl && idEl.value || '').trim();
+        const password = (pwEl && pwEl.value || '').trim();
+        if (!identifier || !password) { if (cMsg) cMsg.textContent = 'Please enter both email/ID and password.'; return; }
+        if (!scannedChallenge) { if (cMsg) cMsg.textContent = 'Walang na-scan na challenge. I-scan muli ang QR sa desktop.'; return; }
+        if (cMsg) cMsg.textContent = 'Nagpapadala ng approval...';
+        const params = new URLSearchParams();
+        params.set('challenge', scannedChallenge);
+        params.set('identifier', identifier);
+        params.set('password', password);
+        fetch('../../backend/api/auth.php?action=qr_approve_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() })
+          .then(r=>r.json())
+          .then(d=>{
+            if (d && d.success) {
+              if (cMsg) cMsg.textContent = 'Approved! Pwede mo nang i-continue sa desktop.';
+              const cmEl = document.getElementById('confirmModal');
+              if (cmEl) { const cm = bootstrap.Modal.getOrCreateInstance(cmEl); cm.hide(); }
+            } else {
+              if (cMsg) cMsg.textContent = (d&&(d.message||d.error)) || 'Approval failed';
+            }
+          })
+          .catch(()=>{ if (cMsg) cMsg.textContent = 'Network error'; });
+      });
+
+      // Enable personal token from confirm modal and auto-approve
+      document.addEventListener('click', async function(ev){
+        const btn = ev.target && ev.target.id === 'enablePersonalNow2';
+        if (!btn) return;
+        ev.preventDefault();
+        const cMsg = document.getElementById('confirmMsg');
+        const idEl = document.getElementById('confirmIdentifier');
+        const pwEl = document.getElementById('confirmPassword');
+        const identifier = (idEl && idEl.value || '').trim();
+        const password = (pwEl && pwEl.value || '').trim();
+        if (!identifier || !password) { if (cMsg) cMsg.textContent = 'Please enter both email/ID and password.'; return; }
+        if (cMsg) cMsg.textContent = 'Enabling one‑tap approval...';
+        try {
+          const body = new URLSearchParams({ identifier, password }).toString();
+          const res = await fetch('../../backend/api/auth.php?action=qr_generate_token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+          const text = await res.text();
+          let data; try { data = JSON.parse(text); } catch(e){ console.error('enable token resp', text); throw new Error('Invalid server response'); }
+          if (data && data.success && data.qr_text) {
+            try { localStorage.setItem('documed_personal_qr', data.qr_text); } catch(_) {}
+            if (cMsg) cMsg.textContent = 'One‑tap approval enabled. Approving now...';
+            if (scannedChallenge) {
+              const params = new URLSearchParams(); params.set('challenge', scannedChallenge); params.set('qr', data.qr_text);
+              const r = await fetch('../../backend/api/auth.php?action=qr_approve_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+              const rt = await r.text(); let rd; try { rd = JSON.parse(rt); } catch(e){ rd=null; }
+              if (rd && rd.success) {
+                if (cMsg) cMsg.textContent = 'Approved! Pwede mo nang i-continue sa desktop.';
+                const cmEl = document.getElementById('confirmModal');
+                if (cmEl) { const cm = bootstrap.Modal.getOrCreateInstance(cmEl); cm.hide(); }
+              } else {
+                if (cMsg) cMsg.textContent = (rd && (rd.message||rd.error)) || 'Approval failed';
+              }
+            } else {
+              if (cMsg) cMsg.textContent = 'Enabled. Next scans will auto‑approve.';
+            }
+          } else {
+            if (cMsg) cMsg.textContent = (data && (data.message||data.error)) || 'Failed to enable one‑tap approval.';
+          }
+        } catch(err) {
+          console.error('enable now err', err);
+          if (cMsg) cMsg.textContent = 'Network or server error while enabling.';
+        }
+      });
+
+      // Allow Enter key on password to submit (confirm modal)
+      document.addEventListener('keydown', function(ev){
+        const pwEl = document.getElementById('confirmPassword');
+        if (!pwEl) return;
+        if (document.activeElement === pwEl && ev.key === 'Enter') {
+          ev.preventDefault();
+          const btn = document.getElementById('confirmSubmit');
+          if (btn) btn.click();
+        }
+      });
+
+      // Hide PWA install button while modal is open (avoid overlap blocking Approve)
+      const installBtn = document.getElementById('pwaInstallBtn');
+      modalEl.addEventListener('shown.bs.modal', function(){ if (installBtn) installBtn.style.display = 'none'; });
+      modalEl.addEventListener('hidden.bs.modal', function(){ if (installBtn) installBtn.style.display = ''; });
+
+      // Use delegated click so it works even if the dropdown is injected later
+      document.body.addEventListener('click', function(e){
+        const t = e.target && e.target.closest && e.target.closest('#scanApproveBtn');
+        if (!t) return;
+        e.preventDefault();
+        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+        m.show();
+      });
+      modalEl.addEventListener('shown.bs.modal', tryStart);
+      modalEl.addEventListener('hidden.bs.modal', stopCam);
+
+    })();
+  </script>
+  <!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;">
+      <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+        <h5 class="modal-title" id="qrModalLabel">Your QR Code</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="userQRImg" src="" alt="User QR Code" 
+             style="width:180px;height:180px;object-fit:contain;margin-bottom:12px;">
+        <div id="qrLabel" style="font-size:1.08rem;color:#222;"></div>
+        <div id="qrMsg" class="text-danger" style="margin-top:8px;"></div>
+        <button id="qrGenerateBtn" type="button" class="btn btn-primary btn-sm" style="margin-top:8px;display:none;">Enable QR Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // View QR pop-up
+      const qrModalEl = document.getElementById('qrModal');
+      const qrImgEl = document.getElementById('userQRImg');
+      const qrLabelEl = document.getElementById('qrLabel');
+      // Ensure a single modal instance is reused
+      let qrModal = bootstrap.Modal.getOrCreateInstance(qrModalEl, { backdrop: true, keyboard: true });
+      // Clean up any leftover backdrops/body state on hide (safety net)
+      qrModalEl.addEventListener('hidden.bs.modal', function(){
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('padding-right');
+        // Reset QR content to avoid flashes
+        if (qrImgEl) qrImgEl.src = '';
+        if (qrLabelEl) qrLabelEl.textContent = '';
+      });
+
+      document.body.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'viewQRBtn') {
+          e.preventDefault();
+          // Close any open dropdowns before showing modal
+          document.querySelectorAll('.dropdown-toggle[aria-expanded="true"]').forEach(function(t){
+            try { bootstrap.Dropdown.getOrCreateInstance(t).hide(); } catch(_) {}
+          });
+
+          // Get user QR from backend
+          let userObj = null;
+          try {
+            userObj = JSON.parse(localStorage.getItem('documed_user'));
+          } catch (e) {}
+          
+          let userId = userObj && userObj.id ? userObj.id : localStorage.getItem('id');
+          if (!userId) userId = localStorage.getItem('student_faculty_id');
+          const genBtn = document.getElementById('qrGenerateBtn');
+          const msg = document.getElementById('qrMsg');
+          if (msg) { msg.textContent = ''; msg.classList.remove('text-success'); msg.classList.add('text-danger'); }
+          
+          fetch(`../../backend/api/auth.php?action=get_user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${encodeURIComponent(userId)}`
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (qrImgEl && qrLabelEl) {
+              if (data.success && data.user && data.user.qr_code) {
+                qrImgEl.src = data.user.qr_code;
+                qrLabelEl.textContent = userObj ? (userObj.name || '') : '';
+                if (genBtn) genBtn.style.display = 'none';
+              } else {
+                qrImgEl.src = '../assets/images/documed_logo.png';
+                qrLabelEl.textContent = 'No QR code found.';
+                if (genBtn) {
+                  genBtn.style.display = 'inline-block';
+                  genBtn.onclick = function(){
+                    if (msg) { msg.textContent = 'Generating secure QR...'; msg.classList.remove('text-danger'); msg.classList.add('text-muted'); }
+                    fetch(`../../backend/api/auth.php?action=qr_generate_token`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                      body: `id=${encodeURIComponent(userId)}`
+                    })
+                    .then(r => r.json())
+                    .then(resp => {
+                      if (resp && resp.success) {
+                        // Set image to new QR, or refetch user if only path provided
+                        if (resp.qr_image) {
+                          qrImgEl.src = resp.qr_image + '?t=' + Date.now();
+                        } else if (resp.user && resp.user.qr_code) {
+                          qrImgEl.src = resp.user.qr_code + '?t=' + Date.now();
+                        } else {
+                          // Fallback: refetch user
+                          return fetch(`../../backend/api/auth.php?action=get_user`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `id=${encodeURIComponent(userId)}`
+                          }).then(rr => rr.json()).then(dd => {
+                            if (dd && dd.success && dd.user && dd.user.qr_code) {
+                              qrImgEl.src = dd.user.qr_code + '?t=' + Date.now();
+                            }
+                          });
+                        }
+                        if (msg) { msg.textContent = 'QR Login enabled.'; msg.classList.remove('text-danger','text-muted'); msg.classList.add('text-success'); }
+                        if (genBtn) genBtn.style.display = 'none';
+                      } else {
+                        if (msg) { msg.textContent = (resp && (resp.message || resp.error)) || 'Failed to generate QR.'; msg.classList.remove('text-success','text-muted'); msg.classList.add('text-danger'); }
+                      }
+                    })
+                    .catch(()=>{
+                      if (msg) { msg.textContent = 'Error contacting server.'; msg.classList.remove('text-success','text-muted'); msg.classList.add('text-danger'); }
+                    });
+                  };
+                }
+              }
+            }
+          });
+          
+          qrModal.show();
+        }
+      });
+    });
+  </script>
+  <script src="../assets/js/notifications.js"></script>
+  <script>
+    // Inject Admin Settings (clinic name, banner message, operating hours) into the User Dashboard
+    document.addEventListener('DOMContentLoaded', function(){
+      fetch('../../backend/api/admin_tools.php?action=settings_get')
+        .then(r => r.json())
+        .then(d => {
+          const s = d && d.settings ? d.settings : {};
+          const clinic = (s.clinic_name || '').toString().trim();
+          const banner = (s.banner_message || '').toString().trim();
+          const hours = (s.operating_hours || '').toString().trim();
+          // Clinic name: update title and footer label
+          if (clinic) {
+            try { document.title = `${clinic}`; } catch(_) {}
+            const footer = document.getElementById('footerClinicName');
+            if (footer) footer.textContent = `${clinic} © ${new Date().getFullYear()}`;
+          }
+          // Banner message: show top informational banner if provided
+          if (banner) {
+            const ub = document.getElementById('userBanner');
+            if (ub) { ub.textContent = banner; ub.style.display = 'block'; }
+          }
+          // Operating hours: replace table contents to a single-line string if given
+          if (hours) {
+            const tbl = document.querySelector('.info-hours-table');
+            if (tbl) {
+              tbl.innerHTML = `
+                <tr><td colspan="2">${hours}</td></tr>
+                <tr><td colspan=\"2\"><hr style=\"border:0;border-top:1px solid #fff;margin:4px 0;\"></td></tr>
+              `;
+            }
+          }
+        })
+        .catch(() => {});
+    });
+  </script>
+  <script>
+    // Show profile/settings icons after successful login
+    function showProfileNav() {
+      const navActions = document.getElementById('navActions');
+      // Read user to get profile photo
+      let userObj = null;
+      try { userObj = JSON.parse(localStorage.getItem('documed_user')); } catch(_){}
+  const photoUrl = (userObj && userObj.photo) ? userObj.photo : '../assets/images/user_photo.png';
+      if (navActions) {
+        navActions.innerHTML = `
+          <div class="dropdown d-inline-block me-2 position-relative">
+            <button class="btn" id="notifBellBtn" style="background:none;color:#2563eb;font-size:1.7rem;" title="Notifications">
+              <i class="bi bi-bell"></i>
+            </button>
+            <button class="btn dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="background:none; padding:0;">
+              <img id="navProfileImg" src="${photoUrl}" alt="Profile" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #2563eb;background:#fff;" />
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown" style="min-width:180px;">
+              <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person"></i> Manage Account</a></li>
+              <li><a class="dropdown-item" href="#" id="viewQRBtn"><i class="bi bi-qr-code"></i> View QR</a></li>
+              <li><a class="dropdown-item" href="#" id="scanApproveBtn"><i class="bi bi-upc-scan"></i> Scan QR (Approve Login)</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+            </ul>
+          </div>
+        `;
+      }
+      // Update nav links for logged-in user
+      const navLinks = document.getElementById('navLinks');
+      if (navLinks) {
+        navLinks.innerHTML = `
+         <a href="user_dashboard.html">Home</a>
+          <a href="appointments.html">Appointment</a>
+          <a href="medical_history.html">Medical History</a>
+          <a href="profile.html">Profile</a>
+          <a href="#services" id="navServices">Services</a>
+          <a href="#about" id="navAbout">About Us</a>
+          <a href="#contact" id="navContact">Contact</a>
+          <a href="#" id="navHelp">Help</a>
+        `;
+      }
+    }
+    // Listen for login success from modal JS
+    window.addEventListener('loginSuccess', showProfileNav);
+    // Also check localStorage/sessionStorage for login state
+    if (sessionStorage.getItem('documedLoggedIn') === '1') {
+      showProfileNav();
+    }
+    // Update nav avatar if localStorage documed_user changes in this tab
+    window.addEventListener('storage', function(e){
+      if (e.key !== 'documed_user') return;
+      try {
+        const u = JSON.parse(e.newValue || 'null');
+        const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
+        const img = document.getElementById('navProfileImg');
+        if (img) img.src = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
+      } catch(_) {}
+    });
+    // Also react immediately within the page to profile updates
+    window.addEventListener('profilePhotoUpdated', function(ev){
+      const src = (ev && ev.detail && ev.detail.photo) ? ev.detail.photo : null;
+      if (!src) return;
+      const img = document.getElementById('navProfileImg');
+      if (img) img.src = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
+    });
+    // Reset nav links for guests
+    function showGuestNav() {
+      const navLinks = document.getElementById('navLinks');
+      if (navLinks) {
+        navLinks.innerHTML = `
+          <a href="user_dashboard.html">Home</a>
+          <a href="#" id="navServices">Services</a>
+          <a href="#" id="navAbout">About Us</a>
+          <a href="#" id="navContact">Contact</a>
+        `;
+      }
+      const navActions = document.getElementById('navActions');
+      if (navActions) { navActions.innerHTML = ''; }
+    }
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Ensure nav avatar shows latest stored photo when already logged in
+      if (sessionStorage.getItem('documedLoggedIn') === '1') {
+        try {
+          const u = JSON.parse(localStorage.getItem('documed_user')||'null');
+          const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
+          const img = document.getElementById('navProfileImg');
+          if (img) img.src = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
+        } catch(_) {}
+      }
+      // Use event delegation since logout button may be added dynamically
+      document.body.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'logoutBtn') {
+          e.preventDefault();
+          // Clear auth/session but preserve notification read state
+          const preserveKeys = Object.keys(localStorage).filter(k=>k.startsWith('documed_notif_read_'));
+          const preserve = new Map(preserveKeys.map(k=>[k, localStorage.getItem(k)]));
+          localStorage.clear();
+          // Restore preserved notification read states
+          preserve.forEach((v,k)=> localStorage.setItem(k,v));
+          sessionStorage.clear();
+          // Redirect to dashboard
+          window.location.href = 'user_dashboard.html';
+        }
+      });
+    });
+  </script>
+    <script>
+    // PWA install prompt handling
+    let deferredPrompt;
+    const installBtn = document.getElementById('pwaInstallBtn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'inline-flex';
+    });
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      installBtn.disabled = true;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('[PWA] userChoice', outcome);
+      deferredPrompt = null;
+      setTimeout(()=>{ installBtn.style.display='none'; installBtn.disabled=false; }, 500);
+    });
+    window.addEventListener('appinstalled', ()=> {
+      console.log('[PWA] Installed');
+      installBtn.style.display = 'none';
+    });
+
+    // Service worker registration for landing page scope (relative so it works under /DocMed/)
+    if ('serviceWorker' in navigator) {
+      const swUrl = '../../service-worker.js';
+      navigator.serviceWorker.register(swUrl).then(reg => {
+        console.log('[SW] landing registered', reg.scope);
+      }).catch(err => console.error('[SW] landing failed', err));
+    }
+  </script>
+</body>
+  <!-- AI Chatbot Floating Button and Chat Window -->
+  <style>
+    /* Chat UI overrides */
+  .ai-chat-button { position:fixed; bottom:100px; right:20px; z-index:1100; }
+    .ai-chat-button button { background:#2563eb;color:#fff;border:none;border-radius:50%;width:58px;height:58px;box-shadow:0 8px 24px rgba(37,99,235,0.18);font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center }
+  .ai-chat-window { display:none; position:fixed; bottom:170px; right:20px; width:360px; max-width:95vw; height:520px; z-index:1200; background:#fff; border-radius:14px; box-shadow:0 12px 36px rgba(10,46,120,0.12); overflow:hidden; display:flex; flex-direction:column; }
+    .ai-chat-header { background:#2563eb; color:#fff; padding:14px 16px; font-weight:700; font-size:1.05rem; display:flex; align-items:center; justify-content:space-between; }
+    .ai-chat-header button { background:transparent;border:none;color:#fff;font-size:1.2rem;cursor:pointer }
+    .ai-suggestions { padding:10px; display:flex; gap:8px; flex-wrap:wrap; background:#ffffff; border-top:1px solid #eef6ff; max-height:88px; overflow:auto }
+    .ai-sug-btn { padding:6px 12px; border-radius:999px; border:1px solid #e6f0ff; background:#fff; color:#1e3a8a; cursor:pointer; font-size:0.94rem; white-space:nowrap }
+    .ai-sug-btn:hover { background:#f3fbff }
+    #aiChatbotMessages { flex:1; overflow-y:auto; padding:14px; background:#f8fafc; }
+    .ai-msg { margin:8px 0; display:flex; }
+    .ai-msg.user { justify-content:flex-end }
+    .ai-msg.bot { justify-content:flex-start }
+    .ai-msg .bubble { display:inline-block; max-width:80%; padding:10px 14px; border-radius:12px; font-size:1rem; line-height:1.2 }
+    .ai-msg .bubble.user { background:#2563eb; color:#fff; }
+    .ai-msg .bubble.bot { background:#eef6ff; color:#06243a; }
+    .ai-chat-input { display:flex; gap:8px; padding:10px; background:#f3f6fc; }
+    .ai-chat-input input { flex:1; border-radius:12px; border:1px solid #cfe4ff; padding:10px 12px; font-size:1rem; }
+    .ai-chat-input button { background:#2563eb;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:600; }
+  @media (max-width:600px) { .ai-chat-window { right:12px; left:12px; width:auto; bottom:150px; height:62vh; } .ai-suggestions { max-height:72px } }
+  </style>
+
+  <div id="aiChatbotBtn" class="ai-chat-button" aria-hidden="false">
+    <button aria-label="Open chat" title="Chat with AI">💬</button>
+  </div>
+  <div id="aiChatbotWindow" class="ai-chat-window" role="dialog" aria-label="AI Assistant" style="display:none;">
+    <div class="ai-chat-header">
+      <span>AI Assistant</span>
+      <button id="aiChatbotClose" aria-label="Close chat">&times;</button>
+    </div>
+    <!-- Suggestions inserted dynamically here -->
+    <!-- Messages -->
+    <div id="aiChatbotMessages"></div>
+    <form id="aiChatbotForm" class="ai-chat-input">
+      <input id="aiChatbotInput" class="ai-chat-text" type="text" placeholder="Type your question..." required autocomplete="off" aria-label="Chat message" />
+      <button type="submit" aria-label="Send message">Send</button>
+    </form>
+  </div>
+  <script>
+    // AI Chatbot UI logic
+    const aiBtn = document.getElementById('aiChatbotBtn');
+    const aiWin = document.getElementById('aiChatbotWindow');
+    const aiClose = document.getElementById('aiChatbotClose');
+    // Chat open behavior: show window and a one-time greeting; suggestions removed per request
+    let greeted = false;
+    aiBtn.onclick = () => {
+      aiWin.style.display = 'flex';
+      if (!greeted) {
+        // Friendly greeting — users can still type their own question
+        appendMsg('ai', 'Hello! You can ask about hours, appointments, services, or contact information. Type your question below and press Send.');
+        greeted = true;
+      }
+      // focus input for convenience
+      setTimeout(()=>{ try { document.getElementById('aiChatbotInput').focus(); } catch(_){} }, 50);
+    };
+    aiClose.onclick = () => { aiWin.style.display = 'none'; };
+    // Minimize on outside click
+    document.addEventListener('mousedown', function(e) {
+      if (aiWin.style.display === 'flex' && !aiWin.contains(e.target) && !aiBtn.contains(e.target)) {
+        aiWin.style.display = 'none';
+      }
+    });
+    // Chatbot messaging logic (OpenAI integration to be added next)
+    const aiForm = document.getElementById('aiChatbotForm');
+    const aiInput = document.getElementById('aiChatbotInput');
+    const aiMsgs = document.getElementById('aiChatbotMessages');
+    function appendMsg(sender, text) {
+      const div = document.createElement('div');
+      div.style.margin = '8px 0';
+      div.style.textAlign = sender === 'user' ? 'right' : 'left';
+      div.innerHTML = `<span style="display:inline-block;max-width:80%;padding:10px 14px;border-radius:12px;background:${sender==='user'?'#2563eb':'#e0e7ff'};color:${sender==='user'?'#fff':'#222'};font-size:1rem;">${text.replace(/</g,'&lt;')}</span>`;
+      aiMsgs.appendChild(div);
+      aiMsgs.scrollTop = aiMsgs.scrollHeight;
+    }
+    aiForm.onsubmit = function(e) {
+      e.preventDefault();
+      const msg = aiInput.value.trim();
+      if (!msg) return;
+      appendMsg('user', msg);
+      aiInput.value = '';
+
+      // Add a temporary typing placeholder
+      const typing = document.createElement('div');
+      typing.style.margin = '8px 0';
+      typing.innerHTML = `<span style="display:inline-block;max-width:80%;padding:10px 14px;border-radius:12px;background:#eef2ff;color:#222;font-size:1rem;">...</span>`;
+      aiMsgs.appendChild(typing);
+      aiMsgs.scrollTop = aiMsgs.scrollHeight;
+
+      // Call backend to get DeepSeek AI response
+      fetch('../../backend/api/chatbot_deepseek.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      })
+      .then(res => res.json())
+      .then(data => {
+        // remove typing placeholder
+        try { typing.remove(); } catch(_) {}
+        if (data && data.reply) {
+          let note = '';
+          if (data.info === 'served_by_fallback_openai') note = ' (served by fallback)';
+          if (data.info === 'served_by_local_fallback') note = ' (served by local fallback)';
+          appendMsg('ai', data.reply + note);
+          return;
+        }
+        // If provider didn't return a reply, call local fallback
+        fetch('../../backend/api/local_fallback.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) })
+          .then(r => r.json())
+          .then(ld => { appendMsg('ai', ld.reply + (ld.info ? ' (' + ld.info + ')' : '')); })
+          .catch(()=>{ appendMsg('ai', 'Sorry, unable to get a response right now.'); });
+      })
+      .catch(()=>{
+        // remove typing placeholder and try local fallback
+        try { typing.remove(); } catch(_) {}
+        fetch('../../backend/api/local_fallback.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) })
+          .then(r => r.json()).then(ld => { appendMsg('ai', ld.reply + (ld.info ? ' (' + ld.info + ')' : '')); })
+          .catch(()=>{ appendMsg('ai', 'Sorry, unable to get a response right now.'); });
+      });
+    };
+  </script>
+</html>

@@ -1,0 +1,485 @@
+<!-- Nurse/Doctor Patient View Page -->
+<!-- ...existing code from admin/patient_view.html, with updated JS and nav ... -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+      /* Responsive: collapse personal info grid on narrow screens */
+      @media (max-width: 720px) {
+        #pvDetailsGrid { grid-template-columns: 1fr !important; gap: 16px !important; }
+        .pvColDivider { display: none !important; }
+      }
+      /* Print: ensure 2x2 inch photo and clean margins */
+      @media print {
+        #pvPhoto { width: 2in !important; height: 2in !important; }
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .main-content { padding: 0 !important; }
+      }
+  /* Vertical divider between left/right columns */
+  .pvColDivider { width: 1px; background: #e5e7eb; align-self: stretch; }
+
+      /* Follow Up modal styles */
+      .dm-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+      .dm-modal .dm-dialog { width: 100%; max-width: 960px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; }
+      .dm-modal .dm-header { display:flex; align-items:center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; }
+      .dm-modal .dm-title { margin:0; font-size: 1.1rem; color:#111827; font-weight: 700; }
+      .dm-modal .dm-close { border:none; background:#f3f4f6; color:#111827; border-radius:8px; padding:6px 10px; cursor:pointer; }
+      .dm-modal .dm-body { padding: 12px 16px; }
+      .dm-muted { color:#6b7280; }
+  .dm-actions { display:flex; gap:10px; justify-content:flex-end; padding: 12px 16px; border-top:1px solid #f3f4f6; }
+  .btn { padding:8px 12px; border:none; border-radius:8px; cursor:pointer; }
+  .btn-primary { background:#2563eb; color:#fff; }
+  .btn-muted { background:#6b7280; color:#fff; }
+  .btn-danger { background:#e11d48; color:#fff; }
+  .dm-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:16px; }
+  .dm-field { display:flex; flex-direction:column; gap:6px; }
+  .dm-field label { font-weight:600; color:#374151; }
+  .dm-field input, .dm-field textarea, .dm-field select { border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; font: inherit; }
+  .dm-field textarea { min-height: 72px; resize: vertical; }
+  @media (max-width: 720px) { .dm-grid { grid-template-columns: 1fr; } }
+  .dm-row-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; }
+  .dm-row-4 { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
+    </style>
+</head>
+<body>
+  <div class="main-content" style="max-width:none;margin:0 auto;background:#fff;padding:24px 32px;min-height:100vh;box-sizing:border-box;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+      <div>
+        <h1 id="pvTitle" style="color:#111827;margin:0;font-size:1.8rem;">Patient Master Record</h1>
+        <div id="pvSubtitle" style="color:#6b7280;">Loading…</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button id="btnBack" style="background:#6b7280;color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">Back</button>
+  <button id="btnFollowup" style="background:#10b981;color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">Follow Up Check-Up</button>
+  <button id="btnCheckup" style="background:#2563eb;color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">New Check-Up</button>
+      </div>
+    </div>
+  <div id="patientInfo" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;"></div>
+  <div id="checkupHistory" style="margin-top:16px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;"></div>
+  <div id="followupHistory" style="margin-top:16px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;"></div>
+  </div>
+
+  <!-- Follow Up Form Modal -->
+  <div id="followupModal" class="dm-modal" aria-hidden="true" role="dialog" aria-labelledby="fuTitle">
+    <div class="dm-dialog">
+      <div class="dm-header">
+        <h3 id="fuTitle" class="dm-title">Add Follow Up</h3>
+        <button id="fuClose" class="dm-close" aria-label="Close">Close</button>
+      </div>
+      <form id="followupForm">
+        <div class="dm-body">
+          <div id="fuModalMsg" class="dm-muted" style="margin-bottom:8px;"></div>
+          <input type="hidden" id="followupUserId" name="user_id" value="">
+          <div class="dm-grid">
+            <div class="dm-field" style="grid-column:1/-1;">
+              <label for="fuDate">Date of Examination</label>
+              <input type="date" id="fuDate" name="date_of_examination" placeholder="YYYY-MM-DD" required />
+            </div>
+            <div class="dm-field" style="grid-column:1/-1;">
+              <label for="fuComplaint">Chief Complaint</label>
+              <textarea id="fuComplaint" name="chief_complaint" placeholder="e.g., Headache for 2 days" required></textarea>
+            </div>
+            <div class="dm-row-3" style="grid-column:1/-1;">
+              <div class="dm-field">
+                <label for="fuBP">BP</label>
+                <input type="text" id="fuBP" name="bp" placeholder="e.g., 120/80" />
+              </div>
+              <div class="dm-field">
+                <label for="fuCR">CR</label>
+                <input type="number" step="1" id="fuCR" name="cr" placeholder="e.g., 72 bpm" />
+              </div>
+              <div class="dm-field">
+                <label for="fuRR">RR</label>
+                <input type="number" step="1" id="fuRR" name="rr" placeholder="e.g., 16 bpm" />
+              </div>
+            </div>
+
+            <div class="dm-row-4" style="grid-column:1/-1;">
+              <div class="dm-field">
+                <label for="fuTemp">TEMP (°C)</label>
+                <input type="number" step="0.1" id="fuTemp" name="temp" placeholder="e.g., 37.0" />
+              </div>
+              <div class="dm-field">
+                <label for="fuWT">WT (kg)</label>
+                <input type="number" step="0.1" id="fuWT" name="wt" placeholder="e.g., 65" />
+              </div>
+              <div class="dm-field">
+                <label for="fuHT">HT (cm)</label>
+                <input type="number" step="0.1" id="fuHT" name="ht" placeholder="e.g., 170" />
+              </div>
+              <div class="dm-field">
+                <label for="fuBMI">BMI</label>
+                <input type="text" id="fuBMI" name="bmi" placeholder="Auto-calculated" readonly />
+                <div id="fuBmiStatus" class="dm-muted"></div>
+              </div>
+            </div>
+            <div class="dm-field" style="grid-column:1/-1;">
+              <label for="fuImpression">Impression</label>
+              <textarea id="fuImpression" name="impression" placeholder="e.g., Viral URTI"></textarea>
+            </div>
+            <div class="dm-field" style="grid-column:1/-1;">
+              <label for="fuTreatment">Treatment</label>
+              <textarea id="fuTreatment" name="treatment" placeholder="e.g., Paracetamol 500 mg q6h PRN/Services"></textarea>
+            </div>
+            <div class="dm-field" style="grid-column:1/-1;">
+              <label for="fuNotes">Nurse's Notes</label>
+              <textarea id="fuNotes" name="nurses_notes" placeholder="Additional observations, instructions, or referrals"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="dm-actions">
+          <button type="button" id="fuCancel" class="btn btn-muted">Cancel</button>
+          <button type="submit" id="fuSave" class="btn btn-primary">Save Follow Up</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (!id) {
+      const subtitle = document.getElementById('pvSubtitle');
+      if (subtitle) subtitle.textContent = 'Missing record id.';
+      const info = document.getElementById('patientInfo');
+      if (info) info.textContent = 'Cannot load patient without a record id.';
+    } else {
+    fetch(`../../backend/api/checkup.php?action=view&id=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.patient) {
+          const p = data.patient;
+          const sid = p.student_faculty_id;
+          const title = document.getElementById('pvTitle');
+          const subtitle = document.getElementById('pvSubtitle');
+          if (title) title.textContent = p.name ? p.name : 'Patient Master Record';
+          if (subtitle) subtitle.textContent = sid ? `School ID: ${sid}` : '';
+          // Wire action buttons to dn_patient flows using query params
+          const btnBack = document.getElementById('btnBack'); if (btnBack) btnBack.onclick = ()=>window.history.back();
+          const btnFollow = document.getElementById('btnFollowup');
+          if (btnFollow) {
+            btnFollow.onclick = () => { try { openFollowupModal(); } catch(_) {} };
+          }
+          const btnCheck = document.getElementById('btnCheckup'); if (btnCheck) btnCheck.onclick = ()=>{ if(sid){ try{ sessionStorage.setItem('documed_checkup_sid', sid); }catch(_){} window.location.href = `dn_patient.html?action=checkup`; } };
+          // Show concise patient info card (with photo) before histories
+          (function renderPatientCard(){
+            const info = document.getElementById('patientInfo');
+            if (!info) return;
+            const safe = v => (v == null ? '' : v);
+            const role = p.role_effective || p.role || '';
+            const photoFallback = '../assets/images/user_photo.png';
+            const basePhoto = p.photo || '';
+            // Personal info only (no medical findings)
+
+            const headerHtml = (ph) => `
+            <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;text-align:center;">
+                <img id="pvPhoto" src="${ph || photoFallback}" alt="Photo" style="width:192px;height:192px;border-radius:12px;object-fit:cover;border:1px solid #e5e7eb;background:#f9fafb;"/>
+                <div style="font-weight:800;color:#111827;font-size:1.4rem;">${safe(p.name)}</div>
+                <div style="color:#6b7280;margin-top:2px;font-size:1rem;">School ID: ${safe(p.student_faculty_id)}</div>
+                <div id="pvRole" style="color:#6b7280;margin-top:0;font-size:1rem;">Role: ${safe(role)}</div>
+              </div>`;
+
+            const line = (label, value) => `
+              <div style="display:flex;gap:10px;align-items:baseline;margin:10px 0;text-align:left;">
+                <div style="min-width:180px;color:#2563eb;font-weight:700;font-size:1rem;">${label}:</div>
+                <div style="color:#111827;font-size:1.05rem;">${safe(value)}</div>
+              </div>`;
+
+    const detailsHtml = `
+      <div id=\"pvDetailsGrid\" style=\"display:grid;grid-template-columns:1fr 1px 1fr;column-gap:32px;max-width:900px;margin:0 auto; align-items:start;\">
+                <div>
+                  ${line('AGE', p.age)}
+                  ${line('CONTACT NO.', p.contact_number)}
+                  ${line('CIVIL STATUS', p.civil_status)}
+                  ${line('RELIGION', p.religion)}
+                  ${line('ADDRESS', p.address)}
+                  ${line('CONTACT PERSON', p.contact_person)}
+                </div>
+                  <div class=\"pvColDivider\" aria-hidden=\"true\"></div>
+                <div style="display:flex; flex-direction:column; align-items:right;">
+                  ${line('BIRTHDATE', p.date_of_birth)}
+                  ${line('PLACE OF BIRTH', p.place_of_birth)}
+                  ${line('NATIONALITY', p.nationality)}
+                  ${line('YEAR & COURSE', p.year_and_course)}
+                </div>
+              </div>`;
+
+            info.innerHTML = headerHtml(basePhoto) + detailsHtml;
+            // Try to enhance photo from user profile if available
+            if (sid) {
+              fetch('../../backend/api/auth.php?action=get_user_by_sid', {
+                method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ sid })
+              }).then(r=>r.json()).then(uRes=>{
+                const u = (uRes && uRes.success) ? uRes.user : null;
+                const ph = (u && u.photo) ? u.photo : (basePhoto || photoFallback);
+                const img = document.getElementById('pvPhoto'); if (img) img.src = ph;
+                // Update role from user profile if missing in checkup view payload
+                const roleEl = document.getElementById('pvRole');
+                if (roleEl) {
+                  let effRole = (u && (u.role_effective || u.role)) || (p.role_effective || p.role) || '';
+                  // Optional mapping (Teacher->Faculty, Non-Teaching->Staff)
+                  const map = { 'Teacher': 'Faculty', 'Non-Teaching': 'Staff' };
+                  if (effRole && map[effRole]) effRole = map[effRole];
+                  if (effRole) roleEl.textContent = `Role: ${effRole}`;
+                }
+              }).catch(()=>{});
+            }
+          })();
+
+          // After rendering core info, load Check-Up history and Follow Up history by School ID
+          if (sid) {
+            // 1) Patient Check-Up History (from checkups table)
+            fetch(`../../backend/api/checkup.php?action=list&student_faculty_id=${encodeURIComponent(sid)}`)
+              .then(r => r.json())
+              .then(list => {
+                const arr = Array.isArray(list.checkups) ? list.checkups : [];
+                const container = document.getElementById('checkupHistory');
+                if (!container) return;
+                if (!arr.length) {
+                  container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Patient Check-Up History</h2><p style="color:#6b7280;">No check-up records found.</p>';
+                  return;
+                }
+                // Sort by created_at desc then id desc (in case backend order varies)
+                arr.sort((a,b)=>{
+                  const da=a&&a.created_at?new Date(a.created_at):null; const db=b&&b.created_at?new Date(b.created_at):null;
+                  if(da && db && !isNaN(da) && !isNaN(db)) return db-da;
+                  const ia=Number(a&&a.id); const ib=Number(b&&b.id); if(isFinite(ia)&&isFinite(ib)) return ib-ia; return 0;
+                });
+                const rows = arr.map((it, idx) => {
+                  const dt = it.created_at || it.updated_at || '';
+                  const dateStr = dt ? new Date(dt).toLocaleDateString() : '';
+                  const performer = it.doctor_nurse || '-';
+                  return `<tr>
+                    <td style="padding:8px;">${idx+1}</td>
+                    <td style="padding:8px;">${dateStr}</td>
+                    <td style="padding:8px;">${it.assessment || ''}</td>
+                    <td style="padding:8px;">${performer}</td>
+                    <td style="padding:8px;"><a href="medical_exam_report.html?id=${encodeURIComponent(it.id)}" style="color:#2563eb;text-decoration:none;">View</a></td>
+                  </tr>`;
+                }).join('');
+                container.innerHTML = `
+                  <h2 style="margin:16px 0 8px;color:#374151;">Patient Check-Up History</h2>
+                  <div style="overflow:auto;">
+                    <table style="width:100%;border-collapse:collapse;">
+                      <thead>
+                        <tr>
+                          <th style="text-align:left;padding:8px;">#</th>
+                          <th style="text-align:left;padding:8px;">Date</th>
+                          <th style="text-align:left;padding:8px;">Assessment</th>
+                          <th style="text-align:left;padding:8px;">By</th>
+                          <th style="text-align:left;padding:8px;">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>${rows}</tbody>
+                    </table>
+                  </div>`;
+              })
+              .catch(() => {
+                const container = document.getElementById('checkupHistory');
+                if (container) container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Patient Check-Up History</h2><p style="color:#dc2626;">Failed to load check-up history.</p>';
+              });
+          }
+          
+          if (sid) {
+            fetch(`../../backend/api/patient.php?action=list&user_id=${encodeURIComponent(sid)}`)
+              .then(r => r.json())
+              .then(list => {
+                const arr = Array.isArray(list.patients) ? list.patients : [];
+                // store for potential reuse (if needed elsewhere)
+                window.__fuData = arr;
+                const container = document.getElementById('followupHistory');
+                if (!container) return;
+                if (!arr.length) {
+                  container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Follow Up Check-Up History</h2><p style="color:#6b7280;">No follow up records found.</p>';
+                  return;
+                }
+                const rows = arr.map((it, idx) => {
+                  const dt = it.date_of_examination || it.last_visit || '';
+                  return `<tr>
+                    <td style="padding:8px;">${idx+1}</td>
+                    <td style="padding:8px;">${(dt||'').toString().slice(0,10)}</td>
+                    <td style="padding:8px;">${it.chief_complaint || ''}</td>
+                    <td style="padding:8px;">${it.bp || ''}</td>
+                    <td style="padding:8px;">${it.temp || ''}</td>
+                    <td style="padding:8px;">${it.impression || ''}</td>
+                    <td style="padding:8px;">${it.treatment || ''}</td>
+                  </tr>`;
+                }).join('');
+                container.innerHTML = `
+                  <h2 style="margin:16px 0 8px;color:#374151;">Follow Up Check-Up History</h2>
+                  <div style="overflow:auto;">
+                    <table style="width:100%;border-collapse:collapse;">
+                      <thead>
+                        <tr>
+                          <th style="text-align:left;padding:8px;">#</th>
+                          <th style="text-align:left;padding:8px;">Date</th>
+                          <th style="text-align:left;padding:8px;">Chief Complaint</th>
+                          <th style="text-align:left;padding:8px;">BP</th>
+                          <th style="text-align:left;padding:8px;">Temp</th>
+                          <th style="text-align:left;padding:8px;">Impression</th>
+                          <th style="text-align:left;padding:8px;">Treatment</th>
+                        </tr>
+                      </thead>
+                      <tbody>${rows}</tbody>
+                    </table>
+                  </div>`;
+              })
+              .catch(() => {
+                const container = document.getElementById('followupHistory');
+                if (container) container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Follow Up Check-Up History</h2><p style="color:#dc2626;">Failed to load follow up history.</p>';
+              });
+          }
+          // Follow Up Form modal helpers
+          function setFuDateToday() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth()+1).padStart(2,'0');
+            const da = String(d.getDate()).padStart(2,'0');
+            const el = document.getElementById('fuDate');
+            if (el && !el.value) el.value = `${y}-${m}-${da}`;
+          }
+          function fuComputeBmi() {
+            const wtEl = document.getElementById('fuWT');
+            const htEl = document.getElementById('fuHT');
+            const bmiEl = document.getElementById('fuBMI');
+            const statusEl = document.getElementById('fuBmiStatus');
+            if (!wtEl || !htEl || !bmiEl) return;
+            const toNum = v => { const s=String(v??'').replace(',', '.').trim(); const n=parseFloat(s); return isFinite(n)?n:NaN; };
+            let w = toNum(wtEl.value);
+            let h = toNum(htEl.value);
+            if (!isFinite(w) || !isFinite(h) || h<=0){ bmiEl.value=''; if(statusEl){ statusEl.textContent=''; statusEl.style.color='#374151'; } return; }
+            if (h > 10) h = h/100; // treat as cm
+            const bmi = w/(h*h);
+            if (isFinite(bmi) && bmi>0) {
+              const val = parseFloat(bmi.toFixed(1));
+              bmiEl.value = val.toFixed(1);
+              let cat = 'Normal'; let color = '#16a34a';
+              if (val < 18.5) { cat = 'Underweight'; color = '#eab308'; }
+              else if (val < 25) { cat = 'Normal'; color = '#16a34a'; }
+              else if (val < 30) { cat = 'Overweight'; color = '#f97316'; }
+              else { cat = 'Obese'; color = '#dc2626'; }
+              if (statusEl) { statusEl.textContent = cat; statusEl.style.color = color; }
+            } else { bmiEl.value = ''; if (statusEl) { statusEl.textContent=''; statusEl.style.color='#374151'; } }
+          }
+          function openFollowupModal() {
+            const modal = document.getElementById('followupModal');
+            const userId = document.getElementById('followupUserId');
+            if (!modal || !userId) return;
+            userId.value = sid || '';
+            setFuDateToday();
+            fuComputeBmi();
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+          }
+          function closeFollowupModal() {
+            const modal = document.getElementById('followupModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+          }
+          async function saveFollowup(e) {
+            e.preventDefault();
+            const form = document.getElementById('followupForm');
+            const msg = document.getElementById('fuModalMsg');
+            const btn = document.getElementById('fuSave');
+            if (!form) return;
+            const fd = new FormData(form);
+            // Normalize/trim fields and ensure date format
+            const dateEl = document.getElementById('fuDate');
+            const complaintEl = document.getElementById('fuComplaint');
+            if (dateEl) fd.set('date_of_examination', (dateEl.value || '').trim());
+            if (complaintEl) fd.set('chief_complaint', (complaintEl.value || '').trim());
+            msg.textContent = 'Saving...';
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+            try {
+              const res = await fetch('../../backend/api/patient.php?action=add', { method:'POST', body: fd });
+              const data = await res.json();
+              if (data && data.success) {
+                msg.textContent = 'Saved!';
+                // Refresh follow-up history
+                try {
+                  const r = await fetch(`../../backend/api/patient.php?action=list&user_id=${encodeURIComponent(sid)}`);
+                  const l = await r.json();
+                  window.__fuData = Array.isArray(l.patients) ? l.patients : [];
+                  // re-render page table
+                  const container = document.getElementById('followupHistory');
+                  if (container) {
+                    if (!window.__fuData.length) {
+                      container.innerHTML = '<h2 style="margin:16px 0 8px;color:#374151;">Follow Up Check-Up History</h2><p style="color:#6b7280;">No follow up records found.</p>';
+                    } else {
+                      const rows = window.__fuData.map((it, idx) => {
+                        const dt = it.date_of_examination || it.last_visit || '';
+                        return `<tr>
+                          <td style="padding:8px;">${idx+1}</td>
+                          <td style="padding:8px;">${(dt||'').toString().slice(0,10)}</td>
+                          <td style="padding:8px;">${it.chief_complaint || ''}</td>
+                          <td style="padding:8px;">${it.bp || ''}</td>
+                          <td style="padding:8px;">${it.temp || ''}</td>
+                          <td style="padding:8px;">${it.impression || ''}</td>
+                          <td style="padding:8px;">${it.treatment || ''}</td></tr>`;
+                      }).join('');
+                      container.innerHTML = `
+                        <h2 style=\"margin:16px 0 8px;color:#374151;\">Follow Up Check-Up History</h2>
+                        <div style=\"overflow:auto;\">
+                          <table style=\"width:100%;border-collapse:collapse;\">
+                            <thead>
+                              <tr>
+                                <th style=\"text-align:left;padding:8px;\">#</th>
+                                <th style=\"text-align:left;padding:8px;\">Date</th>
+                                <th style=\"text-align:left;padding:8px;\">Chief Complaint</th>
+                                <th style=\"text-align:left;padding:8px;\">BP</th>
+                                <th style=\"text-align:left;padding:8px;\">Temp</th>
+                                <th style=\"text-align:left;padding:8px;\">Impression</th>
+                                <th style=\"text-align:left;padding:8px;\">Treatment</th>
+                              </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                          </table>
+                        </div>`;
+                    }
+                  }
+                } catch(_) {}
+                // Close and reset the form
+                setTimeout(() => {
+                  try { form.reset(); setFuDateToday(); fuComputeBmi(); } catch(_) {}
+                  closeFollowupModal();
+                  if (btn){ btn.disabled=false; btn.textContent='Save Follow Up'; }
+                }, 300);
+              } else {
+                msg.textContent = (data && (data.message || data.error)) ? (data.message || data.error) : 'Save failed.';
+                if (btn){ btn.disabled=false; btn.textContent='Save Follow Up'; }
+              }
+            } catch (err) {
+              msg.textContent = 'Network error while saving.';
+              if (btn){ btn.disabled=false; btn.textContent='Save Follow Up'; }
+            }
+          }
+          // bind modal controls
+          (function bindFuModalControls(){
+            const modal = document.getElementById('followupModal');
+            const closeBtn = document.getElementById('fuClose');
+            const cancelBtn = document.getElementById('fuCancel');
+            const form = document.getElementById('followupForm');
+            const wt = document.getElementById('fuWT');
+            const ht = document.getElementById('fuHT');
+            if (closeBtn) closeBtn.onclick = closeFollowupModal;
+            if (cancelBtn) cancelBtn.onclick = closeFollowupModal;
+            if (modal) modal.addEventListener('click', (e)=>{ if (e.target === modal) closeFollowupModal(); });
+            document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeFollowupModal(); });
+            if (form) form.addEventListener('submit', saveFollowup);
+            if (wt) wt.addEventListener('input', fuComputeBmi);
+            if (ht) ht.addEventListener('input', fuComputeBmi);
+          })();
+        } else {
+          document.getElementById('patientInfo').textContent = 'Patient not found.';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

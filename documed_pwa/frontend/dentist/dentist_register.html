@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+</head>
+<body>
+  <div class="container login-card">
+    <h1>Create Dentist Account</h1>
+    <form id="dentistRegisterForm" enctype="multipart/form-data">
+      <div class="input-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="input-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required minlength="6">
+      </div>
+      <div class="input-group">
+        <label for="school_id">School ID</label>
+        <input type="text" id="school_id" name="school_id" required>
+      </div>
+      <div class="input-group">
+        <label for="photo">Photo (max 2MB, JPG/PNG)</label>
+        <input type="file" id="photo" name="photo" accept="image/*" required>
+      </div>
+      <div class="input-group">
+        <label for="role">Role</label>
+        <input type="text" id="role" name="role" value="Dentist" readonly>
+      </div>
+      <button type="submit" id="registerBtn" class="btn" style="width:100%;margin-top:16px;">Register</button>
+      <div id="dentistRegisterMsg" style="margin-top:12px;"></div>
+    </form>
+    <div style="margin-top:12px;text-align:center;">
+      <a href="dentist_login.html" style="color:#2563eb;text-decoration:underline;">Back to login</a>
+    </div>
+  </div>
+  <script src="../assets/js/dentist_auth.js"></script>
+</body>
+</html>

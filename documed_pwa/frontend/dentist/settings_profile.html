@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png">
+  <style>
+    .profile-main { max-width: 900px; margin: 8px auto 24px auto; padding: 0 8px; width: 100%; }
+    .profile-title { font-size: 1.8rem; font-weight: 700; color: #2563eb; margin-bottom: 16px; letter-spacing: .5px; }
+    .profile-form-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 24px 28px; background:#fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(37,99,235,.10); padding: 24px; }
+    .profile-form-group { display:flex; flex-direction:column; margin:0; }
+    .profile-form-group label { font-weight:600; color:#2563eb; margin-bottom:6px; }
+    .profile-form-group input, .profile-form-group select { width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid #2563eb; background:#fff; font-size:1rem; }
+    .profile-form-group input:focus, .profile-form-group select:focus { border-color:#1742b0; outline:none; }
+    .profile-photo-container { position:relative; width:120px; height:120px; margin: 0 auto 8px auto; cursor:pointer; }
+    .profile-photo-edit { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; box-shadow:0 2px 8px #2563eb22; background:#fff; transition: filter .2s; }
+    .profile-photo-overlay { position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; opacity:0; transition: opacity .2s; }
+    .profile-photo-container:hover .profile-photo-overlay { opacity:1; }
+    .profile-photo-container:hover .profile-photo-edit { filter:brightness(.9); }
+    .profile-photo-text { color:#fff; font-size:.85rem; font-weight:500; text-align:center; }
+    #dnPhoto { display:none; }
+    .profile-actions { grid-column:1 / span 2; display:flex; justify-content:flex-end; gap:12px; margin-top:8px; }
+    .profile-actions .btn { padding:10px 22px; border-radius:8px; box-shadow:0 2px 8px #2563eb33; font-weight:600; }
+    @media (max-width: 900px){ .profile-form-grid { grid-template-columns:1fr; } .profile-actions{ grid-column:1; justify-content:center; } }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"><i class="bi bi-grid"></i> Dashboard</a>
+        <a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a>
+        <a href="settings_profile.html"  class="active"><i class="bi bi-person-gear"></i> Profile</a>
+        <a href="settings.html"><i class="bi bi-gear"></i> Settings</a>
+        <a href="dentist_login.html" class="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      </nav>
+    </aside>
+    <main class="main-content" style="padding:24px;">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h1 style="color:#2563eb;margin:0;">Profile</h1>
+        <div class="dashboard-profile-dropdown" style="position:relative;">
+          <button id="dashboardProfileBtn" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+            <img src="../assets/images/admin_photo.png" alt="Profile" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+          </button>
+        </div>
+      </div>
+
+      <div class="profile-main">
+        <div class="profile-title">Edit Profile</div>
+        <form id="dnProfileForm" class="profile-edit-form">
+          <div class="profile-form-grid">
+            <div class="profile-form-group">
+              <label>Profile Photo</label>
+              <div class="profile-photo-container" onclick="document.getElementById('dnPhoto').click()">
+                <img id="dnPhotoPreview" src="../assets/images/admin_photo.png" alt="Profile" class="profile-photo-edit">
+                <div class="profile-photo-overlay"><div class="profile-photo-text"><i class="bi bi-camera-fill"></i><br>Change Photo</div></div>
+              </div>
+              <input id="dnPhoto" type="file" accept="image/*">
+            </div>
+            <div class="profile-form-group">
+              <label for="dnEmail">Email</label>
+              <input id="dnEmail" type="email" required>
+            </div>
+            <div class="profile-form-group">
+              <label for="dnName">Name</label>
+              <input id="dnName" type="text" required>
+            </div>
+            <div class="profile-form-group">
+              <label for="dnRole">Role</label>
+              <input id="dnRole" type="text" disabled style="background:#f9fafb;">
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button type="button" id="dnSaveProfile" class="btn btn-primary">Save Profile</button>
+            <div id="dnProfileMsg" class="small" style="align-self:center;"></div>
+          </div>
+        </form>
+
+        <div class="settings-divider" style="margin:24px 0 18px 0;"></div>
+        <form id="dnPwdForm" class="profile-edit-form">
+          <div class="profile-title" style="font-size:1.2rem;color:#2563eb;margin-bottom:12px;">Change Password</div>
+          <div class="profile-form-grid">
+            <div class="profile-form-group">
+              <label for="dnPwdOld">Current Password</label>
+              <input id="dnPwdOld" type="password" required placeholder="Enter current password">
+            </div>
+            <div class="profile-form-group">
+              <label for="dnPwdNew">New Password</label>
+              <input id="dnPwdNew" type="password" required minlength="6" placeholder="Enter new password (min 6 chars)">
+            </div>
+            <div class="profile-form-group">
+              <label for="dnPwdNew2">Confirm New Password</label>
+              <input id="dnPwdNew2" type="password" required minlength="6" placeholder="Confirm new password">
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button type="button" id="dnPwdBtn" class="btn btn-outline-primary">Update</button>
+            <div id="dnPwdMsg" class="small" style="align-self:center;"></div>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/dentist_nav.js"></script>
+  <script src="../assets/js/profile_avatar.js"></script>
+  <script src="../assets/js/dentist_settings.js"></script>
+  <script>
+    // Preview the selected photo and initialize with stored photo
+    (function(){
+      function getMe(){ try { return JSON.parse(localStorage.getItem('documed_docnurse')||'{}'); } catch(_){ return {}; } }
+      const me = getMe();
+      const preview = document.getElementById('dnPhotoPreview');
+      if (preview && me){ preview.src = me.dn_photo || me.photo || preview.src; }
+      const inp = document.getElementById('dnPhoto');
+      if (inp && preview){ inp.addEventListener('change', function(){
+        const f = this.files && this.files[0]; if (!f) return;
+        const reader = new FileReader(); reader.onload = e => { preview.src = e.target.result; }; reader.readAsDataURL(f);
+      }); }
+    })();
+  </script>
+</body>
+</html>

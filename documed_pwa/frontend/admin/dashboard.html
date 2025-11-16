@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+</head>
+<body>
+
+  <div class="admin-layout" style="box-shadow: 0 8px 32px rgba(37,99,235,0.18); border-radius: 18px; width: 100vw; min-height: 100vh; margin: 0; max-width: none;">
+  <aside class="sidebar">
+  <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+    <a href="patients.html" class="sidebar-link"><i class="bi bi-people me-2"></i>Patients</a>
+    <a href="appointments.html" class="sidebar-link"><i class="bi bi-calendar-check me-2"></i>Appointments</a>
+    <a href="manage_users.html" class="sidebar-link"><i class="bi bi-person-gear me-2"></i>Manage user</a>
+    <a href="audit_trail.html" class="sidebar-link"><i class="bi bi-clock-history me-2"></i>Activity log</a> 
+    <a href="medicine_inventory.html" class="sidebar-link"><i class="bi bi-capsule me-2"></i>Medicine</a>
+  <a href="reports.html" class="sidebar-link"><i class="bi bi-graph-up me-2"></i>Reports</a>
+  <a href="settings.html" class="sidebar-link"><i class="bi bi-gear me-2"></i>Settings</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+  <div class="dashboard-topbar" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;gap:18px;">
+    <button id="dashboardSettingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.7rem;color:#2563eb;display:flex;align-items:center;">
+    </button>
+    <!-- Admin Notification Bell next to small top-right logo -->
+    <div id="adminNotifBellHolder" class="d-inline-block position-relative">
+      <button id="adminNotifBell" title="Notifications" style="background:none;border:none;color:#2563eb;font-size:1.7rem;position:relative;cursor:pointer;">
+        <i class="bi bi-bell"></i>
+        <span id="adminNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:14px;font-weight:600;line-height:1;">0</span>
+      </button>
+      <div id="adminNotifDropdown" style="display:none;position:absolute;right:0;top:110%;z-index:40;background:#fff;border:1px solid #e2e8f0;box-shadow:0 6px 24px rgba(0,0,0,0.12);border-radius:14px;min-width:360px;max-width:420px;max-height:420px;overflow:auto;">
+        <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;font-weight:600;color:#2563eb;display:flex;justify-content:space-between;align-items:center;">
+          <span>Clinic Notifications</span>
+          <a href="#" id="adminNotifMarkAll" style="font-size:0.75rem;text-decoration:none;color:#64748b;">Mark all read</a>
+        </div>
+        <div id="adminNotifList" style="min-height:120px;"></div>
+        <div style="padding:8px 0;text-align:center;font-size:0.75rem;color:#94a3b8;border-top:1px solid #f1f5f9;">End</div>
+      </div>
+    </div>
+    <div class="dashboard-profile-dropdown" style="position:relative;">
+      <button id="dashboardProfileBtn" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+  <img src="../assets/images/documed_logo.png" alt="DocuMed Logo" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+
+      </button>
+      <div id="dashboardProfileMenu" style="display:none;position:absolute;right:0;top:110%;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:10px;min-width:160px;z-index:20;">
+        <a href="#" id="profileInfoMenu" style="display:block;padding:12px 18px;color:#2563eb;text-decoration:none;font-weight:500;border-bottom:1px solid #f3f4f6;">Profile Info</a>
+        <a href="admin_login.html" id="logoutMenu" style="display:block;padding:12px 18px;color:#e11d48;text-decoration:none;font-weight:500;">Logout</a>
+      </div>
+    </div>
+  </div>
+  <h1 style="margin-bottom:32px;">Admin Dashboard</h1>
+  <div class="dashboard-top-row" style="display:flex;gap:32px;align-items:flex-start;width:100%;padding:0 32px;box-sizing:border-box;">
+    <div class="dashboard-stats" style="display:flex;gap:32px;flex:1;">
+      <div class="stat-card large-card" style="flex:1;min-width:220px;min-height:140px;box-shadow:0 4px 24px #2563eb22;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <span class="stat-label" style="font-size:1.2rem;color:#2563eb;font-weight:600;">Patients</span>
+        <span class="stat-value" id="statCheckups" style="font-size:2.8rem;font-weight:700;margin-top:8px;">...</span>
+      </div>
+      <div class="stat-card large-card" style="flex:1;min-width:220px;min-height:140px;box-shadow:0 4px 24px #2563eb22;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <span class="stat-label" style="font-size:1.2rem;color:#2563eb;font-weight:600;">Appointments</span>
+        <span class="stat-value" id="statAppointments" style="font-size:2.8rem;font-weight:700;margin-top:8px;">...</span>
+      </div>
+      <div class="stat-card large-card" style="flex:1;min-width:220px;min-height:140px;box-shadow:0 4px 24px #2563eb22;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <span class="stat-label" style="font-size:1.2rem;color:#2563eb;font-weight:600;">Reports</span>
+        <span class="stat-value" id="statReports" style="font-size:2.8rem;font-weight:700;margin-top:8px;">...</span>
+      </div>
+    </div>
+  </div>
+  <div class="dashboard-analytics-row" style="display:flex;gap:32px;margin-top:38px;align-items:flex-start;width:100%;padding:0 32px;box-sizing:border-box;">
+    <div class="dashboard-analytics" style="width:100%;max-width:none;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:18px;padding:32px;display:flex;flex-direction:column;justify-content:flex-start;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <h2 style="color:#2563eb;font-size:1.2rem;font-weight:600;">Patient Data Analytics</h2>
+        <select id="analyticsSorter" style="padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;font-size:1rem;">
+          <option value="all" selected>All</option>
+          <option value="day">This Day</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
+        </select>
+      </div>
+      <div style="width:100%;height:240px;max-width:100%;background:#f9fafb;border-radius:12px;overflow:hidden;">
+  <canvas id="patientLineGraph" height="240" style="width:100%;height:240px;max-width:100%;background:#f9fafb;border-radius:12px;"></canvas>
+</div>
+    </div>
+      </div>
+      <div class="dashboard-analytics-row" style="display:flex;gap:32px;margin-top:38px;align-items:flex-start;width:100%;padding:0 32px;box-sizing:border-box;">
+        <div class="dashboard-analytics" style="width:100%;max-width:none;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:18px;padding:32px;display:flex;flex-direction:column;justify-content:flex-start;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <h2 style="color:#2563eb;font-size:1.2rem;font-weight:600;">Recent Appointments</h2>
+        <select id="recentSorter" style="padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;font-size:1rem;">
+          <option value="all">All</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+        </select>
+      </div>
+      <table id="recentAppointmentsTable" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f3f4f6;color:#2563eb;font-weight:600;">
+            <th style="padding:10px 6px;">Patient</th>
+            <th style="padding:10px 6px;">Purpose</th>
+            <th style="padding:10px 6px;">Date</th>
+            <th style="padding:10px 6px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Recent appointments will be injected here -->
+        </tbody>
+      </table>
+    </div>
+    </div>
+  <!-- <div id="admin-content" style="margin-top:38px;">
+    <p>Welcome, Admin! Use the sidebar to manage clinic operations.</p>
+    <div style="margin-top:24px;">
+      <button class="btn" id="checkupBtn" style="margin-right:12px;">Patient Check-Up</button>
+      <button class="btn" id="scanBtn">Scan QR</button>
+    </div>
+    <div id="errorMsg" style="color:red;margin-top:12px;"></div>
+  </div> -->
+  <!-- Popup form for patient check-up -->
+  <!-- Popup form for patient check-up -->
+<!-- <div id="checkupModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:rgba(255,255,255,0.97);padding:30px 32px;border-radius:18px;box-shadow:0 16px 56px rgba(0,0,0,0.32);max-width:700px;width:95vw;max-height:85vh;overflow-y:auto;position:relative;">
+    <button id="closeCheckupX" style="position:absolute;top:18px;right:22px;background:none;border:none;font-size:2rem;color:#e11d48;cursor:pointer;line-height:1;z-index:10;" title="Close">&times;</button>
+    <h2 style="color:#2563eb;margin-bottom:18px;text-align:center;letter-spacing:1px;font-size:1.3rem;">Patient Check-Up</h2>
+    
+  <form id="checkupForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px 48px;">
+      
+      <div class="input-group">
+        <label for="patientId" style="font-weight:600;color:#374151;">Patient ID</label>
+      <input type="text" name="user_id" id="user_id" placeholder="Student/Faculty ID" required
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="name" style="font-weight:600;color:#374151;">Name</label>
+        <input type="text" id="name" name="name" placeholder="Full Name"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="address" style="font-weight:600;color:#374151;">Address</label>
+        <input type="text" id="address" name="address"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="age_sex" style="font-weight:600;color:#374151;">Age / Sex</label>
+        <input type="text" id="age_sex" name="age_sex"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="contact_number" style="font-weight:600;color:#374151;">Contact Number</label>
+        <input type="text" id="contact_number" name="contact_number"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="date_of_examination" style="font-weight:600;color:#374151;">Date of Examination</label>
+        <input type="date" id="date_of_examination" name="date_of_examination"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group" style="grid-column:1/-1;">
+        <label for="chief_complaint" style="font-weight:600;color:#374151;">Chief Complaint</label>
+    <textarea id="chief_complaint" name="chief_complaint" rows="2" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;resize:vertical;width:100%;"></textarea>
+      </div>
+
+      <div class="input-group">
+        <label for="bp" style="font-weight:600;color:#374151;">Blood Pressure</label>
+        <input type="text" id="bp" name="bp"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="cr" style="font-weight:600;color:#374151;">Capillary Refill</label>
+        <input type="text" id="cr" name="cr"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="rr" style="font-weight:600;color:#374151;">Respiratory Rate</label>
+        <input type="text" id="rr" name="rr"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="temp" style="font-weight:600;color:#374151;">Temperature</label>
+        <input type="text" id="temp" name="temp"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="wt" style="font-weight:600;color:#374151;">Weight</label>
+        <input type="text" id="wt" name="wt"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="ht" style="font-weight:600;color:#374151;">Height</label>
+        <input type="text" id="ht" name="ht"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group">
+        <label for="bmi" style="font-weight:600;color:#374151;">Body Mass Index</label>
+        <input type="text" id="bmi" name="bmi"
+          style="padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;width:100%;">
+      </div>
+
+      <div class="input-group" style="grid-column:1/-1;">
+        <label for="impression" style="font-weight:600;color:#374151;">Impression</label>
+    <textarea id="impression" name="impression" rows="2" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;resize:vertical;width:100%;"></textarea>
+      </div>
+
+      <div class="input-group" style="grid-column:1/-1;">
+        <label for="treatment" style="font-weight:600;color:#374151;">Treatment</label>
+    <textarea id="treatment" name="treatment" rows="2" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;resize:vertical;width:100%;"></textarea>
+      </div>
+
+      <div class="input-group" style="grid-column:1/-1;">
+        <label for="nurses_notes" style="font-weight:600;color:#374151;">Nurses Notes</label>
+    <textarea id="nurses_notes" name="nurses_notes" rows="2" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;resize:vertical;width:100%;"></textarea>
+      </div>
+
+      <div style="grid-column:1/-1;text-align:center;margin-top:12px;">
+        <button type="submit" id="submitCheckup" style="background:#2563eb;color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:1rem;transition:background 0.2s,box-shadow 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.boxShadow='0 2px 8px #2563eb55'" onmouseout="this.style.background='#2563eb';this.style.boxShadow='none'">Submit</button>
+        <button type="button" id="closeCheckup" style="background:#dc2626;color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:1rem;margin-left:10px;transition:background 0.2s,box-shadow 0.2s;" onmouseover="this.style.background='#b91c1c';this.style.boxShadow='0 2px 8px #dc262655'" onmouseout="this.style.background='#dc2626';this.style.boxShadow='none'">Cancel</button>
+      </div>
+      <div id="checkupMsg" style="margin-top:12px;"></div>
+    </form>
+  </div>
+</div>
+
+
+      Popup for QR scan -->
+      <!-- <div id="scanModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:999;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:32px 24px;border-radius:16px;box-shadow:0 4px 24px rgba(34,197,94,0.18);max-width:400px;width:90vw;">
+          <h2 style="color:#2563eb;margin-bottom:18px;">Scan Patient QR</h2>
+      <video id="qrVideo" width="320" height="240" style="border-radius:8px;border:1px solid #2563eb;background:#f3f4f6;"></video>
+      <canvas id="qrCanvas" width="320" height="240" style="display:none;"></canvas>
+          <div id="scanMsg" style="margin-top:12px;color:#e11d48;"></div>
+          <button type="button" class="btn" style="width:100%;background:#e11d48;margin-top:12px;" id="closeScan">Close</button>
+        </div>
+      </div> -->
+
+      <section id="settingsSection" style="margin-top:32px;background:#f9fafb;padding:24px 18px;border-radius:12px;box-shadow:0 2px 8px #2563eb22;display:none;">
+  <div id="manageUsersSection">
+    <h2 style="color:#2563eb;margin-bottom:18px;">Manage Users</h2>
+    <div id="userManage"></div>
+  </div>
+  <div id="auditTrailSection" style="display:none;">
+    <h2 style="color:#2563eb;margin-bottom:18px;">Audit Trail</h2>
+    <div id="auditTrail"></div>
+  </div>
+</section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../assets/js/dashboard_interactive.js"></script>
+  <script src="../assets/js/dashboard_data.js"></script>
+  <script src="../assets/js/admin.js"></script>
+  <script src="../assets/js/admin_notifications.js"></script>
+  <script src="../assets/js/settings_dropdown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

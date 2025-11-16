@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=docnurse2">
+  <link rel="stylesheet" href="../assets/css/docnurse_layout.css?v=1">
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+  /* Scanning overlay */
+  #qr-reader { position: relative; }
+  .qr-scan-overlay { position:absolute; inset:0; pointer-events:none; }
+  .qr-scan-overlay .scan-line { position:absolute; left:10%; right:10%; height:2px; background:rgba(16,185,129,0.95); box-shadow:0 0 12px rgba(16,185,129,0.7); animation:scan-vert 2s linear infinite; }
+  @keyframes scan-vert { 0% { top:14%; } 100% { top:86%; } }
+  </style>
+</head>
+<body>
+ <div class="dashboard-wrapper">
+    <aside class="sidebar">
+      <div class="logo"><img src="../assets/images/documed_logo.png" alt="DocuMed" /></div>
+      <nav class="sidebar-nav">
+  <a href="dashboard.html"><i class="bi bi-grid"></i> Dashboard</a>
+  <!-- <a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointment</a> -->
+  <a href="dn_patient.html" class="active"><i class="bi bi-person-lines-fill"></i> Patients</a>
+  <a href="reports.html"><i class="bi bi-file-earmark-text"></i> Reports</a>
+  <a href="settings.html"><i class="bi bi-gear"></i> Profile Info</a>
+        <button class="logout"><i class="bi bi-box-arrow-right"></i> Logout</button>
+      </nav>
+    </aside>
+ <main class="main-content">
+  <div class="dashboard-topbar" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:18px;gap:18px;">
+    <button id="dashboardSettingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.7rem;color:#2563eb;display:flex;align-items:center;">
+    </button>
+    <div class="dashboard-profile-dropdown" style="position:relative;">
+      <button id="dashboardProfileBtn" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <img src="../assets/images/admin_photo.png" alt="Profile" style="width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #2563eb22;">
+      </button>
+      <div id="dashboardProfileMenu" style="display:none;position:absolute;right:0;top:110%;background:#fff;box-shadow:0 2px 8px #2563eb22;border-radius:10px;min-width:160px;z-index:20;">
+        <a href="#" id="profileInfoMenu" style="display:block;padding:12px 18px;color:#2563eb;text-decoration:none;font-weight:500;border-bottom:1px solid #f3f4f6;">Profile Info</a>
+        <a href="admin_login.html" id="logoutMenu" style="display:block;padding:12px 18px;color:#e11d48;text-decoration:none;font-weight:500;">Logout</a>
+      </div>
+    </div>
+  </div>
+      <h1>Patient Records</h1>
+      <div id="patients-list">
+          <div style="display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 0;">
+            <input type="text" id="searchPatient" class="form-control" placeholder="Search patient by name or ID..." autocomplete="off" style="max-width: 500px; margin-top: 0;">            
+            <div style="display: flex; gap: 12px;">
+              <button class="btn" id="checkupBtn">Patient Check-Up</button>
+              <button class="btn" id="scanBtn">Scan QR</button>
+              <a class="btn btn-outline-secondary" href="patients_archive.html" title="View archived patients">View Archived</a>
+            </div>
+          </div>
+        <table id="patientsTable">
+          <thead>
+            <tr>
+              <th>School ID</th>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Client Type</th>
+              <th>Contact Number</th>
+              <th>Birthdate</th>
+              <th>Assessment</th>
+              <th>Last Check Up</th>
+              <th>Next Check-Up</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="patientsMsg" style="margin-top:12px;"></div>
+      </div>
+    </main>
+  </div>
+  
+        <!-- Popup form for patient check-up -->
+<div id="checkupModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;max-width:900px;width:min(900px,95vw);padding:36px 32px;border-radius:18px;box-sizing:border-box;box-shadow:0 2px 12px rgba(0,0,0,0.04);position:relative;overflow-x:hidden;">
+    <button id="closeCheckup" style="position:absolute;top:18px;right:18px;background:none;border:none;font-size:2rem;color:#047857;cursor:pointer;">&times;</button>
+    <h2 style="text-align:center;color:#5b5b5b;font-size:2rem;font-weight:700;margin-bottom:32px;letter-spacing:1px;">Add Checkup</h2>
+    <form id="addCheckupForm" class="form-grid">
+      <div class="input-group">
+        <label>School ID</label>
+        <input type="text" name="student_faculty_id" required placeholder="Enter School ID">
+      </div>
+      <div class="input-group">
+        <label>Role / Type</label>
+        <select name="client_type" id="roleSelect" required>
+          <option value="">Select role</option>
+          <option value="Student">Student</option>
+          <option value="Teacher">Teacher</option>
+          <option value="Non-Teaching">Non-Teaching</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Gender</label>
+        <select name="gender" id="genderSelect" required>
+          <option value="">Select gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
+      </div>
+       <div class="input-group">
+        <label>Name</label>
+        <input type="text" name="name" required placeholder="Full Name">
+      </div>
+      <div class="input-group">
+        <label>Age</label>
+        <input type="number" name="age" min="0" required style="width:100%;" placeholder="e.g., 20">
+      </div>
+      <div class="input-group">
+        <label>Address</label>
+        <input type="text" name="address" placeholder="Home Address">
+      </div>
+      <div class="input-group">
+       <label for="civil_status">Civil Status</label>
+              <select id="civil_status" name="civil_status" aria-label="Select civil status">
+                <option value="">Select civil status</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Separated">Separated</option>
+                <option value="Divorce">Divorce</option>
+                <option value="Annuled">Annuled</option>
+              </select>
+      </div>
+      <div class="input-group">
+        <label>Nationality</label>
+        <input type="text" name="nationality" placeholder="e.g., Filipino">
+      </div>
+      <div class="input-group">
+        <label>Religion</label>
+        <input type="text" name="religion" placeholder="e.g., Roman Catholic">
+      </div>
+      <div class="input-group">
+        <label>Date of Birth</label>
+        <input type="date" name="date_of_birth" required placeholder="YYYY-MM-DD" title="YYYY-MM-DD">
+      </div>
+      <div class="input-group">
+        <label>Place of Birth</label>
+        <input type="text" name="place_of_birth" placeholder="City/Province">
+      </div>
+      <div class="input-group" id="yearCourseGroup" style="display:none;">
+        <label>Year and Course</label>
+        <input type="text" name="year_and_course" id="yearAndCourseInput" placeholder="e.g., 3rd Year BSIT">
+      </div>
+      <div class="input-group" id="departmentGroup" style="display:none;">
+        <label>Department</label>
+        <input type="text" name="department" id="departmentInput" placeholder="e.g., College of Computing Science">
+      </div>
+      <div class="input-group">
+        <label>Contact Person</label>
+        <input type="text" name="contact_person" placeholder="Guardian or Emergency Contact">
+      </div>
+      <div class="input-group">
+        <label>Contact No.</label>
+        <input type="text" name="contact_number" inputmode="numeric" placeholder="e.g., 09XXXXXXXXX">
+      </div>
+      <div class="input-group">
+        <label>History of Past Illness</label>
+        <textarea name="history_past_illness" rows="2" placeholder="e.g., Asthma, Allergy to ..."></textarea>
+      </div>
+      <div class="input-group">
+        <label>Present Illness</label>
+        <textarea name="present_illness" rows="2" placeholder="Describe current symptoms"></textarea>
+      </div>
+      <div class="input-group">
+        <label>Operations and Hospitalizations</label>
+        <textarea name="operations_hospitalizations" rows="2" placeholder="List surgeries or hospital stays"></textarea>
+      </div>
+      <div class="input-group">
+        <label>Immunization History</label>
+        <textarea name="immunization_history" rows="2" placeholder="e.g., Tetanus (2022)"></textarea>
+      </div>
+      <div class="input-group">
+        <label>Social and Environmental History</label>
+        <textarea name="social_environmental_history" rows="2" placeholder="Lifestyle, home/work environment"></textarea>
+      </div>
+      <div class="input-group">
+        <label>OB/Gynecological History (for female only)</label>
+        <textarea name="ob_gyne_history" rows="2" placeholder="LMP, pregnancies, etc."></textarea>
+      </div>
+      <!-- <div class="input-group" style="grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:18px;">
+        <label style="min-width:180px;">Physical Examination (Check all that apply)</label> -->
+        <div class="checkbox-group">
+          <label style="margin-bottom: 4px;">Physical Examination (Check all that apply)</label>
+          <div class="checkbox-row">
+            <label><input type="checkbox" name="physical_exam_general_survey" value="1"> General Survey</label>
+            <label><input type="checkbox" name="physical_exam_skin" value="1"> Skin</label>
+            <label><input type="checkbox" name="physical_exam_heart" value="1"> Heart</label>
+            <label><input type="checkbox" name="physical_exam_chest_lungs" value="1"> Chest/Lungs</label>
+            <label><input type="checkbox" name="physical_exam_abdomen" value="1"> Abdomen</label>
+            <label><input type="checkbox" name="physical_exam_genitourinary" value="1"> Genitourinary</label>
+            <label><input type="checkbox" name="physical_exam_musculoskeletal" value="1"> Musculoskeletal</label>
+          </div>
+        </div>
+      <!-- </div> -->
+      <div class="input-group">
+        <label>Neurological Examination</label>
+        <textarea name="neurological_exam" rows="2" placeholder="Findings, tests"></textarea>
+      </div>
+      <div class="input-group">
+        <label>Laboratory Results</label>
+        <textarea name="laboratory_results" rows="2" placeholder="CBC, X-ray, etc."></textarea>
+      </div>
+      <div class="input-group">
+        <label>Assessment</label>
+        <textarea name="assessment" rows="2" placeholder="Clinical assessment"></textarea>
+      </div>
+      <div class="input-group">
+        <label>Remarks</label>
+        <textarea name="remarks" rows="2" placeholder="Additional notes"></textarea>
+      </div>
+      <!-- Follow-up row: left column = checkbox, right column = date picker -->
+      <div class="input-group" id="followUpCol" style="display:flex;align-items:center;gap:10px;">
+        <label for="followUpCheckbox" style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" name="follow_up" id="followUpCheckbox" value="1" style="width:18px;height:18px;accent-color:#2563eb;">
+          <span>Follow-up Needed</span>
+        </label>
+      </div>
+      <div class="input-group" id="followUpDateCol" style="display:none;">
+        <label for="followUpDate">Follow-up Date</label>
+        <input type="date" name="follow_up_date" id="followUpDate" placeholder="YYYY-MM-DD" title="YYYY-MM-DD">
+      </div>
+      <div style="grid-column:1/-1;text-align:center;margin-top:12px;">
+        <button type="submit" id="submitCheckup" style="background:#2563eb;color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:1rem;transition:background 0.2s,box-shadow 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.boxShadow='0 2px 8px #2563eb55'" onmouseout="this.style.background='#2563eb';this.style.boxShadow='none'">Submit</button>
+        <button type="button" id="closeCheckupX" style="background:#dc2626;color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:1rem;margin-left:10px;transition:background 0.2s,box-shadow 0.2s;" onmouseover="this.style.background='#b91c1c';this.style.boxShadow='0 2px 8px #dc262655'" onmouseout="this.style.background='#dc2626';this.style.boxShadow='none'">Cancel</button>
+      </div>
+      <div id="checkupMsg" style="margin-top:12px;"></div>
+    </form>
+  </div>
+</div>
+
+
+      <!-- Popup for QR scan -->
+      <div id="scanModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:999;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:32px 24px;border-radius:16px;box-shadow:0 4px 24px rgba(34,197,94,0.18);max-width:460px;width:92vw;">
+          <h2 style="color:#2563eb;margin-bottom:12px;">Scan Patient QR</h2>
+          <div style="display:flex;gap:8px;align-items:center;margin:8px 0 12px 0;">
+            <label for="cameraSelect" style="min-width:72px;margin:0;color:#374151;">Camera</label>
+            <select id="cameraSelect" class="form-select" style="flex:1;min-height:38px;"></select>
+          </div>
+          <small style="display:block;color:#6b7280;margin-bottom:8px;">Tip: Allow camera permission. Works over https or http://localhost.</small>
+          <div id="qr-reader" style="width:360px;max-width:100%;margin:auto;"></div>
+          
+          <!-- Simplified: Removed unsupported camera controls to avoid constraint errors -->
+          <div id="scanMsg" style="margin-top:12px;color:#e11d48;"></div>
+          <button type="button" class="btn" style="width:100%;background:#e11d48;margin-top:12px;" id="closeScan">Close</button>
+        </div>
+      </div>
+
+
+  <script src="../assets/js/admin.js"></script>
+  <script src="../assets/js/patients.js"></script>
+  <script>
+    // Guarantee performer is attached on this page as well (defense in depth)
+    document.addEventListener('DOMContentLoaded', function(){
+      const form = document.getElementById('addCheckupForm');
+      const msg = document.getElementById('checkupMsg');
+      const modal = document.getElementById('checkupModal');
+      if (!form) return;
+      form.addEventListener('submit', function(ev){
+        // patients.js addCheckupRecord already sets doctor_nurse, but ensure here too
+        try {
+          const dn = JSON.parse(localStorage.getItem('documed_doc_nurse') || 'null');
+          if (dn && dn.name) {
+            const performer = dn.role ? `${dn.name} (${dn.role})` : dn.name;
+            const fd = new FormData(form);
+            fd.set('doctor_nurse', performer);
+            ev.preventDefault();
+            // Submit via the shared helper to apply other normalizations
+            if (typeof addCheckupRecord === 'function') {
+              addCheckupRecord(fd, msg, modal, form);
+            }
+            // Stop here to avoid double submission
+            return;
+          }
+        } catch(_) {}
+        // Fallback: let default submit handler in patients.js run
+      }, { capture: true });
+    });
+  </script>
+  <script>
+    // Follow-up toggle UX: show date column (right) when checked; require it; clear when unchecked
+    document.addEventListener('DOMContentLoaded', function(){
+      const cb = document.getElementById('followUpCheckbox');
+      const dateCol = document.getElementById('followUpDateCol');
+      const date = document.getElementById('followUpDate');
+      const form = document.getElementById('addCheckupForm');
+      function toggle(){
+        const on = cb && cb.checked;
+        if (dateCol) dateCol.style.display = on ? '' : 'none';
+        if (date) { date.required = !!on; if (!on) date.value = ''; }
+      }
+      if (cb){ cb.addEventListener('change', toggle); toggle(); }
+      if (form){
+        form.addEventListener('submit', function(){
+          if (!cb || !cb.checked){ if (date) date.value = ''; }
+        });
+      }
+    });
+  </script>
+  <script>
+    // Show/hide year and course field based on role
+    document.addEventListener('DOMContentLoaded', function() {
+      var roleSelect = document.getElementById('roleSelect');
+      var yearCourseGroup = document.getElementById('yearCourseGroup');
+      var departmentGroup = document.getElementById('departmentGroup');
+      if (roleSelect && yearCourseGroup) {
+        roleSelect.addEventListener('change', function() {
+          var role = roleSelect.value;
+          var yearInput = document.getElementById('yearAndCourseInput');
+          var deptInput = document.getElementById('departmentInput');
+          if (role === 'Student') {
+            if (yearCourseGroup) yearCourseGroup.style.display = 'block';
+            if (departmentGroup) departmentGroup.style.display = 'none';
+            if (deptInput) deptInput.value = '';
+          } else if (role === 'Teacher' || role === 'Non-Teaching') {
+            if (yearCourseGroup) yearCourseGroup.style.display = 'none';
+            if (departmentGroup) departmentGroup.style.display = 'block';
+            if (yearInput) yearInput.value = '';
+          } else {
+            if (yearCourseGroup) yearCourseGroup.style.display = 'none';
+            if (departmentGroup) departmentGroup.style.display = 'none';
+            if (yearInput) yearInput.value = '';
+            if (deptInput) deptInput.value = '';
+          }
+        });
+      }
+    });
+  </script>
+  <script src="../assets/js/settings_dropdown.js"></script>
+  <script src="../assets/js/profile_avatar.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="../assets/js/dashboard_interactive.js"></script>
+  <script src="../assets/js/dn_logout.js"></script>
+  <script>
+    // Ensure SW is registered when entering via doc_nurse pages
+    if ('serviceWorker' in navigator) {
+      const swUrl = new URL('../../public/service-worker.js', window.location.href).toString();
+      navigator.serviceWorker.register(swUrl).catch(()=>{});
+    }
+  </script>
+</body>
+</html>
