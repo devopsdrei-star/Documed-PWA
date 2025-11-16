@@ -1,0 +1,23 @@
+# Force Nixpacks to use PHP with required MySQL PDO extension
+
+[phases.setup]
+# php runtime + common extensions we rely on
+nixPkgs = [
+  "php82",
+  "php82Extensions.pdo_mysql",
+  "php82Extensions.mbstring",
+  "php82Extensions.curl",
+  "php82Extensions.zip",
+  "composer"
+]
+
+[phases.install]
+# Install PHP dependencies (ensures autoload + any ext checks)
+cmds = [
+  "composer install --no-dev --prefer-dist --no-interaction"
+]
+
+# Start command is already provided via Procfile (web: php -S 0.0.0.0:$PORT -t documed_pwa)
+# If Procfile is ignored, uncomment below:
+# [phases.start]
+# cmd = "php -S 0.0.0.0:$PORT -t documed_pwa"
