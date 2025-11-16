@@ -180,9 +180,7 @@
   <div class="container login-card" style="max-width:700px;">
     <h1 style="text-align:center;color:#2563eb;font-size:2rem;font-weight:700;margin-bottom:28px;letter-spacing:1px;">Registration to Login</h1>
     <form id="userRegisterForm" enctype="multipart/form-data">
-
-  <!-- Google reCAPTCHA v2 -->
-  <div class="g-recaptcha" data-sitekey="6LejFOsrAAAAAHdGaGHj9crHVF-Gja-GiNR0I5dC"></div>
+  <!-- reCAPTCHA v3 badge handled globally; token attached on submit -->
   <div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;margin-bottom:2px;">
             <div class="input-group">
@@ -339,19 +337,8 @@
 
       <button type="submit" class="btn" style="width:100%;margin-top:24px;">Register</button>
     <div id="userRegisterMsg" style="margin-top:12px;"></div>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     </form>
-    <script>
-      document.getElementById('userRegisterForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        grecaptcha.ready(function() {
-          grecaptcha.execute('YOUR_SITE_KEY', {action: 'register'}).then(function(token) {
-            document.getElementById('g-recaptcha-response').value = token;
-            e.target.submit();
-          });
-        });
-      });
-    </script>
+  <!-- Registration uses server-side validation only; no reCAPTCHA -->
     <div style="margin-top:8px;">
         <button type="button" class="btn" style="width:100%;margin-top:-2px;" onclick="window.location.href='user_dashboard.html'">Back</button>
     </div>

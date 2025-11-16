@@ -403,27 +403,7 @@
     <script src="../assets/js/pwa.js"></script>
     <script src="../assets/js/booking.js"></script>
 <script>
-// Inject reCAPTCHA token from sessionStorage into form submission
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('appointmentForm');
-    if (!form) return;
-    form.addEventListener('submit', function(e) {
-        // Get token from sessionStorage
-        const recaptchaToken = sessionStorage.getItem('recaptchaToken');
-        if (recaptchaToken) {
-            // Add token to form as hidden input
-            let tokenInput = document.getElementById('recaptchaToken');
-            if (!tokenInput) {
-                tokenInput = document.createElement('input');
-                tokenInput.type = 'hidden';
-                tokenInput.name = 'g-recaptcha-response';
-                tokenInput.id = 'recaptchaToken';
-                form.appendChild(tokenInput);
-            }
-            tokenInput.value = recaptchaToken;
-        }
-    });
-});
+// reCAPTCHA removed — no token injection needed
 </script>
 </body>
     <!-- AI Chatbot Floating Button and Chat Window -->

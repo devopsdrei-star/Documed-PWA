@@ -55,6 +55,7 @@ if (userRegisterForm) {
     userRegisterMsg.textContent = 'Registering...';
 
     const formData = new FormData(userRegisterForm);
+    // reCAPTCHA removed — no token attached
     // Ensure age is taken from DOB computation (ignore any stale value)
     const dobVal = document.getElementById('date_of_birth')?.value || '';
     if (dobVal) {

@@ -308,9 +308,9 @@
           <div id="userReschedError" class="small text-danger mt-1"></div>
         </div>
       </div>
-      <div class="d-flex justify-content-end mb-3">
-  <button id="bookAppointmentBtn" class="btn btn-primary btn-lg">Book Dental Appointment</button>
-      </div>
+      <!-- <div class="d-flex justify-content-end mb-3">
+        <a id="bookAppointmentBtn" href="book_appointment.html" class="btn btn-primary btn-lg">Book Dental Appointment</a>
+      </div> -->
       <!-- Pre-booking reCAPTCHA container -->
       <!-- recaptcha removed -->
       <div class="table-responsive">
@@ -350,8 +350,7 @@
               <!-- Form Column -->
               <div class="col-md-6 p-4">
                 <form id="appointmentFormModal" class="needs-validation" novalidate>
-                  <!-- Google reCAPTCHA v2 -->
-                  <div class="g-recaptcha" data-sitekey="6LejFOsrAAAAAHdGaGHj9crHVF-Gja-GiNR0I5dC"></div>
+                  <!-- reCAPTCHA v3 token handled globally; no inline widget needed -->
                   <div id="formMsgModal" class="alert d-none"></div>
                   
                   <div class="mb-4">
@@ -409,9 +408,8 @@
                     <button type="submit" class="btn btn-lg btn-primary flex-grow-1">Book Appointment</button>
                   </div>
                 </form>
-                <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <script>
-    // Removed legacy reCAPTCHA modal logic and bookBtn reference
+    // No inline reCAPTCHA script; v3 badge handled globally
   </script>
                 <!-- Removed legacy reCAPTCHA form submit logic -->
               </div>
@@ -710,15 +708,25 @@
   <script src="../assets/js/pwa.js"></script>
     <script src="../assets/js/user_appointments.js"></script>
     <script src="../assets/js/user_appointments_table.js"></script>
-    <script src="../assets/js/appointment-form.js"></script>
-  <!-- <script src="../assets/js/appointment-modal.js"></script> -->
-  <script>
-    // recaptcha logic removed
-  document.getElementById('bookAppointmentBtn').onclick = function() {
-    window.location.href = 'recaptcha.html';
-  };
-  </script>
-    <script src="../assets/js/appointment-validation.js"></script>
+    <script>
+      // Ensure link always points to booking page, overriding any stale handlers
+      document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('bookAppointmentBtn');
+        if (btn) btn.setAttribute('href', 'book_appointment.html');
+      });
+      // Capture clicks early and force navigation to booking page,
+      // blocking any old cached listeners that might redirect elsewhere
+      document.addEventListener('click', function (e) {
+        const t = e.target;
+        const btn = t && (t.id === 'bookAppointmentBtn' ? t : t.closest && t.closest('#bookAppointmentBtn'));
+        if (btn) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          window.location.assign('book_appointment.html');
+        }
+      }, true);
+    </script>
+  <!-- Removed missing appointment-form.js & appointment-validation.js to eliminate 404 errors -->
   <script>
     // AI Chatbot UI logic
     const aiBtn = document.getElementById('aiChatbotBtn');

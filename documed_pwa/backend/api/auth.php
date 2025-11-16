@@ -365,6 +365,8 @@ if ($action === 'user_register') {
     $department = trim($_POST['department'] ?? '');
     $created_at = $_POST['created_at'] ?? date('Y-m-d H:i:s');
 
+    // reCAPTCHA removed
+
     // Handle photo upload
     $photo_path = '';
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {

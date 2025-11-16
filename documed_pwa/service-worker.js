@@ -2,7 +2,7 @@
  * Scope: /documed_pwa/
  * Caches landing assets + runtime images/css/js
  */
-const DM_APP_VERSION = 'landing-v1';
+const DM_APP_VERSION = 'landing-v2';
 const DM_CORE = `documed-landing-core-${DM_APP_VERSION}`;
 const DM_RUNTIME = `documed-landing-runtime-${DM_APP_VERSION}`;
 // Derive base directory (e.g., /DocMed/documed_pwa)
@@ -12,8 +12,7 @@ const CORE_ASSETS = [
   `${BASE}/frontend/user/user_dashboard.html`,
   `${BASE}/frontend/assets/css/style.css`,
   `${BASE}/frontend/assets/images/Logo.png`,
-  `${BASE}/manifest-landing.json`,
-  `${BASE}/frontend/assets/images/Logo.png`
+  `${BASE}/manifest-landing.json`
 ];
 
 self.addEventListener('install', e => {

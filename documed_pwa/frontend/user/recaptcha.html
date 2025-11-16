@@ -3,59 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Human Validation</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
-  <style>
-    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f3f6fc; }
-    .recaptcha-box { background: #fff; border-radius: 14px; box-shadow: 0 8px 32px rgba(37,99,235,0.18); padding: 48px 32px; max-width: 400px; margin: auto; text-align: center; }
-    h2 { color: #2563eb; font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; }
-    #recaptchaMsg { color: #e11d48; font-weight: 600; margin-top: 12px; }
-  </style>
+  <title>Redirecting…</title>
+  <meta http-equiv="refresh" content="0;url=book_appointment.html">
 </head>
 <body>
-  <div class="recaptcha-box">
-    <h2>Human Validation</h2>
-    <div id="recaptcha-container"></div>
-    <div id="recaptchaMsg"></div>
-  </div>
-  <script>
-    // Dynamically fetch site key from the server and render the widget for the active domain
-    const msgEl = document.getElementById('recaptchaMsg');
-    let recaptchaPassed = false;
-    function onRecaptcha(token) {
-      recaptchaPassed = !!token;
-      msgEl.textContent = '';
-      if (recaptchaPassed) {
-        sessionStorage.setItem('recaptchaToken', token);
-        window.location.href = 'book_appointment.html';
-      }
-    }
-
-    fetch('../../backend/api/recaptcha_config.php')
-      .then(r => r.ok ? r.json() : { enabled: false })
-      .then(cfg => {
-        if (!cfg || !cfg.enabled || !cfg.siteKey) {
-          // If reCAPTCHA is disabled or not configured, bypass gracefully
-          sessionStorage.setItem('recaptchaToken', 'DISABLED');
-          window.location.href = 'book_appointment.html';
-          return;
-        }
-        // Load API and render explicitly with the provided site key
-        window.__recaptchaOnload = function() {
-          try {
-            grecaptcha.render('recaptcha-container', { sitekey: cfg.siteKey, callback: onRecaptcha });
-          } catch (e) {
-            msgEl.textContent = 'Failed to load reCAPTCHA. Please refresh the page.';
-          }
-        };
-        const s = document.createElement('script');
-        s.src = 'https://www.google.com/recaptcha/api.js?onload=__recaptchaOnload&render=explicit';
-        s.async = true; s.defer = true;
-        document.head.appendChild(s);
-      })
-      .catch(() => {
-        msgEl.textContent = 'Unable to contact verification service. Please try again.';
-      });
-  </script>
+  <noscript>
+    <p>JavaScript is required. <a href="book_appointment.html">Continue to booking</a>.</p>
+  </noscript>
 </body>
 </html>
