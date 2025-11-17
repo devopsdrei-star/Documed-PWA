@@ -2,7 +2,7 @@
  * Scope: /documed_pwa/
  * Caches landing assets + runtime images/css/js
  */
-const DM_APP_VERSION = 'landing-v2';
+const DM_APP_VERSION = 'landing-v3';
 const DM_CORE = `documed-landing-core-${DM_APP_VERSION}`;
 const DM_RUNTIME = `documed-landing-runtime-${DM_APP_VERSION}`;
 // Derive base directory (e.g., /DocMed/documed_pwa)

@@ -6,14 +6,32 @@
   let observer = null;
 
   function hardNavigate(ev){
+    try { console.debug('[user_appointments.js] hardNavigate triggered'); } catch(_) {}
     if (ev) {
       try { ev.preventDefault(); ev.stopImmediatePropagation(); } catch(_) {}
     }
+    const absolute = (function(){
+      try { return new URL(BOOK_URL, window.location.href).toString(); }
+      catch(_) { return BOOK_URL; }
+    })();
+    let navigated = false;
     try {
-      window.location.assign(BOOK_URL);
-    } catch (_) {
-      window.location.href = BOOK_URL;
+      window.location.assign(absolute);
+      navigated = true;
+    } catch (_) {}
+    if (!navigated) {
+      try {
+        window.location.href = absolute;
+        navigated = true;
+      } catch (_) {}
     }
+    // Belt-and-suspenders: dispatch async fallback in case another handler blocks navigation
+    setTimeout(function(){
+      const current = window.location.href;
+      if (!current.includes('book_appointment.html')) {
+        try { window.location.href = absolute; } catch(_) {}
+      }
+    }, 75);
   }
 
   function scrubButtonAttributes(btn){

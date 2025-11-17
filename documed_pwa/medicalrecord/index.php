@@ -13,8 +13,8 @@ if ($id === '') {
     exit;
 }
 
-// Build absolute path to backend download endpoint
-$target = sprintf('/documed_pwa/backend/api/download_medical_record.php?id=%s&as=%s', urlencode($id), urlencode($as));
+// Build absolute path to backend download endpoint (root-relative)
+$target = sprintf('/backend/api/download_medical_record.php?id=%s&as=%s', urlencode($id), urlencode($as));
 
 header('Location: ' . $target, true, 302);
 exit;
