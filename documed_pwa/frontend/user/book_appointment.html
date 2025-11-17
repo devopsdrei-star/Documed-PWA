@@ -403,53 +403,15 @@
     <script src="../assets/js/pwa.js"></script>
     <script src="../assets/js/booking.js"></script>
 <script>
-(function(){
-    const MAX_TOKEN_AGE_MS = 110 * 1000; // Google tokens expire quickly; refresh if older than ~110s
-
-    function clearRecaptchaToken() {
-        try {
-            sessionStorage.removeItem('recaptchaToken');
-            sessionStorage.removeItem('recaptchaTokenIssuedAt');
-        } catch (_) {}
-    }
-
-    function requireFreshRecaptcha() {
-        let token = '';
-        let issuedAt = 0;
-        try {
-            token = sessionStorage.getItem('recaptchaToken') || '';
-            issuedAt = parseInt(sessionStorage.getItem('recaptchaTokenIssuedAt') || '0', 10);
-        } catch (_) {
-            token = '';
-            issuedAt = 0;
-        }
-        if (!token) return false;
-        if (!issuedAt || Number.isNaN(issuedAt)) return false;
-        if (Date.now() - issuedAt > MAX_TOKEN_AGE_MS) return false;
-        return true;
-    }
-
-    function redirectToRecaptcha() {
-        clearRecaptchaToken();
-        const url = new URL('recaptcha.html', window.location.href);
-        url.searchParams.set('next', 'book_appointment.html');
-        window.location.replace(url.toString());
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        if (!requireFreshRecaptcha()) {
-            redirectToRecaptcha();
-            return;
-        }
-
-        const form = document.getElementById('appointmentForm');
-        if (!form) return;
-        form.addEventListener('submit', function() {
-            const recaptchaToken = sessionStorage.getItem('recaptchaToken');
-            if (!recaptchaToken) {
-                redirectToRecaptcha();
-                return;
-            }
+// Inject reCAPTCHA token from sessionStorage into form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('appointmentForm');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+        // Get token from sessionStorage
+        const recaptchaToken = sessionStorage.getItem('recaptchaToken');
+        if (recaptchaToken) {
+            // Add token to form as hidden input
             let tokenInput = document.getElementById('recaptchaToken');
             if (!tokenInput) {
                 tokenInput = document.createElement('input');
@@ -459,18 +421,9 @@
                 form.appendChild(tokenInput);
             }
             tokenInput.value = recaptchaToken;
-        });
-    });
-
-    // Handle returning to the page via browser back/forward cache by re-validating immediately
-    window.addEventListener('pageshow', function(e) {
-        if (e.persisted) {
-            if (!requireFreshRecaptcha()) {
-                redirectToRecaptcha();
-            }
         }
     });
-})();
+});
 </script>
 </body>
     <!-- AI Chatbot Floating Button and Chat Window -->
