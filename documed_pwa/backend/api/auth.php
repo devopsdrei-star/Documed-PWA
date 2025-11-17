@@ -321,23 +321,54 @@ if ($action === 'reset_password_otp') {
 
 // ✅ Get user info
 if ($action === 'get_user') {
-    $id = $_POST['id'] ?? null;
+    // Accept id, student_faculty_id (sid), or email to keep legacy callers working
+    $id = trim($_POST['id'] ?? '');
+    $sid = trim($_POST['sid'] ?? '');
+    $email = trim($_POST['email'] ?? '');
 
-    if (!$id) {
-        echo json_encode(['success' => false, 'message' => 'User ID is required']);
-        exit;
+    if ($id === '' && $sid === '' && $email === '') {
+        jsonResponse(['success' => false, 'message' => 'User identifier is required']);
     }
 
-    $stmt = $pdo->prepare("SELECT id, name, email, role, year_course, department FROM users WHERE id = ?");
-    $stmt->execute([$id]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    try {
+        // Determine lookup priority: explicit id → sid → email
+        if ($id !== '') {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+            $stmt->execute([$id]);
+        } elseif ($sid !== '') {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE student_faculty_id = ? LIMIT 1");
+            $stmt->execute([$sid]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1");
+            $stmt->execute([$email]);
+        }
 
-    if ($user) {
-        echo json_encode(['success' => true, 'user' => $user]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'User not found']);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if (!$user) {
+            jsonResponse(['success' => false, 'message' => 'User not found']);
+        }
+
+        // Remove sensitive data and provide legacy aliases the frontend expects
+        unset($user['password'], $user['qr_token_hash'], $user['qr_token_lookup']);
+
+        // Provide aggregated display name for older UI widgets
+        $nameParts = [
+            $user['first_name'] ?? '',
+            $user['middle_initial'] ?? '',
+            $user['last_name'] ?? ''
+        ];
+        $user['name'] = trim(preg_replace('/\s+/', ' ', implode(' ', $nameParts)));
+
+        // Preserve legacy role key
+        if (isset($user['client_type']) && !isset($user['role'])) {
+            $user['role'] = $user['client_type'];
+        }
+
+        jsonResponse(['success' => true, 'user' => $user]);
+    } catch (Throwable $e) {
+        error_log('get_user error: ' . $e->getMessage());
+        jsonResponse(['success' => false, 'message' => 'Unable to fetch user']);
     }
-    exit;
 }
 
 // ✅ User registration

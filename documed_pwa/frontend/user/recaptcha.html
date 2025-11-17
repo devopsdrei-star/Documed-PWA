@@ -20,16 +20,44 @@
   </div>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <script>
-    let recaptchaPassed = false;
-    function onRecaptcha(token) {
-      recaptchaPassed = !!token;
-      document.getElementById('recaptchaMsg').textContent = '';
-      if (recaptchaPassed) {
-        // Store token in sessionStorage
-        sessionStorage.setItem('recaptchaToken', token);
-        window.location.href = 'book_appointment.html';
+    (function(){
+      const DEFAULT_NEXT = 'book_appointment.html';
+
+      function sanitizeNext(value) {
+        if (!value) return DEFAULT_NEXT;
+        try {
+          // Only allow same-origin relative paths
+          const url = new URL(value, window.location.origin);
+          if (url.origin !== window.location.origin) return DEFAULT_NEXT;
+          // Prevent redirecting outside the frontend folder unintentionally
+          return url.pathname.replace(/[^\w\-./]/g, '') + (url.search || '') + (url.hash || '');
+        } catch (_) {
+          return DEFAULT_NEXT;
+        }
       }
-    }
+
+      function getNextFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return sanitizeNext(params.get('next') || params.get('redirect'));
+      }
+
+      window.onRecaptcha = function(token) {
+        const msgEl = document.getElementById('recaptchaMsg');
+        if (msgEl) msgEl.textContent = '';
+        if (!token) {
+          if (msgEl) msgEl.textContent = 'Please try the verification again.';
+          return;
+        }
+        try {
+          sessionStorage.setItem('recaptchaToken', token);
+          sessionStorage.setItem('recaptchaTokenIssuedAt', String(Date.now()));
+        } catch (_) {
+          // If storage fails, continue with redirect so the backend can still validate
+        }
+        const nextUrl = getNextFromQuery();
+        window.location.href = nextUrl;
+      };
+    })();
   </script>
 </body>
 </html>

@@ -191,7 +191,7 @@ ob_start();
       <div><small>Doctor/Nurse: <?=esc($dn)?></small></div>
     ob_start();
     ?>
-    <!doctype html>
+    <!-- <!doctype html>
     <html>
     <head>
     <meta charset="utf-8">
@@ -384,4 +384,4 @@ ob_start();
         </div>
       </div>
     </body>
-    </html>
+    </html> -->

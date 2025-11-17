@@ -146,6 +146,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            if (!formData['g-recaptcha-response']) {
+                showMessage('Please verify you are human before booking.', 'danger');
+                setTimeout(() => { window.location.href = 'recaptcha.html?next=book_appointment.html'; }, 1200);
+                return;
+            }
+
             try {
                 const body = new URLSearchParams();
                 Object.entries(formData).forEach(([key, value]) => {
@@ -160,12 +166,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const data = await res.json();
                 if (data.success) {
+                    try {
+                        sessionStorage.removeItem('recaptchaToken');
+                        sessionStorage.removeItem('recaptchaTokenIssuedAt');
+                    } catch (_) {}
                     showMessage(data.message || 'Appointment booked successfully!', 'success');
                     setTimeout(() => {
                         window.location.href = 'appointments.html';
                     }, 1500);
                 } else {
-                    showMessage(data.message || 'Failed to book appointment.', 'danger');
+                    const message = data.message || 'Failed to book appointment.';
+                    showMessage(message, 'danger');
+                    if (Array.isArray(data.recaptcha_errors) && data.recaptcha_errors.length) {
+                        console.warn('reCAPTCHA errors:', data.recaptcha_errors);
+                        try {
+                            sessionStorage.removeItem('recaptchaToken');
+                            sessionStorage.removeItem('recaptchaTokenIssuedAt');
+                        } catch (_) {}
+                        setTimeout(() => {
+                            window.location.href = 'recaptcha.html?next=book_appointment.html';
+                        }, 1500);
+                    }
                 }
             } catch (err) {
                 console.error('Booking error:', err);

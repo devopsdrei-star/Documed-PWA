@@ -87,6 +87,80 @@ function normalizeTime($slot) {
     return null;
 }
 
+function verifyRecaptchaToken($token, $secret) {
+    $token = trim((string)($token ?? ''));
+    if ($token === '') {
+        return [false, ['missing-input-response']];
+    }
+
+    $endpoint = 'https://www.google.com/recaptcha/api/siteverify';
+    $postData = [
+        'secret' => $secret,
+        'response' => $token,
+    ];
+
+    $remoteIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ($_SERVER['REMOTE_ADDR'] ?? ''));
+    if ($remoteIp) {
+        if (strpos($remoteIp, ',') !== false) {
+            $remoteIp = trim(explode(',', $remoteIp)[0]);
+        }
+        $postData['remoteip'] = $remoteIp;
+    }
+
+    $encoded = http_build_query($postData);
+    $responseBody = null;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $encoded,
+            CURLOPT_TIMEOUT => 6,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+        ]);
+        $responseBody = curl_exec($ch);
+        if ($responseBody === false) {
+            error_log('reCAPTCHA curl error: ' . curl_error($ch));
+        }
+        curl_close($ch);
+    }
+
+    if ($responseBody === null && filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN)) {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => 'Content-type: application/x-www-form-urlencoded',
+                'content' => $encoded,
+                'timeout' => 6,
+            ]
+        ]);
+        $raw = @file_get_contents($endpoint, false, $context);
+        if ($raw !== false) {
+            $responseBody = $raw;
+        }
+    }
+
+    if (!$responseBody) {
+        return [false, ['recaptcha-unreachable']];
+    }
+
+    $decoded = json_decode($responseBody, true);
+    if (!is_array($decoded)) {
+        return [false, ['recaptcha-invalid-response']];
+    }
+
+    $errors = $decoded['error-codes'] ?? [];
+    if (is_string($errors)) {
+        $errors = [$errors];
+    } elseif (!is_array($errors)) {
+        $errors = [];
+    }
+
+    return [!empty($decoded['success']), $errors];
+}
+
 // Book new appointment
 if ($action === 'add') {
     // Get form data
@@ -98,16 +172,21 @@ if ($action === 'add') {
     $purpose = $_POST['purpose'] ?? '';
     $date = $_POST['appointment_date'] ?? '';
     $timeSlot = $_POST['time_slot'] ?? '';
-    $recaptcha_token = $_POST['g-recaptcha-response'] ?? '';
+    $recaptcha_token = trim($_POST['g-recaptcha-response'] ?? '');
     // Verify reCAPTCHA v2
     $recaptcha_secret = '6LejFOsrAAAAAMif6gHs-UjcfJxnWW7fCF-bzWNe';
-    $recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify';
-    $recaptcha = file_get_contents($recaptcha_url . '?secret=' . urlencode($recaptcha_secret) . '&response=' . urlencode($recaptcha_token));
-    $recaptcha = json_decode($recaptcha, true);
-    if (!$recaptcha || empty($recaptcha['success'])) {
+    [$human, $recaptchaErrors] = verifyRecaptchaToken($recaptcha_token, $recaptcha_secret);
+    if (!$human) {
+        if (!empty($recaptchaErrors)) {
+            error_log('appointments_new.php reCAPTCHA errors: ' . implode(',', $recaptchaErrors));
+        }
+        $message = $recaptcha_token === ''
+            ? 'Please complete the human verification before booking.'
+            : 'reCAPTCHA validation failed.';
         jsonResponse([
             'success' => false,
-            'message' => 'reCAPTCHA validation failed.'
+            'message' => $message,
+            'recaptcha_errors' => $recaptchaErrors
         ]);
     }
 
