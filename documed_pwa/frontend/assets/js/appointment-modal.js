@@ -1,10 +1,6 @@
 // Calendar and booking helper functions (top-level so other scripts can call them)
 (function(global){
 
-    // Simple in-memory cache for per-day slot queries to reduce repeated requests
-    const __slotCache = new Map(); // key: 'YYYY-MM-DD' -> { at: ms, data: object }
-    const SLOT_CACHE_TTL_MS = 60 * 1000; // 1 minute TTL
-
     // Helper: format Date -> YYYY-MM-DD
     function formatYMD(dateObj) {
         const y = dateObj.getFullYear();
@@ -37,12 +33,6 @@
 
     // Fetch booked slots for a specific date
     async function fetchBookedSlotsForDate(dateStr, apiBaseUrl) {
-        try {
-            const cached = __slotCache.get(dateStr);
-            if (cached && (Date.now() - (cached.at || 0) < SLOT_CACHE_TTL_MS)) {
-                return cached.data || {};
-            }
-        } catch(_) {}
         try {
             const body = new URLSearchParams();
             body.append('action', 'check_slots');
@@ -81,7 +71,6 @@
             const out = data.booked_slots || {};
             out.__day_total = typeof data.day_total === 'number' ? data.day_total : undefined;
             out.__day_limit = typeof data.day_limit === 'number' ? data.day_limit : 10;
-            try { __slotCache.set(dateStr, { at: Date.now(), data: out }); } catch(_) {}
             return out;
         } catch (e) {
             console.error('Error fetching booked slots for date', dateStr, e);
@@ -287,9 +276,7 @@
     async function updateTimeSlotsForDate(dateStr, apiBaseUrl) {
         const timeSlotsContainer = document.getElementById('timeSlots');
         if (!timeSlotsContainer) return;
-        // Show quick placeholder while loading
-        timeSlotsContainer.innerHTML = '<div class="text-muted" style="padding:8px 2px;">Loading available slots…</div>';
-        const bookedCounts = await fetchBookedSlotsForDate(dateStr, apiBaseUrl); // returns { '09:00': count, ..., __day_total, __day_limit }
+    const bookedCounts = await fetchBookedSlotsForDate(dateStr, apiBaseUrl); // returns { '09:00': count, ..., __day_total, __day_limit }
         // Build hourly slots 08:00–16:00; mark 12:00pm–1:00pm as lunch break
         const availableSlots = [];
         const fmt12 = (t)=>{ const [H,M]=t.split(':'); let x=parseInt(H,10); const am=x<12; if(x===0)x=12; if(x>12)x-=12; return `${x}:${M} ${am?'AM':'PM'}`; };
@@ -301,7 +288,7 @@
             availableSlots.push({ start, label, lunch });
         }
 
-        timeSlotsContainer.innerHTML = '';
+    timeSlotsContainer.innerHTML = '';
     const dayTotal = typeof bookedCounts.__day_total === 'number' ? bookedCounts.__day_total : undefined;
     const dayLimit = typeof bookedCounts.__day_limit === 'number' ? bookedCounts.__day_limit : 10;
     const dayFull = typeof dayTotal === 'number' && dayTotal >= dayLimit;
@@ -489,13 +476,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const purpose = document.getElementById('purposeModal') ? document.getElementById('purposeModal').value.trim() : '';
             const date = (document.getElementById('selectedAppointmentDate') || {}).value || '';
             const time_slot = (document.getElementById('timeModal') || {}).value || '';
-            // reCAPTCHA removed
+            const recaptchaResponse = document.querySelector('.g-recaptcha [name="g-recaptcha-response"]')?.value || document.getElementById('g-recaptcha-response')?.value || '';
 
             if (!name || !email || !date || !time_slot || !role) {
                 if (formMsg) { formMsg.className = 'alert alert-danger'; formMsg.textContent = 'Please complete all required fields.'; }
                 return;
             }
-            // no reCAPTCHA requirement
+            if (!recaptchaResponse) {
+                if (formMsg) { formMsg.className = 'alert alert-danger'; formMsg.textContent = 'Please complete the reCAPTCHA.'; }
+                return;
+            }
 
             try {
                 const body = new URLSearchParams();
@@ -508,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body.append('year_course', year_course);
                 body.append('department', department);
                 body.append('purpose', purpose);
-                // no reCAPTCHA token
+                body.append('g-recaptcha-response', recaptchaResponse);
                 const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

@@ -137,7 +137,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 department: document.getElementById('department').value.trim(),
                 purpose: document.getElementById('purpose').value.trim(),
                 appointment_date: document.getElementById('selectedDate').value,
-                time_slot: document.getElementById('selectedTime').value
+                time_slot: document.getElementById('selectedTime').value,
+                'g-recaptcha-response': sessionStorage.getItem('recaptchaToken') || ''
             };
 
             if (!formData.name || !formData.email || !formData.role || !formData.appointment_date || !formData.time_slot || !formData.purpose) {
