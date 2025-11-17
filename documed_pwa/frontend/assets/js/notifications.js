@@ -182,14 +182,11 @@
       const res = await fetch(`../../backend/api/appointments_new.php?action=notifications&email=${encodeURIComponent(email)}&limit=20`);
       const data = await res.json();
       if (!data.success) return {appointments:[], announcements:[], events:[]};
-      // Only surface user-facing items: appointments + events (reschedules, accepted/declined/cancelled, follow-ups)
-      return {appointments: data.appointments||[], announcements: [], events: data.events||[]};
+      return {appointments: data.appointments||[], announcements: data.announcements||[], events: data.events||[]};
     } catch(err){
       return {appointments:[], announcements:[], events:[]};
     }
   }
-
-  // Removed medicine/decision-making signals from user notifications per requirement
 
   async function loadFollowUpsForUser(){
     try {
@@ -326,22 +323,9 @@
   const items = [];
   // Newest first: sort by created_at desc when available
   const appts = (data.appointments||[]).slice().sort((a,b)=> new Date(b.created_at||0)-new Date(a.created_at||0));
-  // Add login verification shortcut (opens Approve Login scanner)
-  (function addLoginVerifyCard(){
-    const created = 'login_verify_v1';
-    const unread = !loadReadSet().has(keyFor('login_verify', 'global', created));
-    items.push(`<div class="p-3 border-bottom notif-item ${unread?'unread':''}" data-type="login_verify" data-id="global" data-created="${created}" style="background:${unread?'#e0f2fe':'#fff'}; cursor:pointer;">
-      <div style="display:flex; gap:10px; align-items:flex-start;">
-        <div style="color:#0284c7; font-size:1.2rem"><i class="bi bi-shield-lock"></i></div>
-        <div style="flex:1;">
-          <div style="font-weight:600; color:#111">Verify login from another device</div>
-          <div class="small text-muted">Tap to open the scanner and approve a login request.</div>
-          ${unread? '<div class="small" style="color:#0369a1;margin-top:6px;">Unread</div>':''}
-        </div>
-      </div>
-    </div>`);
-  })();
+  const anns  = (data.announcements||[]).slice().sort((a,b)=> new Date(b.created_at||0)-new Date(a.created_at||0));
   appts.forEach(a => items.push(formatAppt(a)));
+  anns.forEach(a => items.push(formatAnn(a)));
   buildReminders(data, followups).forEach(o=> items.push(o.html));
         (data.events||[]).forEach(ev => {
           if (ev.type === 'reschedule_window') {
@@ -407,22 +391,6 @@
                 <div style="flex:1;">
                   <div style="font-weight:600; color:#111">Appointment accepted #${ev.appointment_id||''}</div>
                   <div class="small text-muted">${(ev.purpose||'Appointment')}</div>
-                  <div class="small text-muted mt-1">${fmtDateTimeLabel(createdDisplay)}</div>
-                  ${unread? '<div class="small" style="color:#166534;margin-top:6px;">Unread</div>':''}
-                </div>
-              </div>
-            </div>`);
-          } else if (ev.type === 'checkup_no_followup') {
-            const createdDisplay = ev.created_at || '';
-            const createdKey = 'checkup_no_followup';
-            const cid = ev.id || '';
-            const unread = !loadReadSet().has(keyFor('checkup_no_followup', cid, createdKey));
-            items.push(`<div class="p-3 border-bottom notif-item ${unread?'unread':''}" data-type="checkup_no_followup" data-id="${cid}" data-created="${createdDisplay}" data-keycreated="${createdKey}" style="background:${unread?'#f0fdf4':'#fff'}; cursor:pointer;">
-              <div style="display:flex; gap:10px; align-items:flex-start;">
-                <div style="color:#16a34a; font-size:1.2rem"><i class="bi bi-clipboard-check"></i></div>
-                <div style="flex:1;">
-                  <div style="font-weight:600; color:#111">Check-up complete</div>
-                  <div class="small text-muted">No follow-up is required for your last check-up.</div>
                   <div class="small text-muted mt-1">${fmtDateTimeLabel(createdDisplay)}</div>
                   ${unread? '<div class="small" style="color:#166534;margin-top:6px;">Unread</div>':''}
                 </div>
@@ -540,7 +508,7 @@
   const createdDisplay = item.getAttribute('data-created') || '';
   const keyCreated = item.getAttribute('data-keycreated') || createdDisplay;
     const reason = item.getAttribute('data-reason') || '';
-  if (type==='cancelled' || type==='declined'){
+    if (type==='cancelled' || type==='declined'){
       ensureReasonModal();
       const title = document.getElementById('notifReasonTitle');
       const when = document.getElementById('notifReasonWhen');
@@ -564,7 +532,7 @@
   item.style.background = '#fff';
   const badge = document.querySelector('#notifBellBtn .notif-badge');
   if (badge){ const dd=document.getElementById('notifDropdown'); const n = dd? dd.querySelectorAll('.notif-item.unread').length : 0; badge.style.display = n>0?'inline-block':'none'; if (n>0) badge.textContent = String(n); }
-  } else if (type==='reschedule_window'){
+    } else if (type==='reschedule_window'){
       // Open 3-day selection modal
       ensureReschedPickModal();
       const baseUrl = window.location.pathname.split('/frontend/')[0];
@@ -645,7 +613,7 @@
               }
             } catch {}
             // Mark read
-            markRead(type, apptId, keyCreated); item.classList.remove('unread'); item.style.background='#fff';
+            markRead(type, apptId, created); item.classList.remove('unread'); item.style.background='#fff';
             // Navigate or refresh appointments page
             const userApptUrl = `${baseUrl}/frontend/user/appointments.html`;
             const path = window.location.pathname || '';
@@ -659,7 +627,7 @@
       }
       if (window.bootstrap && bootstrap.Modal){ const m = new bootstrap.Modal(document.getElementById('notifReschedPickModal')); m.show(); }
       else { alert(`Pick a new schedule between ${start} and ${end} on your Appointments page.`); }
-  } else if (type==='rescheduled'){
+    } else if (type==='rescheduled'){
       ensureReasonModal();
       const title = document.getElementById('notifReasonTitle');
       const when = document.getElementById('notifReasonWhen');
@@ -705,59 +673,48 @@
       } else {
         alert(`${pur||'Appointment'}\n${date} ${time12}\nStatus: ${st}`);
       }
-  markRead(type, item.getAttribute('data-id'), createdDisplay);
+      markRead(type, item.getAttribute('data-id'), created);
       item.classList.remove('unread');
       item.style.background = '#fff';
       { const badge=document.querySelector('#notifBellBtn .notif-badge'); if(badge){ const dd=document.getElementById('notifDropdown'); const n = dd? dd.querySelectorAll('.notif-item.unread').length : 0; badge.style.display = n>0?'inline-block':'none'; if(n>0) badge.textContent=String(n);} }
-  } else if (type==='accepted'){
+    } else if (type==='accepted'){
       ensureReasonModal();
       const title = document.getElementById('notifReasonTitle');
       const when = document.getElementById('notifReasonWhen');
       const body = document.getElementById('notifReasonBody');
-  if (title) title.textContent = 'Appointment accepted';
-  if (when) when.textContent = fmtDateTimeLabel(createdDisplay);
+      if (title) title.textContent = 'Appointment accepted';
+      if (when) when.textContent = fmtDateTimeLabel(created);
       const pur = item.getAttribute('data-purpose')||'';
       body.innerHTML = `<div><strong>${pur||'Appointment'}</strong></div><div class="small text-muted">Your booking has been accepted.</div>`;
       if (window.bootstrap && bootstrap.Modal){ const m = new bootstrap.Modal(document.getElementById('notifReasonModal')); m.show(); } else { alert('Appointment accepted'); }
   markRead('accepted', item.getAttribute('data-id'), keyCreated);
       item.classList.remove('unread'); item.style.background='#fff';
       { const badge=document.querySelector('#notifBellBtn .notif-badge'); if(badge){ const dd=document.getElementById('notifDropdown'); const n = dd? dd.querySelectorAll('.notif-item.unread').length : 0; badge.style.display = n>0?'inline-block':'none'; if(n>0) badge.textContent=String(n);} }
-    } else if (type==='login_verify') {
-      // Open approve scanner modal if available, else go to fallback page
-      const approveEl = document.getElementById('approveModal');
-      try {
-        if (approveEl && window.bootstrap && bootstrap.Modal) {
-          const m = bootstrap.Modal.getOrCreateInstance(approveEl);
-          m.show();
-        } else {
-          // Navigate to dedicated approval page
-          const base = window.location.pathname.split('/frontend/')[0];
-          window.location.href = base + '/frontend/user/qr_approve.html';
-        }
-      } catch(_) {
-        const base = window.location.pathname.split('/frontend/')[0];
-        window.location.href = base + '/frontend/user/qr_approve.html';
+    } else if (type==='ann'){
+      // Show announcement details and mark as read
+      ensureReasonModal();
+      const title = document.getElementById('notifReasonTitle');
+      const when = document.getElementById('notifReasonWhen');
+      const body = document.getElementById('notifReasonBody');
+      if (title) title.textContent = 'Announcement';
+  if (when) when.textContent = fmtDateTimeLabel(createdDisplay);
+      const msg = item.getAttribute('data-message') || '';
+      body.innerHTML = `<div>${msg}</div>`;
+      if (window.bootstrap && bootstrap.Modal){
+        const m = new bootstrap.Modal(document.getElementById('notifReasonModal'));
+        m.show();
+      } else {
+        alert(`Announcement\n\n${msg}`);
       }
-      markRead(type, item.getAttribute('data-id'), keyCreated);
-      item.classList.remove('unread'); item.style.background='#fff';
+  markRead('ann', item.getAttribute('data-id'), keyCreated);
+      item.classList.remove('unread');
+      item.style.background = '#f8fafc';
       { const badge=document.querySelector('#notifBellBtn .notif-badge'); if(badge){ const dd=document.getElementById('notifDropdown'); const n = dd? dd.querySelectorAll('.notif-item.unread').length : 0; badge.style.display = n>0?'inline-block':'none'; if(n>0) badge.textContent=String(n);} }
     } else if (type==='rem_appt' || type==='followup_due'){
       // For reminder cards, just mark read on click and update badge
   markRead(type, item.getAttribute('data-id'), keyCreated);
       item.classList.remove('unread'); item.style.background='#fff';
       const badge=document.querySelector('#notifBellBtn .notif-badge'); if(badge){ const dd=document.getElementById('notifDropdown'); const n = dd? dd.querySelectorAll('.notif-item.unread').length : 0; badge.style.display = n>0?'inline-block':'none'; if(n>0) badge.textContent=String(n);}        
-    } else if (type==='checkup_no_followup') {
-      ensureReasonModal();
-      const title = document.getElementById('notifReasonTitle');
-      const when = document.getElementById('notifReasonWhen');
-      const body = document.getElementById('notifReasonBody');
-      if (title) title.textContent = 'Check-up complete';
-      if (when) when.textContent = fmtDateTimeLabel(createdDisplay);
-      body.innerHTML = '<div>No follow-up is required for your last check-up.</div>';
-      if (window.bootstrap && bootstrap.Modal){ const m = new bootstrap.Modal(document.getElementById('notifReasonModal')); m.show(); } else { alert('Check-up complete. No follow-up required.'); }
-      markRead(type, item.getAttribute('data-id'), keyCreated);
-      item.classList.remove('unread'); item.style.background='#fff';
-      { const badge=document.querySelector('#notifBellBtn .notif-badge'); if(badge){ const dd=document.getElementById('notifDropdown'); const n = dd? dd.querySelectorAll('.notif-item.unread').length : 0; badge.style.display = n>0?'inline-block':'none'; if(n>0) badge.textContent=String(n);} }
     }
   });
 
@@ -772,11 +729,10 @@
       let count = 0;
       const addIfUnread = (type, id, createdKey)=>{ const k = keyFor(type,id,createdKey); if (!read.has(k)) count++; };
       (data.appointments||[]).forEach(a=> addIfUnread('appt', a.id, stableThirdForAppt(a)));
+      (data.announcements||[]).forEach(a=> addIfUnread('ann', a.id, 'ann'));
       (data.events||[]).forEach(ev=>{
         if (!ev) return; const id = ev.appointment_id||ev.id||''; const t=ev.type||''; if(!t) return; addIfUnread(t, id, t);
       });
-      // Login verify shortcut counts as one until clicked
-      addIfUnread('login_verify', 'global', 'login_verify_v1');
       // Appointment reminders (next 3 days)
       const today = new Date(); const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const inDays = (d)=>{ const dt=new Date(d); return Math.round((dt - t0)/86400000); };

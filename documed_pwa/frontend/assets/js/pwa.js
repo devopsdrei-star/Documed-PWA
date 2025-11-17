@@ -57,23 +57,11 @@
 
   function registerSW(){
     if (!('serviceWorker' in navigator)) return;
-    // Prefer root service worker for widest scope; fall back to relative if needed
-    const candidates = [
-      '/service-worker.js?v=2',
-      new URL('../../service-worker.js?v=2', window.location.href).toString()
-    ];
-    (async () => {
-      for (const url of candidates) {
-        try {
-          const reg = await navigator.serviceWorker.register(url);
-          console.log('[SW] registered', reg.scope, 'via', url);
-          return;
-        } catch (err) {
-          console.warn('[SW] register failed for', url, err);
-        }
-      }
-      console.error('[SW] registration failed for all candidates');
-    })();
+    // Register relative to user pages location (frontend/user/* -> ../../service-worker.js)
+    const swUrl = new URL('../../service-worker.js', window.location.href).toString();
+    navigator.serviceWorker.register(swUrl)
+      .then(reg => console.log('[SW] registered', reg.scope))
+      .catch(err => console.error('[SW] failed', err));
   }
 
   document.addEventListener('DOMContentLoaded', function(){
