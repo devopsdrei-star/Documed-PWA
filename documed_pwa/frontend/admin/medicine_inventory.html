@@ -97,6 +97,24 @@
         <div id="panel" style="margin-top:12px;"></div>
         <div id="actionsPanel" class="mt-2"></div>
       </div>
+
+      <!-- Suggestions / Alerts Modal -->
+      <div class="modal fade" id="suggestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">System Alerts & Suggestions</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="suggestBody">
+              <!-- Populated dynamically -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <!-- Create / Edit Medicine Modal -->
       <div class="modal fade" id="medModal" tabindex="-1" aria-hidden="true">
@@ -423,14 +441,35 @@
               </div>
             </div>
           </div>`;
+
+        // If there are restock or orientation suggestions, show a modal popup to the admin
+        const hasRestock = (data.actions && Array.isArray(data.actions.restock) && data.actions.restock.length > 0);
+        const hasOrient = (data.actions && Array.isArray(data.actions.orientation) && data.actions.orientation.length > 0);
+        if (hasRestock || hasOrient) {
+          const suggestBody = document.getElementById('suggestBody');
+          let html = '<p>The system detected suggested actions based on recent case trends.</p>';
+          if (hasRestock) {
+            html += '<h6>Restock suggested</h6><ul>' + data.actions.restock.map(r => `<li>${r.name} — ${r.in_inventory ? (r.low_stock ? 'low stock' : 'in stock') : 'not in inventory' } (for ${r.linked_condition})</li>`).join('') + '</ul>';
+          }
+          if (hasOrient) {
+            html += '<h6>Orientation suggested</h6><ul>' + data.actions.orientation.map(o => `<li>${o.condition}: ${o.month_cases} cases (${o.week_cases} in last 7 days) — ${o.reason}</li>`).join('') + '</ul>';
+          }
+          // show modal
+          const suggestModalEl = document.getElementById('suggestModal');
+          suggestBody.innerHTML = html;
+          const boostModal = new bootstrap.Modal(suggestModalEl);
+          boostModal.show();
+        }
       } catch (e) {
         document.getElementById('panel').innerHTML = '<div class="alert alert-danger">Failed to load suggestions.</div>';
       }
     }
-    // Auto load inventory and decision suggestions, refresh every 10 minutes
-    loadList();
-    showSuggestions();
-    setInterval(showSuggestions, 10 * 60 * 1000);
+  // Auto load inventory and decision suggestions, refresh every 10 minutes
+  loadList();
+  showSuggestions();
+  // Also auto-run alerts once when admin opens the page
+  showAlerts();
+  setInterval(showSuggestions, 10 * 60 * 1000);
   </script>
   <script src="../assets/js/settings_dropdown.js"></script>
   <script src="../assets/js/dashboard_interactive.js"></script>
