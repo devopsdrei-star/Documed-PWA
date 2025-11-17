@@ -29,6 +29,7 @@
     /* Status badges */
     .tag { display:inline-block; padding:2px 8px; border-radius:14px; font-size:0.78rem; }
     .tag-exp { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+  .tag-ok { background:#ecfdf5; color:#065f46; border:1px solid #bbf7d0; }
     .row-low td { background:#fff7ed; }
 
     @media (max-width: 900px) {
@@ -85,6 +86,7 @@
             <tr>
               <th>Name</th>
               <th>Qty</th>
+              <th>Status</th>
               <th>Threshold</th>
               <th>Nearest Expiry</th>
               <th style="width:200px;">Actions</th>
@@ -223,13 +225,21 @@
           const tr = document.createElement('tr');
           if (m.low_stock) tr.classList.add('row-low');
           const expTag = m.expiring_soon ? '<span class="tag tag-exp">Expiring soon</span>' : (m.nearest_expiry ? m.nearest_expiry : '');
+          let statusBadge = '';
+          if ((m.quantity || 0) <= 0) {
+            statusBadge = '<span class="tag" style="background:#f8d7da;color:#842029;border:1px solid #f5c2c7">Out of stock</span>';
+          } else if (m.low_stock) {
+            statusBadge = '<span class="tag tag-exp">Paubos na</span>';
+          } else {
+            statusBadge = '<span class="tag tag-ok">In stock</span>';
+          }
           const actions = `
             <div class="btn-group btn-group-sm" role="group">
               <button class="btn btn-outline-primary" onclick="openEditModal(${m.id}, '${encodeURIComponent(JSON.stringify(m)).replace(/'/g,"&#39;")}')">Edit</button>
               <button class="btn btn-outline-secondary" onclick="openBatches(${m.id}, '${String(m.name).replace(/'/g,"&#39;")}')">Batches</button>
               <button class="btn btn-outline-danger" onclick="confirmDelete(${m.id}, '${String(m.name).replace(/'/g,"&#39;")}')">Delete</button>
             </div>`;
-          tr.innerHTML = `<td>${m.name}</td><td>${m.quantity}</td><td>${m.threshold_qty}</td><td>${expTag}</td><td>${actions}</td>`;
+          tr.innerHTML = `<td>${m.name}</td><td>${m.quantity}</td><td>${statusBadge}</td><td>${m.threshold_qty}</td><td>${expTag}</td><td>${actions}</td>`;
           tbody.appendChild(tr);
         });
       } catch (e) {
