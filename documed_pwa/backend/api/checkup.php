@@ -26,6 +26,30 @@ try { $pdo->exec("ALTER TABLE checkups ADD COLUMN doc_nurse_id INT NULL AFTER do
 try { $pdo->exec("ALTER TABLE checkups ADD COLUMN follow_up TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* ignore */ }
 // Ensure follow-up date column exists (best-effort)
 try { $pdo->exec("ALTER TABLE checkups ADD COLUMN follow_up_date DATE NULL"); } catch (Throwable $e) { /* ignore */ }
+// Ensure issuance tables exist (best-effort)
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS checkup_medicines (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        checkup_id INT NOT NULL,
+        medicine_id INT NOT NULL,
+        qty INT NOT NULL,
+        campus VARCHAR(100) NOT NULL DEFAULT 'Lingayen',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_checkup (checkup_id),
+        INDEX idx_medicine (medicine_id)
+    ) ENGINE=InnoDB");
+} catch (Throwable $e) { /* ignore */ }
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS checkup_medicine_batches (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        checkup_medicine_id INT NOT NULL,
+        batch_id INT NOT NULL,
+        qty INT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_checkup_med (checkup_medicine_id),
+        INDEX idx_batch (batch_id)
+    ) ENGINE=InnoDB");
+} catch (Throwable $e) { /* ignore */ }
 // Ensure exam_category column exists (based on current schema screenshot)
 try { $pdo->exec("ALTER TABLE checkups ADD COLUMN exam_category VARCHAR(200) NULL AFTER client_type"); } catch (Throwable $e) { /* ignore */ }
 // Ensure client_type (renamed from role) & gender columns exist (best-effort, guarded)
@@ -192,7 +216,76 @@ if ($action === 'add') {
         }
     $insertId = null;
     try { $insertId = $pdo->lastInsertId(); } catch (Throwable $e) { $insertId = null; }
-    echo json_encode(['success' => true, 'message' => 'Checkup record successfully inserted!', 'insert_id' => $insertId]);
+
+    // If medicines were provided, attempt to issue them and decrement inventory.
+    $issuedSummary = [];
+    try {
+        $medsRaw = $_POST['medicines'] ?? null;
+        if ($medsRaw) {
+            // Accept JSON string or array
+            if (is_string($medsRaw)) {
+                $meds = json_decode($medsRaw, true);
+                if (!is_array($meds)) $meds = [];
+            } elseif (is_array($medsRaw)) {
+                $meds = $medsRaw;
+            } else {
+                $meds = [];
+            }
+            // Use a campus default - callers may include campus per item in future
+            $defaultCampus = 'Lingayen';
+            foreach ($meds as $m) {
+                $medicine_id = intval($m['medicine_id'] ?? $m['id'] ?? 0);
+                $reqQty = intval($m['qty'] ?? $m['quantity'] ?? 0);
+                if (!$medicine_id || $reqQty <= 0) continue;
+
+                // Calculate available stock (prefer batch sum)
+                $availStmt = $pdo->prepare("SELECT COALESCE(SUM(qty),0) AS avail FROM medicine_batches WHERE medicine_id = ? AND campus = ?");
+                $availStmt->execute([$medicine_id, $defaultCampus]);
+                $avail = intval($availStmt->fetchColumn());
+                // Fallback to medicines.quantity if batches missing
+                if ($avail <= 0) {
+                    $mq = $pdo->prepare("SELECT COALESCE(quantity,0) FROM medicines WHERE id = ?");
+                    $mq->execute([$medicine_id]);
+                    $avail = intval($mq->fetchColumn());
+                }
+                $toIssue = min($reqQty, $avail);
+                if ($toIssue <= 0) {
+                    $issuedSummary[] = ['medicine_id' => $medicine_id, 'requested' => $reqQty, 'issued' => 0, 'note' => 'no stock'];
+                    continue;
+                }
+
+                // Insert issuance record linked to checkup
+                $ins = $pdo->prepare("INSERT INTO checkup_medicines (checkup_id, medicine_id, qty, campus) VALUES (?, ?, ?, ?)");
+                $ins->execute([$insertId, $medicine_id, $toIssue, $defaultCampus]);
+                $cmid = $pdo->lastInsertId();
+
+                // Decrement medicines.quantity safely
+                $updMed = $pdo->prepare("UPDATE medicines SET quantity = GREATEST(quantity - ?, 0), updated_at = NOW() WHERE id = ?");
+                $updMed->execute([$toIssue, $medicine_id]);
+
+                // Consume batches FIFO by nearest expiry
+                $need = $toIssue;
+                $bstmt = $pdo->prepare("SELECT id, qty FROM medicine_batches WHERE medicine_id = ? AND campus = ? AND qty > 0 ORDER BY COALESCE(expiry_date, '9999-12-31') ASC, id ASC");
+                $bstmt->execute([$medicine_id, $defaultCampus]);
+                while ($need > 0 && ($batch = $bstmt->fetch(PDO::FETCH_ASSOC))) {
+                    $consume = min($need, intval($batch['qty']));
+                    if ($consume <= 0) continue;
+                    $updateBatch = $pdo->prepare("UPDATE medicine_batches SET qty = qty - ? WHERE id = ?");
+                    $updateBatch->execute([$consume, $batch['id']]);
+                    $insb = $pdo->prepare("INSERT INTO checkup_medicine_batches (checkup_medicine_id, batch_id, qty) VALUES (?, ?, ?)");
+                    $insb->execute([$cmid, $batch['id'], $consume]);
+                    $need -= $consume;
+                }
+
+                $issuedSummary[] = ['medicine_id' => $medicine_id, 'requested' => $reqQty, 'issued' => $toIssue];
+            }
+        }
+    } catch (Throwable $e) {
+        // Non-fatal: report in response
+        $issuedSummary[] = ['error' => 'Issuance failed: ' . $e->getMessage()];
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Checkup record successfully inserted!', 'insert_id' => $insertId, 'issued' => $issuedSummary]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage(), 'debug' => $_POST]);
     }
