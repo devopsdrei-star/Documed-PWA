@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   })
   .then(data => {
-    if (data.success && data.user) {
+    if (data && data.success && data.user) {
       const user = data.user;
       console.log("DEBUG: User fetched from backend:", user);
 

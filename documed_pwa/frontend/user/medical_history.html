@@ -235,9 +235,8 @@
               const p = d.patient;
               const fu = (p.follow_up && String(p.follow_up) !== '0');
               const fuDate = p.follow_up_date ? ` (${p.follow_up_date})` : '';
-              // Use short hosted URL so the QR/link is clean (redirects to backend downloader)
-              const base = 'https://documed.up.railway.app';
-              const dlUrl = p.id ? `${base}/medicalrecord?id=${encodeURIComponent(p.id)}&as=pdf` : '';
+              // Direct link to backend downloader so browsers trigger attachment download
+              const dlUrl = p.id ? new URL(`../../backend/api/download_medical_record.php?id=${encodeURIComponent(p.id)}&as=pdf`, window.location.href).href : '';
               bodyEl.innerHTML = `
                 <div class="container-fluid">
                   <div class="row g-3">
@@ -255,7 +254,7 @@
                     <div class="col-12"><hr></div>
                     <div class="col-12 position-relative" style="padding-right: 160px;">
                       <div id="qrWrap" class="position-absolute" style="right:0; top:0; text-align:right;">
-                        <div style="font-size:.85rem;color:#6b7280;margin-bottom:4px;">Scan QR or <a href="${dlUrl}" target="_blank" rel="noopener" style="text-decoration:underline;">click here</a> to download</div>
+                        <div style="font-size:.85rem;color:#6b7280;margin-bottom:4px;">Scan QR or <a href="${dlUrl}" style="text-decoration:underline;" download>click here</a> to download</div>
                         <img id="qrInModal" alt="QR" style="width:120px;height:120px;object-fit:contain;border:1px solid #e5e7eb;border-radius:6px;padding:4px;"/>
                       </div>
                       <div><strong>Assessment:</strong><br>${p.assessment || ''}</div>
@@ -298,10 +297,11 @@
         const labelDiv = wrap.querySelector('div');
         const linkEl = wrap.querySelector('a[href]');
         const href = linkEl ? linkEl.getAttribute('href') : '';
+        if (linkEl) linkEl.setAttribute('download', 'medical-record.pdf');
         if (labelDiv && (!/click here/i.test(labelDiv.textContent))) {
           // Apply the desired wording with a clickable link
           const safeHref = href || '#';
-          labelDiv.innerHTML = `Scan QR or <a href="${safeHref}" target="_blank" rel="noopener" style="text-decoration:underline;">click here</a> to download`;
+          labelDiv.innerHTML = `Scan QR or <a href="${safeHref}" style="text-decoration:underline;" download>click here</a> to download`;
         }
       } catch {}
     });
