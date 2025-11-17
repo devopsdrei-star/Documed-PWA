@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__DIR__) . '/config/db.php';
+require_once '../config/db.php';
 header('Content-Type: application/json');
 
 // Ensure we have a database connection
@@ -98,7 +98,18 @@ if ($action === 'add') {
     $purpose = $_POST['purpose'] ?? '';
     $date = $_POST['appointment_date'] ?? '';
     $timeSlot = $_POST['time_slot'] ?? '';
-    // reCAPTCHA removed
+    $recaptcha_token = $_POST['g-recaptcha-response'] ?? '';
+    // Verify reCAPTCHA v2
+    $recaptcha_secret = '6LejFOsrAAAAAMif6gHs-UjcfJxnWW7fCF-bzWNe';
+    $recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify';
+    $recaptcha = file_get_contents($recaptcha_url . '?secret=' . urlencode($recaptcha_secret) . '&response=' . urlencode($recaptcha_token));
+    $recaptcha = json_decode($recaptcha, true);
+    if (!$recaptcha || empty($recaptcha['success'])) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'reCAPTCHA validation failed.'
+        ]);
+    }
 
     // Validate required fields
     if (!$name || !$email || !$date || !$timeSlot) {
@@ -920,77 +931,6 @@ if ($action === 'notifications') {
             } catch (Throwable $eAcc) { /* ignore */ }
             $out['events'] = $events;
         } catch (Throwable $e) { /* ignore if audit_trail missing */ }
-
-        // Also surface any ACTIVE reschedule windows directly (even if no audit log was written)
-        try {
-            ensureRescheduleTableExists($pdo);
-            // Collect all appointment ids belonging to this email across primary and fallback tables
-            $apptIds = [];
-            $purposes = [];
-            try {
-                $q = $pdo->prepare('SELECT id, purpose FROM appointments WHERE LOWER(email)=LOWER(?)');
-                $q->execute([$email]);
-                foreach ($q->fetchAll(PDO::FETCH_ASSOC) ?: [] as $r) { $id=(int)$r['id']; $apptIds[]=$id; $purposes[$id] = $r['purpose'] ?? 'Appointment'; }
-            } catch (Throwable $e1) {}
-            try {
-                ensurePwaTableExists($pdo);
-                $q2 = $pdo->prepare('SELECT id, purpose FROM appointments_pwa WHERE LOWER(email)=LOWER(?)');
-                $q2->execute([$email]);
-                foreach ($q2->fetchAll(PDO::FETCH_ASSOC) ?: [] as $r2) { $id=(int)$r2['id']; $apptIds[]=$id; if (!isset($purposes[$id])) $purposes[$id] = $r2['purpose'] ?? 'Appointment'; }
-            } catch (Throwable $e2) {}
-            $apptIds = array_values(array_unique(array_filter($apptIds)));
-            if (!empty($apptIds)) {
-                $ph = implode(',', array_fill(0, count($apptIds), '?'));
-                $w = $pdo->prepare("SELECT appointment_id, start_date, end_date, active, created_at FROM reschedule_windows WHERE active = 1 AND appointment_id IN ($ph) ORDER BY id DESC");
-                $w->execute($apptIds);
-                foreach ($w->fetchAll(PDO::FETCH_ASSOC) ?: [] as $win) {
-                    $aid = (int)($win['appointment_id'] ?? 0);
-                    $out['events'][] = [
-                        'type' => 'reschedule_window',
-                        'appointment_id' => $aid,
-                        'purpose' => $purposes[$aid] ?? 'Appointment',
-                        'range' => [ $win['start_date'] ?? null, $win['end_date'] ?? null ],
-                        'created_at' => $win['created_at'] ?? null
-                    ];
-                }
-            }
-        } catch (Throwable $eRW) { /* ignore */ }
-
-        // Check-up notifications: follow-up due and no-follow-up confirmation from latest record
-        try {
-            // Map email -> student_faculty_id
-            $sid = null;
-            try {
-                $u = $pdo->prepare('SELECT student_faculty_id FROM users WHERE LOWER(email)=LOWER(?) LIMIT 1');
-                $u->execute([$email]);
-                $sid = $u->fetchColumn();
-            } catch (Throwable $eU) { $sid = null; }
-            if ($sid) {
-                $c = $pdo->prepare('SELECT id, follow_up, follow_up_date, created_at FROM checkups WHERE student_faculty_id = ? ORDER BY created_at DESC LIMIT 1');
-                $c->execute([$sid]);
-                if ($row = $c->fetch(PDO::FETCH_ASSOC)) {
-                    $fu = (int)($row['follow_up'] ?? 0);
-                    $fud = $row['follow_up_date'] ?? null;
-                    $created = $row['created_at'] ?? null;
-                    if ($fu === 1 && $fud) {
-                        // Add a follow-up due event (frontend already renders these nicely)
-                        $out['events'][] = [
-                            'type' => 'followup_due',
-                            'id' => (int)$row['id'],
-                            'date' => $fud,
-                            'created_at' => $created
-                        ];
-                    } else if ($fu === 0) {
-                        // Explicit no-follow-up notice after latest checkup
-                        $out['events'][] = [
-                            'type' => 'checkup_no_followup',
-                            'id' => (int)$row['id'],
-                            'created_at' => $created
-                        ];
-                    }
-                }
-            }
-        } catch (Throwable $eCU) { /* ignore */ }
         jsonResponse(['success'=>true] + $out);
     } catch (Throwable $e) {
         jsonResponse(['success'=>false,'message'=>'Failed to load notifications']);

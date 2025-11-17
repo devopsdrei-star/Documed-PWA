@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__DIR__) . '/config/db.php';
+require_once '../config/db.php';
 require_once __DIR__ . '/../config/email.php';
 header('Content-Type: application/json');
 
@@ -364,8 +364,6 @@ if ($action === 'user_register') {
     $student_faculty_id = trim($_POST['student_faculty_id'] ?? '');
     $department = trim($_POST['department'] ?? '');
     $created_at = $_POST['created_at'] ?? date('Y-m-d H:i:s');
-
-    // reCAPTCHA removed
 
     // Handle photo upload
     $photo_path = '';
