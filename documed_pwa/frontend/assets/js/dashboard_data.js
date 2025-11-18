@@ -113,7 +113,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (labels.length === 0) {
       const todayStr = today.toISOString().slice(0,10);
       labels.push(todayStr);
-      counts.push(0);
+      // No data: provide a single zero point so Chart.js can render
+      totalCounts.push(0);
+      maleCounts.push(0);
+      femaleCounts.push(0);
     }
 
     const ctxEl = document.getElementById('patientLineGraph');
@@ -123,8 +126,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Dynamic Y max similar to doc_nurse but adaptive
   const maxVal = totalCounts.length ? Math.max.apply(null, totalCounts) : 0;
-    const yTicks = { stepSize: (maxVal <= 10 ? 1 : undefined), precision: 0 };
-    const yMax = (maxVal <= 5) ? Math.max(3, maxVal + 1) : undefined;
+    // Fixed Y-axis tick labels requested: 5,10,15,20,25,30,45,50
+    const yTicks = {
+      stepSize: 5,
+      precision: 0,
+      callback: function(value){
+        const allowed = [5,10,15,20,25,30,45,50];
+        return allowed.includes(Number(value)) ? String(value) : '';
+      }
+    };
+    const yMax = 50; // upper bound for the ticks
 
     window.analyticsChart = new Chart(ctx, {
       type: 'line',
@@ -142,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
         plugins: { legend: { display: true } },
         scales: {
           y: {
-            min: 0,
+            min: 5,
             max: yMax,
             ticks: yTicks,
             grid: { color: 'rgba(37,99,235,0.08)' }

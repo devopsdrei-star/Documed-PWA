@@ -474,8 +474,35 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!msg) return;
             appendMsg('user', msg);
             aiInput.value = '';
-            appendMsg('ai', '...'); // Placeholder, will be replaced by OpenAI response
-            // OpenAI API integration will be added in the next step
+
+            // Add a temporary typing placeholder
+            const typing = document.createElement('div');
+            typing.style.margin = '8px 0';
+            typing.innerHTML = `<span style="display:inline-block;max-width:80%;padding:10px 14px;border-radius:12px;background:#eef2ff;color:#222;font-size:1rem;">...</span>`;
+            aiMsgs.appendChild(typing);
+            aiMsgs.scrollTop = aiMsgs.scrollHeight;
+
+            fetch('../../backend/api/chatbot_deepseek.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg })
+            })
+            .then(res => res.json())
+            .then(data => {
+                try { typing.remove(); } catch(_) {}
+                if (data && data.reply) {
+                    let note = '';
+                    if (data.info === 'served_by_deepseek') note = ' (served by DeepSeek)';
+                    if (data.info === 'served_by_local_fallback') note = ' (served by local fallback)';
+                    appendMsg('ai', data.reply + note);
+                } else {
+                    appendMsg('ai', data.error || 'Sorry, unable to get a response right now.');
+                }
+            })
+            .catch(()=>{
+                try { typing.remove(); } catch(_) {}
+                appendMsg('ai', 'Sorry, unable to get a response right now.');
+            });
         };
     </script>
 </html>

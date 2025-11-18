@@ -1,6 +1,7 @@
 <?php
 
-require_once dirname(__DIR__) . '/config/db.php';
+// Robust path resolution (works under web server and CLI runner)
+require_once __DIR__ . '/../config/db.php';
 header('Content-Type: application/json');
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
@@ -555,6 +556,9 @@ if ($action === 'clinic_overview') {
 	];
 	$roles = ['Student','Faculty','Staff'];
 
+	// Ensure $hasRole flag used below is defined (was causing warnings)
+	$hasRole = $hasLegacyRole;
+
 	// Pull checkups in date range
 	$whereDate = "WHERE DATE(created_at) BETWEEN ? AND ?";
 	$sql = $hasLegacyRole
@@ -819,9 +823,9 @@ if ($action === 'clinic_overview') {
 					$pos = strpos($rm, $kLower);
 					$window = $rm;
 					if ($pos !== false) {
-						$start = max(0, $pos - 20);
+						$wStart = max(0, $pos - 20); // local var so we don't clobber date $start
 						$len = 160; // look ahead ~160 chars from just before the med name
-						$window = substr($rm, $start, $len);
+						$window = substr($rm, $wStart, $len);
 					}
 					$qty = $parseDoseQty($window);
 					$incr($medicineCounts,$label,$role,$qty);
@@ -888,7 +892,20 @@ if ($action === 'debug_checkups') {
 	$start = $_GET['start'] ?? date('Y-m-01');
 	$end = $_GET['end'] ?? date('Y-m-t');
 	try {
-		$stmt = $pdo->prepare("SELECT id, student_faculty_id, name, client_type, role, assessment, present_illness, remarks, created_at FROM checkups WHERE DATE(created_at) BETWEEN ? AND ? ORDER BY created_at DESC LIMIT 300");
+		// Detect whether legacy 'role' column exists; if not, safely select client_type as role
+		$dbName = $pdo->query('SELECT DATABASE()')->fetchColumn();
+		$hasRoleCol = false;
+		if ($dbName) {
+			$cstmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'checkups' AND COLUMN_NAME = 'role'");
+			$cstmt->execute([$dbName]);
+			$hasRoleCol = intval($cstmt->fetchColumn()) > 0;
+		}
+		if ($hasRoleCol) {
+			$sql = "SELECT id, student_faculty_id, name, COALESCE(NULLIF(client_type,''), role) AS role, assessment, present_illness, remarks, created_at FROM checkups WHERE DATE(created_at) BETWEEN ? AND ? ORDER BY created_at DESC LIMIT 300";
+		} else {
+			$sql = "SELECT id, student_faculty_id, name, client_type AS role, assessment, present_illness, remarks, created_at FROM checkups WHERE DATE(created_at) BETWEEN ? AND ? ORDER BY created_at DESC LIMIT 300";
+		}
+		$stmt = $pdo->prepare($sql);
 		$stmt->execute([$start, $end]);
 		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		echo json_encode(['success'=>true,'start'=>$start,'end'=>$end,'count'=>count($rows),'rows'=>$rows]);

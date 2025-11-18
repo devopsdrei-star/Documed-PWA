@@ -407,8 +407,8 @@
       if (!msg) return;
       appendMsg('user', msg);
       aiInput.value = '';
-      // Call backend to get OpenAI response
-      fetch('../../backend/api/chatbot.php', {
+      // Call backend to get DeepSeek AI response
+      fetch('../../backend/api/chatbot_deepseek.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg })
@@ -417,8 +417,11 @@
       .then(data => {
         // Remove placeholder
         aiMsgs.lastChild.remove();
-        if (data.reply) {
-          appendMsg('ai', data.reply);
+        if (data && data.reply) {
+          let note = '';
+          if (data.info === 'served_by_deepseek') note = ' (served by DeepSeek)';
+          if (data.info === 'served_by_local_fallback') note = ' (served by local fallback)';
+          appendMsg('ai', data.reply + note);
         } else {
           appendMsg('ai', data.error || 'Sorry, I could not get a response.');
         }

@@ -29,3 +29,4 @@ documed_pwa/backend/config/faq_admin_token.php
 *.log
 npm-debug.log*
 yarn-error.log*
+documed_pwa/backend/config/deepseek_key.php

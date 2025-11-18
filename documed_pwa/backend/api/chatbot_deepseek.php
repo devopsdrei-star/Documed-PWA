@@ -2,15 +2,18 @@
 // backend/api/chatbot_deepseek.php
 header('Content-Type: application/json');
 
-// Load OpenAI key securely from config or env
-$openaiKeyFile = dirname(__DIR__) . '/config/openai_key.php';
-$OPENAI_API_KEY = '';
-if (file_exists($openaiKeyFile)) {
-    $k = include $openaiKeyFile;
-    if (is_array($k) && !empty($k['OPENAI_API_KEY'])) { $OPENAI_API_KEY = $k['OPENAI_API_KEY']; }
+// Load DeepSeek API key from config or env
+$deepseekKeyFile = dirname(__DIR__) . '/config/deepseek_key.php';
+$DEEPSEEK_API_KEY = '';
+if (file_exists($deepseekKeyFile)) {
+    $k = include $deepseekKeyFile;
+    if (is_array($k) && !empty($k['DEEPSEEK_API_KEY'])) { $DEEPSEEK_API_KEY = $k['DEEPSEEK_API_KEY']; }
 }
-if (!$OPENAI_API_KEY) { $OPENAI_API_KEY = getenv('OPENAI_API_KEY') ?: ''; }
-if (!$OPENAI_API_KEY) { echo json_encode(['error'=>'Missing OpenAI API key configuration']); exit; }
+if (!$DEEPSEEK_API_KEY) { $DEEPSEEK_API_KEY = getenv('DEEPSEEK_API_KEY') ?: ''; }
+$DEEPSEEK_AVAILABLE = (bool) $DEEPSEEK_API_KEY;
+if (!$DEEPSEEK_AVAILABLE) {
+    @file_put_contents(__DIR__ . '/../../tmp/deepseek_debug.log', json_encode(['time'=>date('c'),'note'=>'deepseek_key_missing']) . "\n", FILE_APPEND);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -26,56 +29,81 @@ if (!$userMessage) {
     exit;
 }
 
-$system_prompt = 'You are a helpful medical assistant for a dental clinic. Always reply in English, even if the user writes in another language. Keep answers concise and friendly.';
+$system_prompt = "You are a helpful assistant for the Campus Medical Clinic (DocuMed). You must only answer questions about the Campus Medical Clinic and its services (appointments, clinic hours, locations, walk-in policy, immunizations, minor procedures handled by the clinic, medical certificates, basic laboratory tests, referral processes, patient record access, and how to use this system). Always reply in English and keep answers concise and friendly. If a user asks for medical diagnoses, detailed treatment plans, dosing, or clinical management beyond administrative or clinic-process information, refuse to provide medical instructions and instead advise the user to consult a clinician or go to emergency services when appropriate. If the user asks about topics outside the Campus Medical Clinic (insurance policy beyond the clinic, unrelated medical specialties, or general medical textbooks), reply: 'I am only able to answer about the Campus Medical Clinic services and this system — please contact the clinic or a licensed clinician for that question.'";
 
-// Call OpenAI Chat Completions API as primary provider
-$ch = curl_init('https://api.openai.com/v1/chat/completions');
-$payload = [
-    'model' => 'gpt-3.5-turbo',
-    'messages' => [
-        ['role' => 'system', 'content' => $system_prompt],
-        ['role' => 'user', 'content' => $userMessage]
-    ],
-    'max_tokens' => 256,
-    'temperature' => 0.7
-];
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer ' . $OPENAI_API_KEY
-]);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+// Load fallback FAQ early so we can use an out-of-scope message for sanitization
+$faqFile = __DIR__ . '/../config/fallback_faq.json';
+$allFaq = [];
+if (file_exists($faqFile)) {
+    $allFaq = json_decode(file_get_contents($faqFile), true) ?: [];
+}
+$faq_en = $allFaq['en'] ?? [];
+$faq_fil = $allFaq['fil'] ?? [];
+$out_of_scope_default = $faq_en['out_of_scope'] ?? ($faq_fil['out_of_scope'] ?? "I'm only able to answer about the Campus Medical Clinic services and this system. For medical diagnosis or treatment advice, please consult a licensed clinician or go to emergency services if urgent.");
 
-$response = curl_exec($ch);
-$err = curl_error($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
+// Try DeepSeek first (if key is configured)
+$deepseekReply = '';
+if ($DEEPSEEK_AVAILABLE) {
+    $ch = curl_init('https://api.deepseek.com/v1/chat/completions');
+    $payload = [
+        'model' => 'deepseek-chat',
+        'messages' => [
+            ['role' => 'system', 'content' => $system_prompt],
+            ['role' => 'user', 'content' => $userMessage]
+        ],
+        'max_tokens' => 256,
+        'temperature' => 0.7
+    ];
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $DEEPSEEK_API_KEY
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
 
-// Log OpenAI call to tmp/openai_debug.log for diagnosis
-$debugEntry = [
-    'time' => date('c'),
-    'request' => $payload,
-    'http_code' => $httpCode,
-    'curl_error' => $err,
-    'response' => $response
-];
-@file_put_contents(__DIR__ . '/../../tmp/openai_debug.log', json_encode($debugEntry, JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+    $dsResponse = curl_exec($ch);
+    $dsErr = curl_error($ch);
+    $dsHttp = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
 
-$aiReply = '';
-if ($err) {
-    @file_put_contents(__DIR__ . '/../../tmp/openai_debug.log', json_encode(['time'=>date('c'),'note'=>'openai_curl_error','err'=>$err], JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
-} else {
-    $openaiData = json_decode($response, true);
-    if (json_last_error() === JSON_ERROR_NONE) {
-        $aiReply = $openaiData['choices'][0]['message']['content'] ?? '';
+    // Log DeepSeek call
+    $debugEntry = [
+        'time' => date('c'),
+        'request' => $payload,
+        'http_code' => $dsHttp,
+        'curl_error' => $dsErr,
+        'response' => $dsResponse
+    ];
+    @file_put_contents(__DIR__ . '/../../tmp/deepseek_debug.log', json_encode($debugEntry, JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+
+    if (!$dsErr) {
+        $dsData = json_decode($dsResponse, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $deepseekReply = $dsData['choices'][0]['message']['content'] ?? '';
+            // Reply sanitization: detect if the provider gives diagnostic/treatment instructions or other out-of-scope clinical guidance
+            $sanitized = false;
+            if ($deepseekReply) {
+                $oos_pattern = '/\b(diagnos|diagnosis|diagnose|symptom|how to treat|treat(?:ment)?|dose|dosage|prescribe|prescription|medication advice|should I take|should I use|surgery|operation|emergency|suicide|self[- ]harm|administer|inject|intravenous|iv|take as directed|apply (?:ice|heat)|take \d+mg|take \d+\s?ml)\b/i';
+                if (preg_match($oos_pattern, $deepseekReply)) {
+                    // Log that we sanitized an out-of-scope provider reply
+                    @file_put_contents(__DIR__ . '/../../tmp/deepseek_debug.log', json_encode(['time'=>date('c'),'note'=>'sanitized_provider_reply','original_reply'=>$deepseekReply], JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+                    $deepseekReply = $out_of_scope_default;
+                    $sanitized = true;
+                }
+            }
+        } else {
+            @file_put_contents(__DIR__ . '/../../tmp/deepseek_debug.log', json_encode(['time'=>date('c'),'note'=>'deepseek_invalid_json','json_error'=>json_last_error_msg(),'response'=>$dsResponse], JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+        }
     } else {
-        @file_put_contents(__DIR__ . '/../../tmp/openai_debug.log', json_encode(['time'=>date('c'),'note'=>'openai_invalid_json','json_error'=>json_last_error_msg(),'response'=>$response], JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+        @file_put_contents(__DIR__ . '/../../tmp/deepseek_debug.log', json_encode(['time'=>date('c'),'note'=>'deepseek_curl_error','err'=>$dsErr], JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
     }
 }
 
-if ($aiReply) {
-    echo json_encode(['reply' => $aiReply]);
+if ($deepseekReply) {
+    $info = isset($sanitized) && $sanitized ? 'served_by_deepseek_sanitized' : 'served_by_deepseek';
+    echo json_encode(['reply' => $deepseekReply, 'info' => $info]);
     exit;
 }
 
@@ -92,6 +120,12 @@ $faq_for_match = array_merge($faq_en, $faq_fil);
 function match_faq_force_en($msg, $faq_for_match, $faq_en, $faq_fil) {
     $m = strtolower($msg);
     if ($m === '') return $faq_en['default'] ?? ($faq_fil['default'] ?? 'Sorry, AI is not available right now.');
+
+    // Early out: detect requests asking for diagnosis/treatment or out-of-scope clinical instructions
+    if (preg_match('/(diagnos|symptom|how to treat|treat(?:ment)?|dose|dosage|prescribe|prescription|medication advice|should I take|should I use|surgery|operation|emergency|suicide|self[- ]harm)/i', $m)) {
+        return $faq_en['out_of_scope'] ?? ($faq_fil['out_of_scope'] ?? "I'm only able to answer questions about the Campus Medical Clinic services and this system. For medical diagnosis or treatment advice, please consult a licensed clinician or go to emergency services if urgent.");
+    }
+
     if (preg_match('/(hours|open|close|schedule|oras|bukas|sarado)/i', $m) && isset($faq_for_match['hours'])) {
         return $faq_en['hours'] ?? ($faq_fil['hours'] ?? 'Our clinic hours are Mon–Fri 08:00–17:00.');
     }
@@ -104,8 +138,8 @@ function match_faq_force_en($msg, $faq_for_match, $faq_en, $faq_fil) {
     if (preg_match('/(medical certificate|med cert|certificate|medical cert|medical)/i', $m) && isset($faq_for_match['medical_certificate'])) {
         return $faq_en['medical_certificate'] ?? ($faq_fil['medical_certificate'] ?? 'Medical certificates are issued after consultation. Bring a valid ID.');
     }
-    if (preg_match('/(services|dental|check[- ]?up|consultation|serbisyo)/i', $m) && isset($faq_for_match['services'])) {
-        return $faq_en['services'] ?? ($faq_fil['services'] ?? 'We provide general check-ups, dental treatments, medical certificates, and basic lab tests.');
+    if (preg_match('/(services|medical|clinic|check[- ]?up|consultation|serbisyo)/i', $m) && isset($faq_for_match['services'])) {
+        return $faq_en['services'] ?? ($faq_fil['services'] ?? 'We provide general medical check-ups, immunizations, minor procedures, medical certificates, and basic lab tests.');
     }
     if (preg_match('/(thank|thanks|thank you|salamat)/i', $m) && isset($faq_for_match['thanks'])) {
         return $faq_en['thanks'] ?? ($faq_fil['thanks'] ?? 'You are welcome!');

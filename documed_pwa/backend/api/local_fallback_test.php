@@ -13,7 +13,7 @@ function match_faq_simple($msg, $faq) {
     if (preg_match('/(appointment|book|schedule an appointment|book an appointment)/i', $m) && isset($faq['appointments'])) return $faq['appointments'];
     if (preg_match('/(contact|phone|call|email)/i', $m) && isset($faq['contact'])) return $faq['contact'];
     if (preg_match('/(medical certificate|med cert|certificate)/i', $m) && isset($faq['medical_certificate'])) return $faq['medical_certificate'];
-    if (preg_match('/(services|dental|check[- ]?up|consultation)/i', $m) && isset($faq['services'])) return $faq['services'];
+    if (preg_match('/(services|medical|clinic|check[- ]?up|consultation)/i', $m) && isset($faq['services'])) return $faq['services'];
     if (preg_match('/(thank|thanks|thank you)/i', $m) && isset($faq['thanks'])) return $faq['thanks'];
     return $faq['default'] ?? '';
 }

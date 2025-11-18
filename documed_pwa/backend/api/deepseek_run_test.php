@@ -10,13 +10,19 @@ if (!$expected || $provided !== $expected) {
     exit;
 }
 
-// Use same key as chatbot_deepseek.php
-$DEEPSEEK_API_KEY = 'sk-fd9a3334a522478fae7964b580ba3ec5';
+// Load DeepSeek API key from config or environment (do NOT hardcode real keys in source)
+$DEEPSEEK_KEY_FILE = dirname(__DIR__) . '/config/deepseek_key.php';
+$DEEPSEEK_API_KEY = '';
+if (file_exists($DEEPSEEK_KEY_FILE)) {
+    $k = include $DEEPSEEK_KEY_FILE;
+    if (is_array($k) && !empty($k['DEEPSEEK_API_KEY'])) { $DEEPSEEK_API_KEY = $k['DEEPSEEK_API_KEY']; }
+}
+if (!$DEEPSEEK_API_KEY) { $DEEPSEEK_API_KEY = getenv('DEEPSEEK_API_KEY') ?: ''; }
 
 $data = [
     'model' => 'deepseek-chat',
     'messages' => [
-        ['role' => 'system', 'content' => 'You are a helpful medical assistant for a dental clinic.'],
+        ['role' => 'system', 'content' => 'You are a helpful medical assistant for a Campus medical clinic.'],
         ['role' => 'user', 'content' => 'Live debug test']
     ],
     'max_tokens' => 64,
@@ -37,10 +43,12 @@ $response = curl_exec($ch);
 $err = curl_error($ch);
 $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+// Include API key status in debug output to help diagnose missing/insufficient balance issues
 $debugEntry = [
     'time' => date('c'),
     'http' => $http,
     'curl_error' => $err,
+    'has_key' => (bool)$DEEPSEEK_API_KEY,
     'request' => $data,
     'response' => $response
 ];

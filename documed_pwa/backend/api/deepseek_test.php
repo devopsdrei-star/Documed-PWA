@@ -1,10 +1,17 @@
 <?php
 // Quick CLI test for DeepSeek API
-$DEEPSEEK_API_KEY = 'sk-fd9a3334a522478fae7964b580ba3ec5';
+// Load key from config or environment so keys are not committed in the repository
+$DEEPSEEK_KEY_FILE = dirname(__DIR__) . '/config/deepseek_key.php';
+$DEEPSEEK_API_KEY = '';
+if (file_exists($DEEPSEEK_KEY_FILE)) {
+    $k = include $DEEPSEEK_KEY_FILE;
+    if (is_array($k) && !empty($k['DEEPSEEK_API_KEY'])) { $DEEPSEEK_API_KEY = $k['DEEPSEEK_API_KEY']; }
+}
+if (!$DEEPSEEK_API_KEY) { $DEEPSEEK_API_KEY = getenv('DEEPSEEK_API_KEY') ?: ''; }
 $data = [
     'model' => 'deepseek-chat',
     'messages' => [
-        ['role' => 'system', 'content' => 'You are a helpful medical assistant for a dental clinic.'],
+           ['role' => 'system', 'content' => "You are a helpful assistant for the Campus Medical Clinic (DocuMed). Only answer questions about the Campus Medical Clinic and this system (appointments, hours, locations, clinic services, medical certificates, basic lab tests, referrals, and how to use this platform). If asked for medical diagnoses or treatment advice, decline and advise the user to consult a licensed clinician or go to emergency services when appropriate."],
         ['role' => 'user', 'content' => 'Hello from CLI test']
     ],
     'max_tokens' => 128,

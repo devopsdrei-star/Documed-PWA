@@ -1,0 +1,9 @@
+<?php
+// Example OpenAI key file for DocuMed. Do NOT commit your real key to version control.
+// Copy this file to `openai_key.php` and replace the placeholder with your actual key.
+// The application will also accept the OPENAI_API_KEY environment variable if you prefer that.
+
+return [
+    // Replace the value below with your OpenAI API key, e.g. 'sk-...'
+    'OPENAI_API_KEY' => 'REPLACE_WITH_YOUR_OPENAI_API_KEY',
+];

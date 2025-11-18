@@ -1,0 +1,7 @@
+<?php
+// Example DeepSeek API key file (DO NOT commit your real key).
+// Copy this file to `deepseek_key.php` and replace the placeholder with your key.
+
+return [
+    'DEEPSEEK_API_KEY' => 'REPLACE_WITH_YOUR_DEEPSEEK_KEY',
+];

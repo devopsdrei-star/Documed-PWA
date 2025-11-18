@@ -1388,7 +1388,7 @@
         try { typing.remove(); } catch(_) {}
         if (data && data.reply) {
           let note = '';
-          if (data.info === 'served_by_fallback_openai') note = ' (served by fallback)';
+          if (data.info === 'served_by_deepseek') note = ' (served by DeepSeek)';
           if (data.info === 'served_by_local_fallback') note = ' (served by local fallback)';
           appendMsg('ai', data.reply + note);
           return;
