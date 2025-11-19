@@ -197,7 +197,7 @@
           <div class="profile-form-group">
             <label>Profile Photo</label>
             <div class="profile-photo-container" onclick="document.getElementById('photoInput').click()">
-              <img id="profilePhoto" src="../assets/images/documed_logo.png" alt="Profile" class="profile-photo-edit">
+              <img id="profilePhoto" src="../assets/images/user_photo.png" alt="Profile" class="profile-photo-edit">
               <div class="profile-photo-overlay">
                 <div class="profile-photo-text">
                   <i class="bi bi-camera-fill"></i><br>
@@ -407,8 +407,8 @@
       if (!msg) return;
       appendMsg('user', msg);
       aiInput.value = '';
-      // Call backend to get DeepSeek AI response
-      fetch('../../backend/api/chatbot_deepseek.php', {
+      // Call backend to get OpenAI response
+      fetch('../../backend/api/chatbot.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg })
@@ -417,11 +417,8 @@
       .then(data => {
         // Remove placeholder
         aiMsgs.lastChild.remove();
-        if (data && data.reply) {
-          let note = '';
-          if (data.info === 'served_by_deepseek') note = ' (served by DeepSeek)';
-          if (data.info === 'served_by_local_fallback') note = ' (served by local fallback)';
-          appendMsg('ai', data.reply + note);
+        if (data.reply) {
+          appendMsg('ai', data.reply);
         } else {
           appendMsg('ai', data.error || 'Sorry, I could not get a response.');
         }
