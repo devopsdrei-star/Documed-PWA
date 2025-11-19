@@ -49,6 +49,71 @@ document.addEventListener('DOMContentLoaded', function() {
 			});
 	})();
 
+	// --- Admin: mobile (Android) sidebar -> hamburger + drawer behavior ---
+	(function(){
+		function isAndroid() {
+			try { return /android/i.test(navigator.userAgent || ''); } catch(e) { return false; }
+		}
+		if (!isAndroid()) return; // only apply on Android devices as requested
+		document.addEventListener('DOMContentLoaded', function(){
+			try {
+				document.body.classList.add('mobile-admin');
+				const topbar = document.querySelector('.dashboard-topbar');
+				if (!topbar) return;
+				// Create hamburger button if not present
+				if (!document.getElementById('adminMenuBtn')) {
+					const btn = document.createElement('button');
+					btn.id = 'adminMenuBtn';
+					btn.type = 'button';
+					btn.title = 'Menu';
+					btn.style.cssText = 'background:none;border:none;color:#2563eb;font-size:1.6rem;cursor:pointer;padding:6px 8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;margin-right:auto;';
+					btn.innerHTML = '\u2630'; // simple hamburger
+					// Insert at the start of topbar
+					topbar.insertBefore(btn, topbar.firstChild);
+
+					// Build drawer overlay
+					const overlay = document.createElement('div');
+					overlay.id = 'adminDrawerOverlay';
+					overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;z-index:1200;';
+					document.body.appendChild(overlay);
+
+					const drawer = document.createElement('nav');
+					drawer.id = 'adminDrawer';
+					drawer.setAttribute('aria-hidden','true');
+					drawer.style.cssText = 'position:fixed;left:0;top:0;height:100vh;width:78%;max-width:320px;background:#fff;box-shadow:0 16px 48px rgba(2,6,23,0.2);z-index:1250;transform:translateX(-110%);transition:transform 260ms ease;padding:20px 14px;overflow:auto;';
+					// Clone sidebar content if available
+					const sidebar = document.querySelector('.sidebar');
+					if (sidebar) {
+						// clone without id collisions
+						const clone = sidebar.cloneNode(true);
+						// Remove large logo image size to fit drawer
+						clone.querySelectorAll('img').forEach(img => { img.style.width='54px'; img.style.height='54px'; img.style.borderRadius='8px'; });
+						// Remove margin on clone
+						clone.style.margin = '0';
+						// Append a close button
+						const close = document.createElement('button'); close.type='button'; close.id='adminDrawerClose'; close.innerHTML='\u00d7'; close.title='Close menu';
+						close.style.cssText='position:absolute;right:10px;top:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#374151;';
+						drawer.appendChild(close);
+						drawer.appendChild(clone);
+					} else {
+						drawer.innerHTML = '<div style="padding:12px;color:#374151;font-weight:700;">Menu</div>';
+					}
+					document.body.appendChild(drawer);
+
+					function openDrawer(){ overlay.style.display='block'; drawer.style.transform='translateX(0%)'; drawer.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+					function closeDrawer(){ drawer.style.transform='translateX(-110%)'; overlay.style.display='none'; drawer.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+					btn.addEventListener('click', openDrawer);
+					overlay.addEventListener('click', closeDrawer);
+					const closeBtn = document.getElementById('adminDrawerClose');
+					if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+
+					// Accessibility: close on Escape
+					document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeDrawer(); });
+				}
+			} catch (e) { console.debug('[admin mobile menu] init failed', e); }
+		});
+	})();
 	// --- Patient Check-Up Popup ---
 	const checkupBtn = document.getElementById('checkupBtn');
 	const checkupModal = document.getElementById('checkupModal');
@@ -273,3 +338,33 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 	}
 });
+
+// --- PWA bootstrap (enable manifest + service worker for Admin & Doc/Nurse pages) ---
+(function(){
+	try {
+		// Add manifest link if missing
+		if (!document.querySelector('link[rel="manifest"]')) {
+			const link = document.createElement('link');
+			link.rel = 'manifest';
+			// manifest located at repo root: ../../manifest-landing.json from frontend/* pages
+			link.href = '../../manifest-landing.json';
+			document.head.appendChild(link);
+		}
+		// Add theme-color meta if missing
+		if (!document.querySelector('meta[name="theme-color"]')) {
+			const m = document.createElement('meta');
+			m.name = 'theme-color';
+			m.content = '#0a6ecb';
+			document.head.appendChild(m);
+		}
+		if ('serviceWorker' in navigator) {
+			// Prefer the top-level service-worker in repo root; compute relative URL from current page
+			const swUrl = new URL('../../service-worker.js', window.location.href).toString();
+			navigator.serviceWorker.register(swUrl).then(() => {
+				console.debug('[PWA] service worker registered', swUrl);
+			}).catch(()=>{
+				// swallow errors -- other pages may register a different SW (public/service-worker.js)
+			});
+		}
+	} catch (e) { console.debug('[PWA] init failed', e); }
+})();

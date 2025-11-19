@@ -87,3 +87,13 @@ body {
   .sidebar-nav a { border-radius: 8px; padding: 8px 12px; font-size: 1rem; }
   .main-content { padding: 18px 6px; }
 }
+
+/* Admin mobile drawer when running on Android (JS adds body.mobile-admin) */
+body.mobile-admin .sidebar { display: none; }
+body.mobile-admin .main-content { padding-left: 12px; padding-right: 12px; }
+
+#adminDrawerOverlay { display: none; }
+#adminDrawer { -webkit-overflow-scrolling: touch; }
+@media (max-width: 640px) {
+  #adminDrawer { width: 86%; }
+}

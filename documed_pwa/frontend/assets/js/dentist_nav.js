@@ -16,4 +16,23 @@
       }
     });
   }
+  // PWA bootstrap for Dentist pages (inject manifest/meta and register SW)
+  try {
+    if (!document.querySelector('link[rel="manifest"]')) {
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = '../../manifest-landing.json';
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('meta[name="theme-color"]')) {
+      const m = document.createElement('meta'); m.name = 'theme-color'; m.content = '#0a6ecb'; document.head.appendChild(m);
+    }
+    if ('serviceWorker' in navigator) {
+      const swUrl = new URL('../../service-worker.js', window.location.href).toString();
+      navigator.serviceWorker.register(swUrl).then(()=>{
+        console.debug('[PWA] dentist SW registered', swUrl);
+      }).catch(()=>{});
+    }
+  } catch (e) { console.debug('[PWA] dentist init failed', e); }
+
 })();
