@@ -1153,7 +1153,7 @@
       // Read user to get profile photo
       let userObj = null;
       try { userObj = JSON.parse(localStorage.getItem('documed_user')); } catch(_){}
-  const photoUrl = (userObj && userObj.photo) ? userObj.photo : '../assets/images/documed_logo.png';
+  const photoUrl = (userObj && userObj.photo) ? userObj.photo : '../assets/images/user_photo.png';
       if (navActions) {
         navActions.innerHTML = `
           <div class="dropdown d-inline-block me-2 position-relative">
@@ -1199,7 +1199,7 @@
       if (e.key !== 'documed_user') return;
       try {
         const u = JSON.parse(e.newValue || 'null');
-  const src = (u && u.photo) ? u.photo : '../assets/images/documed_logo.png';
+const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
         const img = document.getElementById('navProfileImg');
         if (img) img.src = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
       } catch(_) {}
@@ -1232,7 +1232,7 @@
       if (sessionStorage.getItem('documedLoggedIn') === '1') {
         try {
           const u = JSON.parse(localStorage.getItem('documed_user')||'null');
-          const src = (u && u.photo) ? u.photo : '../assets/images/documed_logo.png';
+                    const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
           const img = document.getElementById('navProfileImg');
           if (img) img.src = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
         } catch(_) {}
