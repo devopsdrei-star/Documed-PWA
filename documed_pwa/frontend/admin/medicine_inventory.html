@@ -74,9 +74,10 @@
       <div class="d-flex flex-wrap gap-2 align-items-center px-3" id="medControls">
         <input id="q" class="form-control" placeholder="Search medicine..." style="max-width:320px;height:42px;">
         <button class="btn btn-primary" onclick="loadList()">Search</button>
-        <button class="btn btn-outline-warning" onclick="showAlerts()">Show Alerts</button>
+    <button class="btn btn-outline-warning" onclick="showAlerts()">Show Alerts</button>
+    <button class="btn btn-info" id="aiAnalyzeBtn"><i class="bi bi-robot me-1"></i>AI Analyze</button>
   <!-- Suggestions now load automatically and show an actions banner -->
-        <div class="ms-auto"></div>
+    <div class="ms-auto"></div>
         <button class="btn btn-success" onclick="openCreateModal()"><i class="bi bi-plus-circle me-1"></i>Add Medicine</button>
       </div>
 
@@ -108,6 +109,33 @@
             </div>
             <div class="modal-body" id="suggestBody">
               <!-- Populated dynamically -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Analyze Modal -->
+      <div class="modal fade" id="aiAnalyzeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">AI Clinical Analysis</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Paste clinical note / illness report</label>
+                <textarea id="aiNoteText" class="form-control" rows="6" placeholder="Paste clinical note or illness description here..."></textarea>
+              </div>
+              <div class="mb-3 text-end">
+                <button class="btn btn-primary" id="aiSubmitBtn">Analyze</button>
+              </div>
+              <div id="aiResultArea">
+                <!-- results populated here -->
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -416,54 +444,165 @@
       }
     }
     async function showSuggestions() {
-      try {
-        const res = await fetch(api + '?action=suggestions&days=30');
-        const data = await res.json();
-        const p = document.getElementById('panel');
-        const sug = (data.suggestions || []).map(s => {
-          const meds = s.recommendations.map(r => `<li>${r.name} ${r.in_inventory ? `— stock ${r.quantity}${r.low_stock ? ' (low)' : ''}` : '— not in inventory'}</li>`).join('');
-          return `<div class="mb-2"><b>${s.condition}</b> — ${s.cases} cases<ul class="mb-0">${meds}</ul></div>`;
-        }).join('');
-        p.innerHTML = `<div class="card"><div class="card-header">Decision Suggestions</div><div class="card-body"><div class="mb-2">${data.narrative || ''}</div>${sug || '<span class="text-muted">No suggestions</span>'}</div></div>`;
-        // Actions banner (auto decision hints)
-        const act = data.actions || { };
-        const orient = (act.orientation||[]).map(a=>`<li>${a.condition}: ${a.month_cases} this month (${a.week_cases} in last 7d) — ${a.reason}</li>`).join('') || '<li class="text-muted">None</li>';
-        const restock = (act.restock||[]).map(r=>`<li>${r.name} ${r.in_inventory? (r.low_stock?'— low stock':'— in stock') : '— not in inventory'} (for ${r.linked_condition})</li>`).join('') || '<li class="text-muted">None</li>';
-        const monitor = (act.monitor||[]).map(m=>`<li>${m.condition}: ${m.month_cases} (${m.week_cases}/7d) — ${m.reason}</li>`).join('') || '<li class="text-muted">None</li>';
-        document.getElementById('actionsPanel').innerHTML = `
-          <div class="card">
-            <div class="card-header"><i class="bi bi-activity me-1"></i>Auto Actions</div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-4"><h6>Orientation suggested</h6><ul class="mb-2">${orient}</ul></div>
-                <div class="col-md-4"><h6>Restock suggested</h6><ul class="mb-2">${restock}</ul></div>
-                <div class="col-md-4"><h6>Monitor</h6><ul class="mb-2">${monitor}</ul></div>
-              </div>
-            </div>
-          </div>`;
+        // call AI aggregate analysis endpoint which reads recent checkups and inventory
+        try {
+          const res = await fetch(deepseekApi + '?action=analyze_aggregate&days=30&campus=Lingayen');
+          const data = await res.json();
+          const p = document.getElementById('panel');
+          const result = (data.result || {});
+          const analysis = result.analysis || {};
+          const actions = result.actions || {};
 
-        // If there are restock or orientation suggestions, show a modal popup to the admin
-        const hasRestock = (data.actions && Array.isArray(data.actions.restock) && data.actions.restock.length > 0);
-        const hasOrient = (data.actions && Array.isArray(data.actions.orientation) && data.actions.orientation.length > 0);
-        if (hasRestock || hasOrient) {
-          const suggestBody = document.getElementById('suggestBody');
-          let html = '<p>The system detected suggested actions based on recent case trends.</p>';
-          if (hasRestock) {
-            html += '<h6>Restock suggested</h6><ul>' + data.actions.restock.map(r => `<li>${r.name} — ${r.in_inventory ? (r.low_stock ? 'low stock' : 'in stock') : 'not in inventory' } (for ${r.linked_condition})</li>`).join('') + '</ul>';
+          const narrative = analysis.narrative || analysis.trends || analysis.diagnosis_summary || '';
+          p.innerHTML = `<div class="card"><div class="card-header">AI Aggregate Analysis</div><div class="card-body">${escapeHtml(String(narrative))}</div></div>`;
+
+          const orient = (actions.orientation||[]).map(a=>`<li>${escapeHtml(a.condition)}: ${a.month_cases} this month (${a.week_cases} in last 7d) — ${escapeHtml(a.reason||'')}</li>`).join('') || '<li class="text-muted">None</li>';
+          const restock = (actions.restock||[]).map(r=>`<li>${escapeHtml(r.name)} ${r.in_inventory? (r.low_stock?'— low stock':'— in stock') : '— not in inventory'} (for ${escapeHtml(r.linked_condition||'')})</li>`).join('') || '<li class="text-muted">None</li>';
+          const monitor = (actions.monitor||[]).map(m=>`<li>${escapeHtml(m.condition)}: ${m.month_cases} (${m.week_cases}/7d) — ${escapeHtml(m.reason||'')}</li>`).join('') || '<li class="text-muted">None</li>';
+          document.getElementById('actionsPanel').innerHTML = `
+            <div class="card">
+              <div class="card-header"><i class="bi bi-activity me-1"></i>AI Suggested Actions</div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4"><h6>Orientation suggested</h6><ul class="mb-2">${orient}</ul></div>
+                  <div class="col-md-4"><h6>Restock suggested</h6><ul class="mb-2">${restock}</ul></div>
+                  <div class="col-md-4"><h6>Monitor</h6><ul class="mb-2">${monitor}</ul></div>
+                </div>
+              </div>
+            </div>`;
+
+          // If there are restock or orientation suggestions, show a modal popup to the admin
+          const hasRestock = (actions && Array.isArray(actions.restock) && actions.restock.length > 0);
+          const hasOrient = (actions && Array.isArray(actions.orientation) && actions.orientation.length > 0);
+          if (hasRestock || hasOrient) {
+            const suggestBody = document.getElementById('suggestBody');
+            let html = '<p>The AI detected suggested actions based on recent case trends and current inventory.</p>';
+            if (hasRestock) {
+              html += '<h6>Restock suggested</h6><ul>' + actions.restock.map(r => `<li><b>${escapeHtml(r.name)}</b> — ${r.in_inventory ? (r.low_stock ? 'low stock' : 'in stock') : 'not in inventory'} (for ${escapeHtml(r.linked_condition||'')}) <div class="small text-muted">${escapeHtml(r.reason||'')}</div></li>`).join('') + '</ul>';
+            }
+            if (hasOrient) {
+              html += '<h6>Orientation suggested</h6><ul>' + actions.orientation.map(o => `<li>${escapeHtml(o.condition)}: ${o.month_cases} cases (${o.week_cases} in last 7 days) — ${escapeHtml(o.reason||'')}</li>`).join('') + '</ul>';
+            }
+            // show modal
+            const suggestModalEl = document.getElementById('suggestModal');
+            suggestBody.innerHTML = html;
+            const boostModal = new bootstrap.Modal(suggestModalEl);
+            boostModal.show();
           }
-          if (hasOrient) {
-            html += '<h6>Orientation suggested</h6><ul>' + data.actions.orientation.map(o => `<li>${o.condition}: ${o.month_cases} cases (${o.week_cases} in last 7 days) — ${o.reason}</li>`).join('') + '</ul>';
-          }
-          // show modal
-          const suggestModalEl = document.getElementById('suggestModal');
-          suggestBody.innerHTML = html;
-          const boostModal = new bootstrap.Modal(suggestModalEl);
-          boostModal.show();
+        } catch (e) {
+          document.getElementById('panel').innerHTML = '<div class="alert alert-danger">Failed to load AI recommendations.</div>';
         }
-      } catch (e) {
-        document.getElementById('panel').innerHTML = '<div class="alert alert-danger">Failed to load suggestions.</div>';
-      }
     }
+  // DeepSeek/AI endpoint (backend)
+  const deepseekApi = '../../backend/api/deepseek_analysis.php';
+
+  // AI analyze modal wiring
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const aiBtn = document.getElementById('aiAnalyzeBtn');
+    if (aiBtn) aiBtn.addEventListener('click', ()=>{
+      const modalEl = document.getElementById('aiAnalyzeModal');
+      const modal = new bootstrap.Modal(modalEl);
+      document.getElementById('aiNoteText').value = '';
+      document.getElementById('aiResultArea').innerHTML = '';
+      modal.show();
+    });
+
+    const submitBtn = document.getElementById('aiSubmitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', submitAIAnalyze);
+
+    // Request notification permission early so we can notify when results arrive
+    if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      try { Notification.requestPermission().then(()=>{}); } catch(e) { /* ignore */ }
+    }
+  });
+
+  async function submitAIAnalyze(){
+    const btn = document.getElementById('aiSubmitBtn');
+    const text = document.getElementById('aiNoteText').value.trim();
+    const area = document.getElementById('aiResultArea');
+    area.innerHTML = '';
+    if (!text) { area.innerHTML = '<div class="alert alert-warning">Please paste the note to analyze.</div>'; return; }
+    btn.disabled = true; btn.textContent = 'Analyzing...';
+    try {
+      const body = new URLSearchParams(); body.set('action','analyze_text'); body.set('text', text);
+      const res = await fetch(deepseekApi, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString() });
+      const data = await res.json();
+      if (!data.success) {
+        area.innerHTML = `<div class="alert alert-danger">Analysis failed: ${data.message || 'Unknown error'}</div>`;
+        btn.disabled = false; btn.textContent = 'Analyze';
+        return;
+      }
+      renderAnalysis(data.analysis || {});
+
+      // desktop notification summary (if permitted)
+      try {
+        const summary = (data.analysis.summary || data.analysis.diagnosis || 'AI analysis ready');
+        if (window.Notification && Notification.permission === 'granted') {
+          new Notification('AI Analysis Ready', { body: String(summary).slice(0,200) });
+        }
+      } catch (e) { /* ignore */ }
+
+    } catch (e) {
+      area.innerHTML = '<div class="alert alert-danger">Network error while contacting AI service.</div>';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Analyze';
+    }
+  }
+
+  function renderAnalysis(an){
+    const area = document.getElementById('aiResultArea');
+    const diag = an.diagnosis || '<em>Not identified</em>';
+    const urgency = an.urgency || 'unknown';
+    const summary = an.summary || '';
+    const meds = (an.recommended_medicines || []);
+    const tests = (an.recommended_tests || []);
+    let html = `<div class="card"><div class="card-body">`;
+    html += `<h5>Diagnosis: <small class="text-muted">${diag}</small></h5>`;
+    html += `<p><strong>Urgency:</strong> ${urgency}</p>`;
+    if (summary) html += `<p><strong>Summary:</strong> ${summary}</p>`;
+    if (meds.length) {
+      html += `<h6>Recommended medicines</h6><ul>` + meds.map((m, idx)=>{
+        const inv = m.in_inventory ? ` — in inventory (${m.matched && m.matched.quantity ? m.matched.quantity : 'unknown'})` : ' — not in inventory';
+        const btns = [];
+        if (m.in_inventory && m.matched && m.matched.id) {
+          btns.push(`<button class="btn btn-sm btn-outline-secondary me-1" onclick="openBatches(${m.matched.id}, '${String(m.matched.name).replace(/'/g,"\\'")}')">Open item</button>`);
+        } else {
+          btns.push(`<button class="btn btn-sm btn-outline-success me-1" onclick="createRestockRequest(${idx})">Create restock</button>`);
+        }
+        return `<li><div class="d-flex justify-content-between align-items-start"><div><b>${escapeHtml(String(m.name))}</b>${inv}<div class="small text-muted">${escapeHtml(String(m.rationale || ''))}</div></div><div>${btns.join('')}</div></div></li>`;
+      }).join('') + `</ul>`;
+      // store meds in a temp place for action handlers
+      window.__ai_last_meds = meds;
+    }
+    if (tests.length) html += `<h6>Recommended tests</h6><ul>` + tests.map(t=>`<li>${escapeHtml(String(t))}</li>`).join('') + `</ul>`;
+    html += `</div></div>`;
+    area.innerHTML = html;
+  }
+
+  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  async function createRestockRequest(idx){
+    const meds = window.__ai_last_meds || [];
+    const m = meds[idx];
+    if (!m) { alert('No medicine found'); return; }
+    const name = m.name || m;
+    const matched_id = (m.matched && m.matched.id) ? m.matched.id : '';
+    const body = new URLSearchParams();
+    body.set('action','create_restock_request'); body.set('medicine_name', String(name));
+    if (matched_id) body.set('matched_medicine_id', String(matched_id));
+    // pass current admin id if available on page
+    const adminIdEl = document.getElementById('adminId');
+    if (adminIdEl) body.set('requestor_id', adminIdEl.value);
+    try {
+      const res = await fetch(deepseekApi, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body.toString() });
+      const data = await res.json();
+      if (!data.success) { alert('Failed to create restock request'); return; }
+      alert('Restock request created (id ' + data.request_id + ')');
+      // refresh inventory if matched
+      if (matched_id) await loadList();
+    } catch (e) { alert('Network error'); }
+  }
+
   // Auto load inventory and decision suggestions, refresh every 10 minutes
   loadList();
   showSuggestions();

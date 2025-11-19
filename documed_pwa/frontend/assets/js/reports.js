@@ -437,20 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		const url = `../../backend/api/report.php?action=clinic_overview&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
 		reportResult.innerHTML = '';
 		if (analyticsRow) analyticsRow.style.display = 'none';
-		const res = await fetch(url);
-		// Robust JSON parsing with fallback display
-		let dataText; let data; try {
-			dataText = await res.text();
-			data = JSON.parse(dataText);
-		} catch (e) {
-			console.error('Clinic overview JSON parse failed', e);
-			if (clinicOverview) clinicOverview.style.display = 'none';
-			reportResult.innerHTML = '<div style="color:#dc2626;font-weight:600;">Clinic overview error: invalid JSON response</div>' +
-				'<pre style="white-space:pre-wrap;font-size:11px;background:#f8fafc;border:1px solid #e2e8f0;padding:6px;max-height:240px;overflow:auto;">' +
-				(dataText ? dataText.replace(/</g,'&lt;') : '(empty response)') + '</pre>';
-			if (reportsLoading) reportsLoading.style.display = 'none';
-			return;
-		}
+		const res = await fetch(url); const data = await res.json();
 		if (!data || !data.success) {
 			if (clinicOverview) clinicOverview.style.display = 'none';
 			reportResult.innerHTML = '<span style="color:red">No data</span>';
@@ -595,52 +582,6 @@ document.addEventListener('DOMContentLoaded', function() {
 				</div>
 			</div>`;
 		if (casesSeenEl) casesSeenEl.insertAdjacentHTML('beforeend', sigHTML);
-
-			// Add a toggle to show raw checkups (individual assessments) for debugging / verification
-			let rawBtn = document.getElementById('showRawCheckupsBtn');
-			if (!rawBtn && casesSeenEl) {
-				rawBtn = document.createElement('button');
-				rawBtn.id = 'showRawCheckupsBtn';
-				rawBtn.textContent = 'Show raw checkups';
-				rawBtn.style.marginTop = '12px';
-				rawBtn.className = 'btn btn-sm';
-				casesSeenEl.appendChild(rawBtn);
-				const rawContainer = document.createElement('div');
-				rawContainer.id = 'rawCheckupsContainer';
-				rawContainer.style.marginTop = '10px';
-				casesSeenEl.appendChild(rawContainer);
-				rawBtn.addEventListener('click', async () => {
-					if (rawContainer.dataset.shown === '1') {
-						rawContainer.innerHTML = '';
-						rawContainer.dataset.shown = '0';
-						rawBtn.textContent = 'Show raw checkups';
-						return;
-					}
-					rawBtn.textContent = 'Loading...';
-					const url2 = `../../backend/api/report.php?action=debug_checkups&start=${encodeURIComponent(data.period.start)}&end=${encodeURIComponent(data.period.end)}`;
-					try {
-						const r2 = await fetch(url2);
-						const j2 = await r2.json();
-						if (!j2 || !j2.success) {
-							rawContainer.innerHTML = `<div style="color:#dc2626">Failed to fetch raw checkups</div><pre>${(j2 && j2.error) ? j2.error : JSON.stringify(j2)}</pre>`;
-							rawBtn.textContent = 'Show raw checkups';
-							return;
-						}
-						// build a simple table
-						let html = '<div style="overflow:auto; max-height:300px; border:1px solid #e5e7eb; padding:8px; background:#fff"><table class="report" style="width:100%;"><thead><tr><th>ID</th><th>Name</th><th>Date</th><th>Assessment</th><th>Present illness</th><th>Remarks</th></tr></thead><tbody>';
-						j2.rows.forEach(rw => {
-							html += `<tr><td>${(rw.id||'')}</td><td>${(rw.name||'')}</td><td>${(rw.created_at||'')}</td><td>${(rw.assessment||'')}</td><td>${(rw.present_illness||'')}</td><td>${(rw.remarks||'')}</td></tr>`;
-						});
-						html += '</tbody></table></div>';
-						rawContainer.innerHTML = html;
-						rawContainer.dataset.shown = '1';
-						rawBtn.textContent = 'Hide raw checkups';
-					} catch (err) {
-						rawContainer.innerHTML = `<div style="color:#dc2626">Error fetching raw checkups</div><pre>${err}</pre>`;
-						rawBtn.textContent = 'Show raw checkups';
-					}
-				});
-			}
 		if (medsTableEl) medsTableEl.insertAdjacentHTML('beforeend', sigHTML);
 		if (servicesTableEl) servicesTableEl.insertAdjacentHTML('beforeend', sigHTML);
 		if (illnessesTableEl) illnessesTableEl.insertAdjacentHTML('beforeend', sigHTML);

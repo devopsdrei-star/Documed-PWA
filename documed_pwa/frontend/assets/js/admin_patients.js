@@ -175,18 +175,21 @@
     }
     if (t.classList.contains('btnArchive')){
       const id = t.getAttribute('data-id');
+      const tr = t.closest('tr');
+      const sidVal = (tr && tr.children && tr.children[0]) ? (tr.children[0].textContent || '').trim() : '';
       if (confirm('Archive this patient record?')){
         const adminId = localStorage.getItem('admin_id') || '';
-        fetch(`../../backend/api/checkup.php?action=archive&id=${encodeURIComponent(id)}`, {
+        // Archive by student_faculty_id to cover all checkups for the patient
+        fetch(`../../backend/api/checkup.php?action=archive`, {
           method:'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `admin_id=${encodeURIComponent(adminId)}`
+          body: `student_faculty_id=${encodeURIComponent(sidVal)}&admin_id=${encodeURIComponent(adminId)}`
         })
           .then(r=>r.json())
           .then(res=>{
             if (res.success) {
-              // Refresh the current list without redirecting
-              load();
+              // Redirect to the Archived Patients view after successful archive
+              window.location.href = 'patients_archive.html';
             } else {
               alert(res.message || 'Archive failed.');
             }

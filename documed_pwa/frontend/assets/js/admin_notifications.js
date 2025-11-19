@@ -42,7 +42,8 @@
 
   async function fetchSuggestions(){
     try {
-      const r = await fetch('../../backend/api/medicine.php?action=suggestions&days=30');
+      // Use AI aggregate endpoint (replaces deprecated local suggestions)
+      const r = await fetch('../../backend/api/deepseek_analysis.php?action=analyze_aggregate&days=30&campus=Lingayen');
       const j = await r.json(); return j && j.success ? j : null;
     } catch { return null; }
   }

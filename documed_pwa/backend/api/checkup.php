@@ -69,6 +69,8 @@ try { $pdo->exec("ALTER TABLE checkups ADD COLUMN department VARCHAR(100) NULL A
 // Normalize potential column name typos to expected 'physical_exam_chest_lungs'
 try { $pdo->exec("ALTER TABLE checkups CHANGE physical_exam_chest_lunge physical_exam_chest_lungs TINYINT(1)"); } catch (Throwable $e) { /* ignore */ }
 try { $pdo->exec("ALTER TABLE checkups CHANGE physical_exam_chest_lung physical_exam_chest_lungs TINYINT(1)"); } catch (Throwable $e) { /* ignore */ }
+// Add note_for_physical_exam column to store free-text notes from the clinical exam
+try { $pdo->exec("ALTER TABLE checkups ADD COLUMN note_for_physical_exam TEXT NULL AFTER physical_exam_musculoskeletal"); } catch (Throwable $e) { /* ignore */ }
 
 function jsonResponse($arr) {
     echo json_encode($arr);
@@ -116,6 +118,7 @@ if ($action === 'add') {
     $physical_exam_abdomen = isset($_POST['physical_exam_abdomen']) ? 1 : 0;
     $physical_exam_genitourinary = isset($_POST['physical_exam_genitourinary']) ? 1 : 0;
     $physical_exam_musculoskeletal = isset($_POST['physical_exam_musculoskeletal']) ? 1 : 0;
+    $note_for_physical_exam = $_POST['note_for_physical_exam'] ?? '';
     $neurological_exam = $_POST['neurological_exam'] ?? '';
     $laboratory_results = $_POST['laboratory_results'] ?? '';
     $assessment = $_POST['assessment'] ?? '';
@@ -187,6 +190,7 @@ if ($action === 'add') {
             'physical_exam_abdomen' => (int)$physical_exam_abdomen,
             'physical_exam_genitourinary' => (int)$physical_exam_genitourinary,
             'physical_exam_musculoskeletal' => (int)$physical_exam_musculoskeletal,
+            'note_for_physical_exam' => $note_for_physical_exam,
             'neurological_exam' => $neurological_exam,
             'laboratory_results' => $laboratory_results,
             'assessment' => $assessment,
@@ -417,6 +421,7 @@ if ($action === 'update') {
     $physical_exam_abdomen = isset($_POST['physical_exam_abdomen']) ? 1 : 0;
     $physical_exam_genitourinary = isset($_POST['physical_exam_genitourinary']) ? 1 : 0;
     $physical_exam_musculoskeletal = isset($_POST['physical_exam_musculoskeletal']) ? 1 : 0;
+    $note_for_physical_exam = $_POST['note_for_physical_exam'] ?? '';
     $neurological_exam = $_POST['neurological_exam'] ?? '';
     $laboratory_results = $_POST['laboratory_results'] ?? '';
     $assessment = $_POST['assessment'] ?? '';
@@ -443,6 +448,7 @@ if ($action === 'update') {
     $doc_nurse_id = array_key_exists('doc_nurse_id', $_POST) ? ($_POST['doc_nurse_id'] ?? null) : ($before['doc_nurse_id'] ?? null);
     $follow_up = array_key_exists('follow_up', $_POST) ? (int)!!$_POST['follow_up'] : (int)($before['follow_up'] ?? 0);
     $follow_up_date = array_key_exists('follow_up_date', $_POST) ? ($_POST['follow_up_date'] ?: null) : ($before['follow_up_date'] ?? null);
+    $note_for_physical_exam = array_key_exists('note_for_physical_exam', $_POST) ? ($_POST['note_for_physical_exam'] ?? '') : ($before['note_for_physical_exam'] ?? '');
         // Resolve performer name on update if missing and id is provided
         if ((!$doctor_nurse || $doctor_nurse === '') && $doc_nurse_id) {
             try {
@@ -459,14 +465,14 @@ if ($action === 'update') {
             student_faculty_id=?, client_type=?, exam_category=?, name=?, age=?, address=?, civil_status=?, nationality=?, religion=?, gender=?, date_of_birth=?, place_of_birth=?, year_and_course=?, department=?,
             contact_person=?, contact_number=?, history_past_illness=?, present_illness=?, operations_hospitalizations=?, immunization_history=?,
             social_environmental_history=?, ob_gyne_history=?, physical_exam_general_survey=?, physical_exam_skin=?, physical_exam_heart=?,
-            physical_exam_chest_lungs=?, physical_exam_abdomen=?, physical_exam_genitourinary=?, physical_exam_musculoskeletal=?,
+            physical_exam_chest_lungs=?, physical_exam_abdomen=?, physical_exam_genitourinary=?, physical_exam_musculoskeletal=?, note_for_physical_exam=?,
             neurological_exam=?, laboratory_results=?, assessment=?, remarks=?, photo=?, doctor_nurse=?, doc_nurse_id=?, follow_up=?, follow_up_date=?
             WHERE id=?");
         $stmt->execute([
             $student_faculty_id, $client_type, $exam_category, $name, $age, $address, $civil_status, $nationality, $religion, $gender, $date_of_birth, $place_of_birth, $year_and_course, $department,
             $contact_person, $contact_number, $history_past_illness, $present_illness, $operations_hospitalizations, $immunization_history,
             $social_environmental_history, $ob_gyne_history, $physical_exam_general_survey, $physical_exam_skin, $physical_exam_heart,
-            $physical_exam_chest_lungs, $physical_exam_abdomen, $physical_exam_genitourinary, $physical_exam_musculoskeletal,
+            $physical_exam_chest_lungs, $physical_exam_abdomen, $physical_exam_genitourinary, $physical_exam_musculoskeletal, $note_for_physical_exam,
             $neurological_exam, $laboratory_results, $assessment, $remarks, $photo, $doctor_nurse, ($doc_nurse_id !== null && $doc_nurse_id !== '' ? (int)$doc_nurse_id : null), $follow_up, ($follow_up ? ($follow_up_date ?: null) : null), $id
         ]);
     // Audit trail log
@@ -513,7 +519,96 @@ if ($action === 'update') {
                 $log_stmt->execute([$admin_id, $log_action, $log_details, date('Y-m-d H:i:s')]);
             } catch (Throwable $e) { /* ignore audit log failure */ }
         }
-        echo json_encode(['success' => true]);
+        // After updating checkup, handle medicines adjustments if provided
+        $issuedSummary = [];
+        try {
+            $pdo->beginTransaction();
+            // Restore previous issued quantities back to medicines.quantity (batch restoration not attempted)
+            $prevStmt = $pdo->prepare('SELECT medicine_id, SUM(qty) AS total FROM checkup_medicines WHERE checkup_id = ? GROUP BY medicine_id');
+            $prevStmt->execute([$id]);
+            $prevRows = $prevStmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($prevRows as $pr) {
+                $pmid = intval($pr['medicine_id']);
+                $pqty = intval($pr['total']);
+                if ($pqty > 0) {
+                    // Add back to medicines.quantity
+                    $up = $pdo->prepare('UPDATE medicines SET quantity = GREATEST(COALESCE(quantity,0) + ?, 0) WHERE id = ?');
+                    $up->execute([$pqty, $pmid]);
+                }
+            }
+            // Remove old issuance records and batches
+            $delBatches = $pdo->prepare('DELETE b FROM checkup_medicine_batches b JOIN checkup_medicines cm ON cm.id = b.checkup_medicine_id WHERE cm.checkup_id = ?');
+            $delBatches->execute([$id]);
+            $delMeds = $pdo->prepare('DELETE FROM checkup_medicines WHERE checkup_id = ?');
+            $delMeds->execute([$id]);
+
+            // Process new medicines if provided (same logic as add)
+            $medsRaw = $_POST['medicines'] ?? null;
+            if ($medsRaw) {
+                if (is_string($medsRaw)) {
+                    $meds = json_decode($medsRaw, true);
+                    if (!is_array($meds)) $meds = [];
+                } elseif (is_array($medsRaw)) {
+                    $meds = $medsRaw;
+                } else {
+                    $meds = [];
+                }
+                $defaultCampus = 'Lingayen';
+                foreach ($meds as $m) {
+                    $medicine_id = intval($m['medicine_id'] ?? $m['id'] ?? 0);
+                    $reqQty = intval($m['qty'] ?? $m['quantity'] ?? 0);
+                    if (!$medicine_id || $reqQty <= 0) continue;
+
+                    // Calculate available stock (prefer batch sum)
+                    $availStmt = $pdo->prepare("SELECT COALESCE(SUM(qty),0) AS avail FROM medicine_batches WHERE medicine_id = ? AND campus = ?");
+                    $availStmt->execute([$medicine_id, $defaultCampus]);
+                    $avail = intval($availStmt->fetchColumn());
+                    if ($avail <= 0) {
+                        $mq = $pdo->prepare("SELECT COALESCE(quantity,0) FROM medicines WHERE id = ?");
+                        $mq->execute([$medicine_id]);
+                        $avail = intval($mq->fetchColumn());
+                    }
+                    $toIssue = min($reqQty, $avail);
+                    if ($toIssue <= 0) {
+                        $issuedSummary[] = ['medicine_id' => $medicine_id, 'requested' => $reqQty, 'issued' => 0, 'note' => 'no stock'];
+                        continue;
+                    }
+
+                    // Insert issuance record linked to checkup
+                    $ins = $pdo->prepare("INSERT INTO checkup_medicines (checkup_id, medicine_id, qty, campus) VALUES (?, ?, ?, ?)");
+                    $ins->execute([$id, $medicine_id, $toIssue, $defaultCampus]);
+                    $cmid = $pdo->lastInsertId();
+
+                    // Decrement medicines.quantity safely
+                    $updMed = $pdo->prepare("UPDATE medicines SET quantity = GREATEST(quantity - ?, 0), updated_at = NOW() WHERE id = ?");
+                    $updMed->execute([$toIssue, $medicine_id]);
+
+                    // Consume batches FIFO by nearest expiry
+                    $need = $toIssue;
+                    $bstmt = $pdo->prepare("SELECT id, qty FROM medicine_batches WHERE medicine_id = ? AND campus = ? AND qty > 0 ORDER BY COALESCE(expiry_date, '9999-12-31') ASC, id ASC");
+                    $bstmt->execute([$medicine_id, $defaultCampus]);
+                    while ($need > 0 && ($batch = $bstmt->fetch(PDO::FETCH_ASSOC))) {
+                        $consume = min($need, intval($batch['qty']));
+                        if ($consume <= 0) continue;
+                        $updateBatch = $pdo->prepare("UPDATE medicine_batches SET qty = qty - ? WHERE id = ?");
+                        $updateBatch->execute([$consume, $batch['id']]);
+                        $insb = $pdo->prepare("INSERT INTO checkup_medicine_batches (checkup_medicine_id, batch_id, qty) VALUES (?, ?, ?)");
+                        $insb->execute([$cmid, $batch['id'], $consume]);
+                        $need -= $consume;
+                    }
+
+                    $issuedSummary[] = ['medicine_id' => $medicine_id, 'requested' => $reqQty, 'issued' => $toIssue];
+                }
+            }
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            try { $pdo->rollBack(); } catch (Throwable $_) {}
+            // Non-fatal: include error in response
+            $issuedSummary[] = ['error' => 'Issuance update failed: ' . $e->getMessage()];
+        }
+
+        echo json_encode(['success' => true, 'issued' => $issuedSummary]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
     }
@@ -555,24 +650,57 @@ if ($action === 'delete') {
 // Soft archive a checkup record
 if ($action === 'archive') {
     $id = $_GET['id'] ?? $_POST['id'] ?? '';
-    if (!$id) jsonResponse(['success' => false, 'message' => 'Missing id']);
-    // Get checkup details before archive
-    $checkup_stmt = $pdo->prepare("SELECT * FROM checkups WHERE id = ?");
-    $checkup_stmt->execute([$id]);
-    $before = $checkup_stmt->fetch(PDO::FETCH_ASSOC);
-    $stmt = $pdo->prepare("UPDATE checkups SET archived = 1 WHERE id = ?");
-    $stmt->execute([$id]);
-    // Audit trail log
+    $student_faculty_id = $_GET['student_faculty_id'] ?? $_POST['student_faculty_id'] ?? '';
+    if (!$id && !$student_faculty_id) jsonResponse(['success' => false, 'message' => 'Missing id or student_faculty_id']);
+
     $admin_id = $_POST['admin_id'] ?? 0;
     $log_action = 'Archive Patient Checkup';
-    $log_details = 'Archived checkup record: ' . ($before ? json_encode($before) : 'ID: ' . $id);
-    if ($admin_id) {
+
+    // If student_faculty_id provided, archive all records for that student (soft-archive by SID)
+    if ($student_faculty_id) {
         try {
-            $log_stmt = $pdo->prepare("INSERT INTO audit_trail (admin_id, action, details, timestamp) VALUES (?, ?, ?, ?)");
-            $log_stmt->execute([$admin_id, $log_action, $log_details, date('Y-m-d H:i:s')]);
-        } catch (Throwable $e) { /* ignore */ }
+            // Fetch affected rows for audit
+            $stmtBefore = $pdo->prepare("SELECT * FROM checkups WHERE student_faculty_id = ?");
+            $stmtBefore->execute([$student_faculty_id]);
+            $rowsBefore = $stmtBefore->fetchAll(PDO::FETCH_ASSOC);
+
+            $upd = $pdo->prepare("UPDATE checkups SET archived = 1 WHERE student_faculty_id = ?");
+            $upd->execute([$student_faculty_id]);
+            $count = $upd->rowCount();
+
+            $log_details = 'Archived checkup records for student_faculty_id=' . $student_faculty_id . ' Count=' . intval($count);
+            if ($admin_id) {
+                try {
+                    $log_stmt = $pdo->prepare("INSERT INTO audit_trail (admin_id, action, details, timestamp) VALUES (?, ?, ?, ?)");
+                    $log_stmt->execute([$admin_id, $log_action, $log_details, date('Y-m-d H:i:s')]);
+                } catch (Throwable $e) { /* ignore */ }
+            }
+            jsonResponse(['success' => true, 'message' => 'Patient records archived', 'archived_count' => intval($count), 'affected' => $rowsBefore]);
+        } catch (Throwable $e) {
+            jsonResponse(['success' => false, 'message' => 'Archive by student failed', 'error' => $e->getMessage()]);
+        }
     }
-    jsonResponse(['success' => true, 'message' => 'Patient archived']);
+
+    // Fallback: archive single checkup by id
+    try {
+        // Get checkup details before archive
+        $checkup_stmt = $pdo->prepare("SELECT * FROM checkups WHERE id = ?");
+        $checkup_stmt->execute([$id]);
+        $before = $checkup_stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $pdo->prepare("UPDATE checkups SET archived = 1 WHERE id = ?");
+        $stmt->execute([$id]);
+
+        $log_details = 'Archived checkup record: ' . ($before ? json_encode($before) : 'ID: ' . $id);
+        if ($admin_id) {
+            try {
+                $log_stmt = $pdo->prepare("INSERT INTO audit_trail (admin_id, action, details, timestamp) VALUES (?, ?, ?, ?)");
+                $log_stmt->execute([$admin_id, $log_action, $log_details, date('Y-m-d H:i:s')]);
+            } catch (Throwable $e) { /* ignore */ }
+        }
+        jsonResponse(['success' => true, 'message' => 'Patient archived']);
+    } catch (Throwable $e) {
+        jsonResponse(['success' => false, 'message' => 'Archive failed', 'error' => $e->getMessage()]);
+    }
 }
 
 // Un-archive a checkup record

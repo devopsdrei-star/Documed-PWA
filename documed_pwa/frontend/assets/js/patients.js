@@ -293,14 +293,18 @@ document.addEventListener('click', function(e) {
         }
         const msg = `Archive this patient record${name ? ` for ${name}` : ''}${sid ? ` (ID: ${sid})` : ''}? It will be moved to Archived Patients and can be restored.`;
         if (!confirm(msg)) return;
-        fetch(`../../backend/api/checkup.php?action=archive&id=${id}`, { method: 'POST' })
+        // Archive all records for this student's SID so the patient won't reappear due to other checkups
+        const sidVal = sid || (tr && tr.children && tr.children[0] ? (tr.children[0].textContent||'').trim() : '');
+        fetch(`../../backend/api/checkup.php?action=archive`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `student_faculty_id=${encodeURIComponent(sidVal)}`
+        })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Stay on the same page: show confirmation and refresh the current list
-                    try { showToast('Patient record archived.'); } catch(_) { /* no-op */ }
-                    // Re-fetch patients so the archived record disappears from active list
-                    try { fetchPatients(); } catch(_) { /* no-op */ }
+                    try { showToast('Patient record archived. Redirecting to Archived Patients...'); } catch(_) { /* no-op */ }
+                    window.location.href = 'patients_archive.html';
                 } else alert(data.message || 'Archive failed.');
             })
             .catch(() => alert('Network error while archiving.'));

@@ -58,18 +58,17 @@ if (file_exists($cacheFile) && !$force) {
 
 // Helper to fetch suggestions (AI + heuristic)
 function fetchSuggestions(): array {
-    $url = basename(__DIR__) === 'api'
-        ? (dirname(__DIR__) . '/api/medicine.php?action=suggestions&days=30')
-        : 'medicine.php?action=suggestions&days=30';
-    // Direct include not ideal because medicine.php echoes; use curl to itself if server accessible.
-    // Fallback: replicate minimal stats from DB if curl fails.
+    // Use AI aggregate endpoint instead of deprecated local suggestions
     if (function_exists('curl_init')) {
         $base = $_SERVER['HTTP_HOST'] ?? '';
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-        if ($base) { $urlFull = $scheme . $base . '/backend/api/medicine.php?action=suggestions&days=30'; }
-        else { $urlFull = $url; }
+        if ($base) {
+            $urlFull = $scheme . $base . '/backend/api/deepseek_analysis.php?action=analyze_aggregate&days=30&campus=Lingayen';
+        } else {
+            $urlFull = 'deepseek_analysis.php?action=analyze_aggregate&days=30&campus=Lingayen';
+        }
         $ch = curl_init($urlFull);
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>10]);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>12]);
         $resp = curl_exec($ch); $err = curl_error($ch); curl_close($ch);
         if (!$err && $resp) {
             $j = json_decode($resp, true);

@@ -11,9 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(res => res.json())
       .then(data => {
         if (data.success && data.profile) {
-          document.getElementById('profilePhoto').src = data.profile.dn_photo || '../assets/images/admin_photo.png';
+          document.getElementById('profilePhoto').src = data.profile.dn_photo || '../assets/images/documed_logo.png';
         } else {
-          document.getElementById('profilePhoto').src = profile.dn_photo || '../assets/images/admin_photo.png';
+          document.getElementById('profilePhoto').src = profile.dn_photo || '../assets/images/documed_logo.png';
         }
       });
     document.getElementById('editName').value = profile.name || '';
