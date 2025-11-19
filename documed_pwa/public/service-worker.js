@@ -32,9 +32,23 @@ const CORE_ASSETS = [
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CORE_CACHE).then(cache => cache.addAll(CORE_ASSETS))
-  );
+  // Robust precache: fetch each asset and only add successful responses to cache.
+  event.waitUntil((async () => {
+    const cache = await caches.open(CORE_CACHE);
+    for (const asset of CORE_ASSETS) {
+      try {
+        const resp = await fetch(asset, { cache: 'no-cache' });
+        if (resp && resp.ok) {
+          await cache.put(asset, resp.clone());
+        } else {
+          // Log missing assets but do not fail installation
+          console.warn('[SW] precache skip (not ok):', asset, resp && resp.status);
+        }
+      } catch (err) {
+        console.warn('[SW] precache error for', asset, err);
+      }
+    }
+  })());
 });
 
 self.addEventListener('activate', (event) => {

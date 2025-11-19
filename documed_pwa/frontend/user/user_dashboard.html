@@ -634,8 +634,8 @@
   <script src="../assets/js/login_sid_helper.js"></script>
   <script src="../assets/js/help_modal.js"></script>
   <!-- QR scan logic (library loads dynamically with fallbacks) -->
-  <!-- Preload local QR engine to avoid CDN/network issues -->
-  <script src="../assets/js/vendor/html5-qrcode.min.js?v=20251011"></script>
+  <!-- Preload QR engine: prefer CDN to avoid missing local vendor file; dynamic loader will still fallback if needed -->
+  <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
   <script src="../assets/js/qr_login.js"></script>
   <script src="../assets/js/qr_challenge.js"></script>
   <!-- Approve Login Modal (phone/device) -->
@@ -1111,6 +1111,29 @@
     });
   </script>
   <script src="../assets/js/notifications.js"></script>
+  <script>
+    // Global image fallback: prevent many console 404s by replacing broken images with a lightweight placeholder.
+    // This only replaces the src once per element to avoid infinite loops.
+    (function(){
+      function onImgError(e){
+        var t = e.target || e.srcElement;
+        if (!t || t.tagName !== 'IMG') return;
+        try {
+          if (t.dataset.hasFallback) return;
+          t.dataset.hasFallback = '1';
+          t.src = '../assets/images/user_photo.png';
+        } catch(_){}
+      }
+      // Use capture to catch errors from deeply nested images
+      window.addEventListener('error', onImgError, true);
+      // Also handle individual image load failures via onerror for robustness
+      document.addEventListener('DOMContentLoaded', function(){
+        document.querySelectorAll('img').forEach(function(img){
+          img.addEventListener('error', onImgError);
+        });
+      });
+    })();
+  </script>
   <script>
     // Inject Admin Settings (clinic name, banner message, operating hours) into the User Dashboard
     document.addEventListener('DOMContentLoaded', function(){

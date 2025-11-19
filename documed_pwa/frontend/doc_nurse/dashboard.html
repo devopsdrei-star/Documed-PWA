@@ -323,16 +323,24 @@ document.addEventListener('DOMContentLoaded', function() {
     profileInfoLink.addEventListener('click', () => { if (profileMenu) profileMenu.style.display = 'none'; });
   }
 });
-    document.addEventListener('DOMContentLoaded', function() {
-      // Load profile from localStorage
-      let profile = null;
-      try { profile = JSON.parse(localStorage.getItem('documed_doc_nurse')); } catch(e) {}
-      if (profile) {
-        document.getElementById('docNursePhoto').src = profile.dn_photo || '../assets/images/admin_photo.png';
-        document.getElementById('docProfileName').textContent = profile.name;
-        document.getElementById('docProfileRole').textContent = profile.role;
-        document.getElementById('docName').textContent = profile.name;
-      }
+document.addEventListener('DOMContentLoaded', function() {
+  // Load profile from localStorage
+  let profile = null;
+  try { profile = JSON.parse(localStorage.getItem('documed_doc_nurse')); } catch(e) {}
+  if (profile) {
+    // NEW: use fallback if image fails to load
+    const imgEl = document.getElementById('docNursePhoto');
+    imgEl.src = profile.dn_photo || '../assets/images/admin_photo.png';
+    imgEl.onerror = function() {
+      this.onerror = null; // prevent infinite loop if fallback missing
+      this.src = '../assets/images/admin_photo.png';
+    };
+
+    document.getElementById('docProfileName').textContent = profile.name;
+    document.getElementById('docProfileRole').textContent = profile.role;
+    document.getElementById('docName').textContent = profile.name;
+  }
+
 
       // Fetch all checkups for male/female stats and analytics
       let allCheckups = [];
@@ -437,13 +445,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return `<tr><td>${name}</td><td>${a.date}</td><td>${time}</td><td>${a.status}</td></tr>`;
             }).join('');
           }
-          document.getElementById('docAppointments').textContent = pending.length;
-          // Today appointments count (any status) for the summary card
-          const todayAppointments = (data.appointments || []).length;
-          const todayApptEl = document.getElementById('todayAppointments');
-          if (todayApptEl) todayApptEl.textContent = todayAppointments;
-          // Equalize heights once data is in
-          setTimeout(equalizeSummaryQuickStats, 0);
+          // document.getElementById('docAppointments').textContent = pending.length;
+          // // Today appointments count (any status) for the summary card
+          // const todayAppointments = (data.appointments || []).length;
+          // const todayApptEl = document.getElementById('todayAppointments');
+          // if (todayApptEl) todayApptEl.textContent = todayAppointments;
+          // // Equalize heights once data is in
+          // setTimeout(equalizeSummaryQuickStats, 0);
         });
 
       // Fetch total patient count
