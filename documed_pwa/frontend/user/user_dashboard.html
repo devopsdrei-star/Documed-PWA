@@ -1199,7 +1199,7 @@
       if (e.key !== 'documed_user') return;
       try {
         const u = JSON.parse(e.newValue || 'null');
-const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
+        const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
         const img = document.getElementById('navProfileImg');
         if (img) img.src = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
       } catch(_) {}
@@ -1232,7 +1232,7 @@ const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
       if (sessionStorage.getItem('documedLoggedIn') === '1') {
         try {
           const u = JSON.parse(localStorage.getItem('documed_user')||'null');
-                    const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
+          const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
           const img = document.getElementById('navProfileImg');
           if (img) img.src = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
         } catch(_) {}
@@ -1313,9 +1313,9 @@ const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
   <div id="aiChatbotBtn" class="ai-chat-button" aria-hidden="false">
     <button aria-label="Open chat" title="Chat with AI">💬</button>
   </div>
-  <div id="aiChatbotWindow" class="ai-chat-window" role="dialog" aria-label="Documed Chatbot" style="display:none;">
+  <div id="aiChatbotWindow" class="ai-chat-window" role="dialog" aria-label="AI Assistant" style="display:none;">
     <div class="ai-chat-header">
-      <span>Documed Chatbot</span>
+      <span>AI Assistant</span>
       <button id="aiChatbotClose" aria-label="Close chat">&times;</button>
     </div>
     <!-- Suggestions inserted dynamically here -->
@@ -1388,7 +1388,7 @@ const src = (u && u.photo) ? u.photo : '../assets/images/user_photo.png';
         try { typing.remove(); } catch(_) {}
         if (data && data.reply) {
           let note = '';
-          if (data.info === 'served_by_deepseek') note = ' (served by DeepSeek)';
+          if (data.info === 'served_by_fallback_openai') note = ' (served by fallback)';
           if (data.info === 'served_by_local_fallback') note = ' (served by local fallback)';
           appendMsg('ai', data.reply + note);
           return;
