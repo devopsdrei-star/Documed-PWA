@@ -270,6 +270,77 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Settings: Manage Users (enhanced with status + loading overlay)
 	const userManage = document.getElementById('userManage');
+    // Toast utilities
+    function ensureToastContainer() {
+        let c = document.getElementById('toast-container');
+        if (!c) {
+            c = document.createElement('div');
+            c.id = 'toast-container';
+            c.style.cssText = 'position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:4000;';
+            document.body.appendChild(c);
+        }
+        return c;
+    }
+	function showToast(type, message) {
+        const c = ensureToastContainer();
+        const t = document.createElement('div');
+        const bg = type === 'success' ? '#16a34a' : (type === 'error' ? '#dc2626' : '#2563eb');
+        t.style.cssText = 'min-width:220px;max-width:360px;color:#fff;padding:10px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(2,6,23,0.18);display:flex;align-items:flex-start;gap:8px;';
+        t.style.background = bg;
+        t.innerHTML = `<span style="font-weight:700;">${type.toUpperCase()}</span><span style="flex:1;">${message}</span>`;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 240ms ease'; setTimeout(()=> t.remove(), 260); }, 2600);
+    }
+
+	// Branded confirm dialog (avoids native browser 'localhost says')
+	const SITE_NAME = 'DocuMed';
+	function ensureConfirmRoot() {
+		let root = document.getElementById('documed-confirm-root');
+		if (!root) {
+			root = document.createElement('div');
+			root.id = 'documed-confirm-root';
+			root.style.cssText = 'position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.45);z-index:4500;';
+			root.innerHTML = `
+				<div role="dialog" aria-modal="true" aria-labelledby="documedConfirmTitle" style="background:#fff;border-radius:12px;box-shadow:0 24px 64px rgba(2,6,23,0.25);width:min(92vw,420px);max-width:92vw;padding:18px 16px 14px;">
+				  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+					<img src="../../frontend/assets/images/Logo.png" alt="${SITE_NAME}" style="width:28px;height:28px;border-radius:6px;"/>
+					<h3 id="documedConfirmTitle" style="margin:0;font-size:1rem;color:#111827;">${SITE_NAME}</h3>
+				  </div>
+				  <div id="documedConfirmMessage" style="color:#374151;padding:8px 2px 14px;white-space:pre-wrap;"></div>
+				  <div style="display:flex;justify-content:flex-end;gap:8px;">
+					<button type="button" id="documedConfirmCancel" class="btn btn-light" style="padding:6px 12px;">Cancel</button>
+					<button type="button" id="documedConfirmOk" class="btn btn-primary" style="padding:6px 12px;">OK</button>
+				  </div>
+				</div>`;
+			document.body.appendChild(root);
+		}
+		return root;
+	}
+	function confirmDialog(message, { okText = 'OK', cancelText = 'Cancel' } = {}) {
+		return new Promise((resolve) => {
+			const root = ensureConfirmRoot();
+			const msgEl = root.querySelector('#documedConfirmMessage');
+			const okBtn = root.querySelector('#documedConfirmOk');
+			const cancelBtn = root.querySelector('#documedConfirmCancel');
+			msgEl.textContent = message;
+			okBtn.textContent = okText; cancelBtn.textContent = cancelText;
+			root.style.display = 'flex';
+			function cleanup(v){
+				root.style.display = 'none';
+				okBtn.removeEventListener('click', onOk);
+				cancelBtn.removeEventListener('click', onCancel);
+				document.removeEventListener('keydown', onKey);
+				resolve(v);
+			}
+			function onOk(){ cleanup(true); }
+			function onCancel(){ cleanup(false); }
+			function onKey(e){ if (e.key === 'Escape') cleanup(false); if (e.key === 'Enter') cleanup(true); }
+			okBtn.addEventListener('click', onOk);
+			cancelBtn.addEventListener('click', onCancel);
+			document.addEventListener('keydown', onKey);
+		});
+	}
+
 	function ensureLoadingOverlay(){
 		let ov = document.getElementById('usersLoadingOverlay');
 		if (!ov) {
@@ -290,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			const res = await fetch('../../backend/api/auth.php?action=list&cacheBust=' + Date.now());
 			const data = await res.json();
 			if (data.users && data.users.length) {
-				userManage.innerHTML = `<table style="width:100%;margin-bottom:12px;" id="usersTable"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${data.users.map(u => `<tr data-id="${u.id}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><span class="badge ${u.status==='inactive'?'text-bg-danger':'text-bg-success'}" id="status-${u.id}">${u.status||'active'}</span></td><td><button class='btn btn-sm btn-outline-${u.status==='inactive'?'success':'warning'}' data-action='toggle' data-id='${u.id}' style='margin-right:4px;'>${u.status==='inactive'?'Activate':'Deactivate'}</button><button class='btn btn-sm btn-danger' data-action='delete' data-id='${u.id}' style='margin-right:4px;'>Delete</button><button class='btn btn-sm btn-primary' data-action='edit' data-id='${u.id}'>Edit</button></td></tr>`).join('')}</tbody></table><button class='btn btn-success' id='addUserBtn' style='padding:6px 14px;'>Add User</button>`;
+				userManage.innerHTML = `<table style="width:100%;margin-bottom:12px;" id="usersTable"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${data.users.map(u => `<tr data-id="${u.id}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><span class="badge ${u.status==='inactive'?'text-bg-danger':'text-bg-success'}" id="status-${u.id}">${u.status||'active'}</span></td><td><button class='btn btn-sm btn-outline-${u.status==='inactive'?'success':'warning'}' data-action='toggle' data-id='${u.id}' style='margin-right:4px;min-width:92px;'>${u.status==='inactive'?'Activate':'Deactivate'}</button><button class='btn btn-sm btn-danger' data-action='delete' data-id='${u.id}' style='margin-right:4px;'>Delete</button><button class='btn btn-sm btn-primary' data-action='edit' data-id='${u.id}'>Edit</button></td></tr>`).join('')}</tbody></table><button class='btn btn-success' id='addUserBtn' style='padding:6px 14px;'>Add User</button>`;
 			} else {
 				userManage.textContent = 'No users found.';
 			}
@@ -299,19 +370,42 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 	if (userManage) {
 		loadUsers();
+		// expose for PWA message handler to reuse
+		window.__docmedLoadUsers = loadUsers;
 		userManage.addEventListener('click', async (e) => {
 			const btn = e.target.closest('button[data-action]');
 			if (!btn) return;
 			const id = btn.getAttribute('data-id');
 			const action = btn.getAttribute('data-action');
 			if (!id) return;
+			const adminId = (localStorage.getItem('admin_id') || '').toString();
+			function setBtnBusy(b, busy){
+				if (!b) return;
+				if (busy) {
+					b.disabled = true;
+					b.dataset.oldText = b.innerHTML;
+					b.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>' + (b.textContent.trim() || 'Working...');
+				} else {
+					b.disabled = false;
+					if (b.dataset.oldText) b.innerHTML = b.dataset.oldText;
+				}
+			}
 			if (action === 'delete') {
-				if (!confirm('Delete this user?')) return;
-				showOverlay();
+				const ok = await confirmDialog('Delete this user?');
+				if (!ok) return;
+				showOverlay(); setBtnBusy(btn, true);
 				try {
-					await fetch('../../backend/api/auth.php?action=delete', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`id=${encodeURIComponent(id)}` });
-					// Remove row instantly
-					const row = userManage.querySelector(`tr[data-id='${id}']`); if (row) row.remove();
+					const res = await fetch('../../backend/api/manage_user.php?action=delete', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`id=${encodeURIComponent(id)}&admin_id=${encodeURIComponent(adminId)}` });
+					let ok = res.ok; let json = null;
+					try { json = await res.json(); } catch(_) { /* ignore */ }
+					if (json && json.success === false) ok = false;
+					if (ok) {
+						// Remove row instantly
+						const row = userManage.querySelector(`tr[data-id='${id}']`); if (row) row.remove();
+						showToast('success', 'User deleted.');
+					} else {
+						showToast('error', (json && json.message) ? json.message : 'Failed to delete user.');
+					}
 				} finally { hideOverlay(); }
 				return;
 			}
@@ -320,39 +414,66 @@ document.addEventListener('DOMContentLoaded', function() {
 				const badge = document.getElementById('status-'+id);
 				const current = badge ? badge.textContent.trim() : 'active';
 				const next = current === 'inactive' ? 'active' : 'inactive';
-				showOverlay();
+				// Confirm only when deactivating
+				if (next === 'inactive') {
+					const ok = await confirmDialog('Deactivate this user account?', { okText: 'Deactivate', cancelText: 'Cancel' });
+					if (!ok) return;
+				}
+				// Faster UX: just button spinner, no global overlay
+				setBtnBusy(btn, true);
 				try {
-					await fetch('../../backend/api/manage_user.php?action=toggle_status', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`id=${encodeURIComponent(id)}&status=${encodeURIComponent(next)}` });
-					// Update badge immediately
-					if (badge) {
-						badge.textContent = next;
-						badge.className = 'badge ' + (next==='inactive'?'text-bg-danger':'text-bg-success');
+					const res = await fetch('../../backend/api/manage_user.php?action=toggle_status', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`id=${encodeURIComponent(id)}&status=${encodeURIComponent(next)}&admin_id=${encodeURIComponent(adminId)}` });
+					let ok = res.ok; let json = null; try { json = await res.json(); } catch(_) {}
+					if (json && json.success === false) ok = false;
+					if (ok) {
+						// Update badge immediately
+						if (badge) {
+							badge.textContent = next;
+							badge.className = 'badge ' + (next==='inactive'?'text-bg-danger':'text-bg-success');
+						}
+						// Update toggle button label/style
+						btn.className = 'btn btn-sm btn-outline-' + (next==='inactive'?'success':'warning');
+						btn.textContent = next==='inactive'?'Activate':'Deactivate';
+						showToast('success', `User ${next==='inactive'?'deactivated':'activated'}.`);
+						if (next === 'inactive') {
+							// Quick reload to reflect broader state
+							setTimeout(() => { location.reload(); }, 200);
+						}
+					} else {
+						showToast('error', (json && json.message) ? json.message : 'Failed to update status.');
 					}
-					// Update toggle button label/style
-					btn.className = 'btn btn-sm btn-outline-' + (next==='inactive'?'success':'warning');
-					btn.textContent = next==='inactive'?'Activate':'Deactivate';
-				} finally { hideOverlay(); }
+				} finally { /* no overlay to hide */ }
+				setBtnBusy(btn, false);
 				return;
 			}
 			if (action === 'edit') {
-				alert('Edit user feature coming soon!');
+				showToast('info', 'Edit user feature coming soon!');
 			}
 		});
 	}
 
-	// Settings: Audit Trail
-	const auditTrail = document.getElementById('auditTrail');
-	if (auditTrail) {
-		fetch('../../backend/api/audit_trail.php?action=list')
-			.then(res => res.json())
-			.then(data => {
-				if (data.logs && data.logs.length) {
-					auditTrail.innerHTML = `<table style="width:100%;margin-bottom:12px;"><thead><tr><th>Admin</th><th>Action</th><th>Details</th><th>Date & Time</th></tr></thead><tbody>${data.logs.map(log => `<tr><td>${log.admin_name || 'Admin #' + log.admin_id}</td><td>${log.action}</td><td>${log.details}</td><td>${new Date(log.timestamp).toLocaleString()}</td></tr>`).join('')}</tbody></table>`;
+	// Settings: Audit Trail (supports both settings section and full activity log page)
+	(function initAuditTrail(){
+		const auditContainer = document.getElementById('auditTrail') || document.getElementById('auditTrailTable');
+		if (!auditContainer) return;
+		async function loadAuditBasic(){
+			try {
+				const res = await fetch('../../backend/api/audit_trail.php?action=list&limit=100&cacheBust=' + Date.now());
+				const data = await res.json();
+				const logs = (data.logs||[]);
+				// If container is a table (activity log page), inject rows; else build a table
+				if (auditContainer.tagName === 'TABLE') {
+					const tbody = auditContainer.querySelector('tbody'); if (!tbody) return;
+					tbody.innerHTML = logs.length ? logs.map(log => `<tr><td>${new Date(log.timestamp).toLocaleString()}</td><td>${log.admin_name || ('Admin #' + log.admin_id)}</td><td>${log.action}</td><td>${log.details||''}</td></tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:#6b7280;padding:14px;">No audit logs found.</td></tr>';
 				} else {
-					auditTrail.textContent = 'No audit logs found.';
+					auditContainer.innerHTML = logs.length ? `<table style="width:100%;margin-bottom:12px;"><thead><tr><th>Admin</th><th>Action</th><th>Details</th><th>Date & Time</th></tr></thead><tbody>${logs.map(log => `<tr><td>${log.admin_name || 'Admin #' + log.admin_id}</td><td>${log.action}</td><td>${log.details}</td><td>${new Date(log.timestamp).toLocaleString()}</td></tr>`).join('')}</tbody></table>` : 'No audit logs found.';
 				}
-			});
-	}
+			} catch(e){ /* ignore */ }
+		}
+		loadAuditBasic();
+		// Expose for SW invalidate refresh
+		window.__docmedLoadAuditTrail = loadAuditBasic;
+	})();
 
 	// --- Settings Dropdown ---
 	const settingsDropdown = document.getElementById('settingsDropdown');
@@ -413,13 +534,8 @@ document.addEventListener('DOMContentLoaded', function() {
 						const auditTrailTable = document.getElementById('auditTrail') || document.querySelector('#auditTrailTable');
 						let updated = false;
 						if (hasUserTable) {
-							// Re-fetch users list
-							fetch('../../backend/api/auth.php?action=list&cacheBust=' + Date.now())
-								.then(r => r.json()).then(d => {
-									if (d.users) {
-										hasUserTable.innerHTML = `<table style="width:100%;margin-bottom:12px;"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody>${d.users.map(u => `<tr><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><button class='btn' onclick='deleteUser(${u.id})' style='background:#e11d48;padding:4px 12px;'>Delete</button> <button class='btn' onclick='editUser(${u.id})' style='background:#2563eb;padding:4px 12px;'>Edit</button></td></tr>`).join('')}</tbody></table>`;
-									}
-								});
+							// Re-fetch users list using same renderer
+							if (window.__docmedLoadUsers) window.__docmedLoadUsers();
 							updated = true;
 						}
 						if (auditTrailTable && auditTrailTable.tagName !== 'TABLE') {

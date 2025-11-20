@@ -4,6 +4,21 @@ header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
+// Helpers to cope with schema differences across environments
+function resolve_column_name($pdo, $table, $candidates) {
+    try {
+        $db = $pdo->query('SELECT DATABASE()')->fetchColumn();
+        if (!$db) return null;
+        foreach ($candidates as $cand) {
+            $q = $pdo->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND UPPER(COLUMN_NAME) = UPPER(?) LIMIT 1");
+            $q->execute([$db, $table, $cand]);
+            $col = $q->fetchColumn();
+            if ($col) return $col;
+        }
+    } catch (Throwable $e) { /* ignore */ }
+    return null;
+}
+
 if ($action === 'list') {
     // Optional filters: start_date, end_date (YYYY-MM-DD), admin (id or name), q (search in action/details), limit
     $start = $_GET['start_date'] ?? $_POST['start_date'] ?? '';
@@ -12,14 +27,16 @@ if ($action === 'list') {
     $q = $_GET['q'] ?? $_POST['q'] ?? '';
     $limit = intval($_GET['limit'] ?? $_POST['limit'] ?? 200);
     // Default behavior: include all rows even if the related admin account no longer exists.
-    // Frontend can pass admins_only=1 to restrict to rows with a matching admins table entry.
     $adminsOnly = $_GET['admins_only'] ?? $_POST['admins_only'] ?? '0';
     if ($limit <= 0 || $limit > 1000) $limit = 200;
 
+    // Resolve timestamp column with sensible fallbacks
+    $tsCol = resolve_column_name($pdo, 'audit_trail', ['timestamp','created_at','createdAt','date_time','datetime','logged_at','time']) ?: 'timestamp';
+
     $where = [];
     $params = [];
-    if ($start) { $where[] = 'a.timestamp >= ?'; $params[] = $start . ' 00:00:00'; }
-    if ($end) { $where[] = 'a.timestamp <= ?'; $params[] = $end . ' 23:59:59'; }
+    if ($start) { $where[] = "a.$tsCol >= ?"; $params[] = $start . ' 00:00:00'; }
+    if ($end) { $where[] = "a.$tsCol <= ?"; $params[] = $end . ' 23:59:59'; }
     if ($admin) {
         // allow numeric id or name partial
         if (ctype_digit($admin)) {
@@ -31,17 +48,16 @@ if ($action === 'list') {
         }
     }
     if ($q) {
-        $where[] = '(a.action LIKE ? OR a.details LIKE ?)';
+        $where[] = '(`a`.`action` LIKE ? OR `a`.`details` LIKE ?)';
         $params[] = '%' . $q . '%';
         $params[] = '%' . $q . '%';
     }
-    $sql = "SELECT a.*, ad.name AS admin_name FROM audit_trail a LEFT JOIN admins ad ON a.admin_id=ad.id";
+    $sql = "SELECT a.admin_id, a.action, a.details, a.$tsCol AS timestamp, ad.name AS admin_name FROM audit_trail a LEFT JOIN admins ad ON a.admin_id=ad.id";
     if ($where) { $sql .= ' WHERE ' . implode(' AND ', $where); }
-    // When admins_only flag is truthy, restrict to rows that have a matching admin
     if ($adminsOnly && $adminsOnly !== '0' && $adminsOnly !== 'false') {
         $sql .= ($where ? ' AND ' : ' WHERE ') . 'ad.id IS NOT NULL';
     }
-    $sql .= ' ORDER BY a.timestamp DESC LIMIT ' . $limit;
+    $sql .= ' ORDER BY ' . $tsCol . ' DESC LIMIT ' . $limit;
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);

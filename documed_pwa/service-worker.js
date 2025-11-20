@@ -1,10 +1,13 @@
-/* DocuMed Landing (user_dashboard) Service Worker
+/* DocuMed PWA Service Worker (admin, doc_nurse, dentist, user)
  * Scope: /documed_pwa/
- * Caches landing assets + runtime images/css/js
+ * - Robust install (skip failing assets)
+ * - NetworkFirst for HTML navigations
+ * - CacheFirst for static assets
+ * - API: POST -> network only + broadcast invalidate; GET -> network-first (no-store)
  */
-const DM_APP_VERSION = 'landing-v3';
-const DM_CORE = `documed-landing-core-${DM_APP_VERSION}`;
-const DM_RUNTIME = `documed-landing-runtime-${DM_APP_VERSION}`;
+const DM_APP_VERSION = 'pwa-v2025-11-20-1';
+const DM_CORE = `documed-core-${DM_APP_VERSION}`;
+const DM_RUNTIME = `documed-runtime-${DM_APP_VERSION}`;
 // Derive base directory (e.g., /DocMed/documed_pwa)
 const BASE = new URL('./', self.location).pathname.replace(/\/$/, '');
 
@@ -12,61 +15,120 @@ const CORE_ASSETS = [
   `${BASE}/frontend/user/user_dashboard.html`,
   `${BASE}/frontend/assets/css/style.css`,
   `${BASE}/frontend/assets/images/Logo.png`,
-  `${BASE}/manifest-landing.json`
+  `${BASE}/manifest-landing.json`,
 ];
 
-self.addEventListener('install', e => {
+self.addEventListener('install', (event) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(DM_CORE).then(c => c.addAll(CORE_ASSETS)));
+  event.waitUntil((async () => {
+    const cache = await caches.open(DM_CORE);
+    await Promise.allSettled(
+      CORE_ASSETS.map(async (url) => {
+        try {
+          const resp = await fetch(url, { cache: 'reload' });
+          if (resp && resp.ok) await cache.put(url, resp);
+        } catch (_) { /* ignore missing assets */ }
+      })
+    );
+  })());
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => ![DM_CORE, DM_RUNTIME].includes(k)).map(k => caches.delete(k))
-    )).then(()=> self.clients.claim())
-  );
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => (k === DM_CORE || k === DM_RUNTIME) ? Promise.resolve() : caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
+function isApiPath(pathname) {
+  // Handle both /documed_pwa/backend/api/* and /backend/api/* within scope
+  return /\/backend\/api\//.test(pathname);
+}
+
+async function broadcastInvalidate(detail) {
+  const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const client of all) {
+    client.postMessage({ type: 'invalidate', ...(detail || {}) });
+  }
+}
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigation requests: network first
-  if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req).then(r => {
-        const copy = r.clone();
-        caches.open(DM_RUNTIME).then(c => c.put(req, copy));
-        return r;
-      }).catch(()=> caches.match(req).then(r=> r || caches.match(`${BASE}/frontend/user/user_dashboard.html`)))
-    );
+  // API handling
+  if (isApiPath(url.pathname)) {
+    if (req.method !== 'GET') {
+      // Mutations: network only, then broadcast invalidate
+      event.respondWith((async () => {
+        try {
+          const resp = await fetch(req, { cache: 'no-store' });
+          // fire and forget broadcast
+          broadcastInvalidate({ api: url.pathname, method: req.method }).catch(()=>{});
+          return resp;
+        } catch (e) {
+          return new Response(JSON.stringify({ success: false, message: 'Network error' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+        }
+      })());
+      return;
+    }
+    // API GET: network-first, no-store, do NOT cache
+    event.respondWith((async () => {
+      try {
+        return await fetch(new Request(req, { cache: 'no-store' }));
+      } catch (_) {
+        // optional: fall back to cache if any exists (unlikely, as we do not cache API)
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        return new Response(JSON.stringify({ success: false, message: 'Offline' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+      }
+    })());
     return;
   }
 
-  // Static assets: cache first
-  if (/\.(?:css|js|png|jpg|jpeg|gif|svg|webp|ico)$/i.test(url.pathname)) {
-    e.respondWith(
-      caches.match(req).then(cached => {
+  // Navigation requests (HTML): NetworkFirst
+  if (req.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const r = await fetch(req);
+        const copy = r.clone();
+        caches.open(DM_RUNTIME).then((c) => c.put(req, copy));
+        return r;
+      } catch (_) {
+        const cached = await caches.match(req);
         if (cached) return cached;
-        return fetch(req).then(r => {
-          const copy = r.clone();
-          caches.open(DM_RUNTIME).then(c => c.put(req, copy));
-          return r;
-        });
-      })
-    );
+        return caches.match(`${BASE}/frontend/user/user_dashboard.html`);
+      }
+    })());
+    return;
+  }
+
+  // Static assets: CacheFirst
+  if (/\.(?:css|js|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf)$/i.test(url.pathname)) {
+    event.respondWith((async () => {
+      const cached = await caches.match(req);
+      if (cached) return cached;
+      const r = await fetch(req);
+      const copy = r.clone();
+      caches.open(DM_RUNTIME).then((c) => c.put(req, copy));
+      return r;
+    })());
     return;
   }
 
   // Default: try cache then network
-  e.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(r => {
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    try {
+      const r = await fetch(req);
       const copy = r.clone();
-      caches.open(DM_RUNTIME).then(c => c.put(req, copy));
+      caches.open(DM_RUNTIME).then((c) => c.put(req, copy));
       return r;
-    }).catch(()=> cached))
-  );
+    } catch (_) {
+      return cached || Response.error();
+    }
+  })());
 });

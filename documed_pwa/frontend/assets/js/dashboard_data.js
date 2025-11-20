@@ -32,15 +32,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('statReports').textContent = 'Err';
       });
   }
+  // Patients stat card should show total distinct patients (not just today's checkups)
   if (document.getElementById('statCheckups')) {
-    fetch('../../backend/api/checkup_count_today.php')
+    fetch('../../backend/api/patient.php?action=count')
       .then(res => res.json())
-      .then(data => {
-        document.getElementById('statCheckups').textContent = data.count || '0';
-      })
-      .catch(() => {
-        document.getElementById('statCheckups').textContent = 'Err';
-      });
+      .then(data => { document.getElementById('statCheckups').textContent = data.count || '0'; })
+      .catch(() => { document.getElementById('statCheckups').textContent = 'Err'; });
   }
 
   // Patient Data Analytics (mirror doc_nurse Activity chart, but single Patients dataset)
@@ -57,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return allCheckupsCache;
   }
 
-  async function renderAnalytics(filter) {
+  async function renderAnalytics(timeFilter, genderFilter) {
     const all = await loadAllCheckups();
     // Update male/female quick stats if elements exist (using gender_effective fallback)
     try {
@@ -75,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(_) { /* ignore */ }
     const today = new Date();
     let filtered = all;
-    const f = (filter === 'day') ? 'today' : filter; // map day -> today to match doc_nurse logic
+  const f = (timeFilter === 'day') ? 'today' : timeFilter; // map day -> today to match doc_nurse logic
     if (f === 'today') {
       const todayStr = today.toISOString().slice(0,10);
       filtered = all.filter(c => (c.created_at||'').slice(0,10) === todayStr);
@@ -93,9 +90,19 @@ document.addEventListener('DOMContentLoaded', function() {
       filtered = all.filter(c => (c.created_at||'').slice(0,4) === yearStr);
     }
 
-    // Group by date (YYYY-MM-DD) and gender
+    // Optional gender restriction
+    let genderRestricted = all;
+    if (genderFilter && genderFilter !== 'all') {
+      genderRestricted = all.filter(c => {
+        const g = (c.gender_effective || c.gender || '').toLowerCase();
+        return g === genderFilter.toLowerCase();
+      });
+    }
+
+    // Group by date (YYYY-MM-DD) and gender (after gender restriction applied)
     const byDate = {};
-    for (const c of filtered) {
+    const source = genderRestricted.filter(c => filtered.includes(c));
+    for (const c of source) {
       const d = (c.created_at || '').slice(0,10);
       if (!d) continue;
       if (!byDate[d]) byDate[d] = { male: 0, female: 0, total: 0 };
@@ -137,15 +144,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const yMax = 50; // upper bound for the ticks
 
+    // Decide which datasets to show based on genderFilter
+    const datasets = [];
+    if (genderFilter === 'male') {
+      datasets.push({ label: 'Total Male', data: totalCounts, borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.12)', fill: true });
+    } else if (genderFilter === 'female') {
+      datasets.push({ label: 'Total Female', data: totalCounts, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.12)', fill: true });
+    } else {
+      datasets.push({ label: 'Total', data: totalCounts, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: true });
+      datasets.push({ label: 'Male', data: maleCounts, borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.12)', fill: false });
+      datasets.push({ label: 'Female', data: femaleCounts, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.12)', fill: false });
+    }
+
     window.analyticsChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels,
-        datasets: [
-          { label: 'Total', data: totalCounts, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: true },
-          { label: 'Male', data: maleCounts, borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.12)', fill: false },
-          { label: 'Female', data: femaleCounts, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.12)', fill: false }
-        ]
+        datasets
       },
       options: {
         responsive: true,
@@ -167,9 +182,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  renderAnalytics('day');
-  document.getElementById('analyticsSorter').addEventListener('change', e => {
-    renderAnalytics(e.target.value);
+  renderAnalytics('day', 'all');
+  const sorterEl = document.getElementById('analyticsSorter');
+  const genderEl = document.getElementById('analyticsGender');
+  sorterEl.addEventListener('change', () => {
+    renderAnalytics(sorterEl.value, genderEl.value);
+  });
+  genderEl.addEventListener('change', () => {
+    renderAnalytics(sorterEl.value, genderEl.value);
   });
 
   // Recent Appointments
