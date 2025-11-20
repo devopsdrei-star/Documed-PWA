@@ -60,7 +60,43 @@
     // Register relative to user pages location (frontend/user/* -> ../../service-worker.js)
     const swUrl = new URL('../../service-worker.js', window.location.href).toString();
     navigator.serviceWorker.register(swUrl)
-      .then(reg => console.log('[SW] registered', reg.scope))
+      .then(reg => {
+        console.log('[SW] registered', reg.scope);
+        navigator.serviceWorker.addEventListener('message', (evt) => {
+          const msg = evt.data || {};
+          if (msg.type === 'invalidate') {
+            if (window.__userInvalidateTimer) return; // throttle
+            window.__userInvalidateTimer = setTimeout(()=>{ window.__userInvalidateTimer = null; }, 1000);
+            let updated = false;
+            // Example: refresh appointments list if table present
+            const apptWrap = document.getElementById('userAppointments');
+            if (apptWrap) {
+              fetch('../../backend/api/appointments_new.php?action=my_appointments&cacheBust=' + Date.now())
+                .then(r=>r.json()).then(d=>{
+                  if (d.appointments) {
+                    apptWrap.innerHTML = d.appointments.map(a => `<div class='appt-row'><span>${a.date||''} ${a.time||''}</span> <span>${a.purpose||''}</span> <span>${a.status||''}</span></div>`).join('');
+                  }
+                });
+              updated = true;
+            }
+            // Example: refresh notifications list
+            const notifWrap = document.getElementById('userNotifications');
+            if (notifWrap) {
+              const email = localStorage.getItem('documed_user_email') || '';
+              if (email) {
+                fetch('../../backend/api/appointments_new.php?action=notifications&email='+encodeURIComponent(email)+'&cacheBust=' + Date.now())
+                  .then(r=>r.json()).then(d=>{
+                    if (d.appointments) {
+                      notifWrap.innerHTML = d.appointments.map(n => `<div class='notif'>${n.purpose||'Appointment'} – ${n.status||''} (${n.date||''} ${n.time||''})</div>`).join('');
+                    }
+                  });
+                updated = true;
+              }
+            }
+            if (!updated) { location.reload(); }
+          }
+        });
+      })
       .catch(err => console.error('[SW] failed', err));
   }
 

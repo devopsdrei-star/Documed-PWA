@@ -61,9 +61,42 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  if (request.method !== 'GET') return; // ignore non-GET
-
   const url = new URL(request.url);
+
+  // Mutation POST requests to backend API: always network, then broadcast invalidate
+  if (request.method === 'POST' && /\/backend\/api\//.test(url.pathname)) {
+    event.respondWith((async () => {
+      try {
+        const resp = await fetch(request.clone());
+        // On success, broadcast invalidation so clients can refresh affected views
+        if (resp.ok) {
+          const clientsArr = await self.clients.matchAll({ includeUncontrolled: true });
+          clientsArr.forEach(c => c.postMessage({ type: 'invalidate', api: url.pathname, status: resp.status }));
+        }
+        return resp;
+      } catch (e) {
+        return new Response(JSON.stringify({ success: false, message: 'Network error', error: String(e) }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+      }
+    })());
+    return;
+  }
+
+  // For GET API requests: network-first, no caching (fresh data)
+  if (request.method === 'GET' && /\/backend\/api\//.test(url.pathname)) {
+    event.respondWith((async () => {
+      try {
+        const resp = await fetch(request, { cache: 'no-store' });
+        // Optional: could broadcast if payload contains success mutation markers
+        return resp;
+      } catch (e) {
+        // As a fallback we do NOT serve stale cached API JSON (avoid outdated state)
+        return new Response(JSON.stringify({ success: false, offline: true, message: 'Offline – API unavailable' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+    })());
+    return;
+  }
+
+  if (request.method !== 'GET') return; // ignore other non-GET (e.g., PUT/DELETE)
 
   // Only handle same-origin for now
   if (url.origin !== self.location.origin) {
@@ -99,12 +132,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default: try cache, then network
-  event.respondWith(
-    caches.match(request).then(cached => cached || fetch(request).then(resp => {
-      const copy = resp.clone();
-      caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+  // Default: NetworkFirst for remaining GET (e.g. JSON not in /backend/api/) with fallback to cache
+  event.respondWith((async () => {
+    try {
+      const resp = await fetch(request);
+      // Cache successful opaque or ok responses
+      if (resp && (resp.ok || resp.type === 'opaque')) {
+        const copy = resp.clone();
+        caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+      }
       return resp;
-    }).catch(() => cached))
-  );
+    } catch (e) {
+      return (await caches.match(request)) || new Response('Offline', { status: 503 });
+    }
+  })());
 });

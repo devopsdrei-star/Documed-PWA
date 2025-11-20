@@ -343,9 +343,9 @@ if ($action === 'delete') {
     }
     $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
     $stmt->execute([$id]);
-    // Audit trail log
-    $admin_id = 1; // TODO: Replace with actual admin id from session
-    audit($pdo, $admin_id, 'Deleted user', 'User ID: ' . $id);
+    // Audit trail log with dynamic admin id (fallback 0 if missing)
+    $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
+    if ($admin_id > 0) { audit($pdo, $admin_id, 'Deleted user', 'User ID: ' . $id); }
     echo json_encode(['success' => true]);
     exit;
 }
@@ -366,9 +366,9 @@ if ($action === 'update') {
     $stmt = $pdo->prepare("UPDATE users SET student_faculty_id=?, last_name=?, first_name=?, middle_initial=?, email=?, {$roleCol}=? WHERE id=?");
     $stmt->execute([$student_faculty_id, $last_name, $first_name, $middle_initial, $email, $role, $id]);
     // Audit trail log
-    $admin_id = 1; // TODO: Replace with actual admin id from session
+    $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
     $details = 'User ID: ' . $id . ', Name: ' . $last_name . ', ' . $first_name . ($middle_initial ? ' ' . $middle_initial . '.' : '');
-    audit($pdo, $admin_id, 'Updated user', $details);
+    if ($admin_id > 0) { audit($pdo, $admin_id, 'Updated user', $details); }
     echo json_encode(['success' => true]);
     exit;
 }
@@ -438,8 +438,8 @@ if ($action === 'add') {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     // Audit
-    $admin_id = 1; // TODO: replace with real admin session id
-    audit($pdo, $admin_id, 'Added user', 'School ID: ' . $student_faculty_id . ', Email: ' . $email);
+    $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
+    if ($admin_id > 0) { audit($pdo, $admin_id, 'Added user', 'School ID: ' . $student_faculty_id . ', Email: ' . $email); }
     // Return minimal user object (sans password) for UI quick refresh
     $newId = $pdo->lastInsertId();
     $selCols = '*';
@@ -495,8 +495,8 @@ if ($action === 'add_admin') {
         $stmt->execute([$name, $email, $hashed, ($status==='inactive'?'inactive':'active')]);
     }
     // Audit trail (placeholder admin id)
-    $admin_id = 1;
-    audit($pdo, $admin_id, 'Added admin', 'Email: ' . $email);
+    $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
+    if ($admin_id > 0) { audit($pdo, $admin_id, 'Added admin', 'Email: ' . $email); }
     echo json_encode(['success' => true]);
     exit;
 }
@@ -517,8 +517,8 @@ if ($action === 'toggle_status') {
     try {
         $stmt = $pdo->prepare('UPDATE users SET status = ? WHERE id = ?');
         $stmt->execute([$status, $id]);
-        $admin_id = 1; // TODO: Replace with real admin id
-        audit($pdo, $admin_id, 'Toggled user status', 'User ID: ' . $id . ' => ' . $status);
+        $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
+        if ($admin_id > 0) { audit($pdo, $admin_id, 'Toggled user status', 'User ID: ' . $id . ' => ' . $status); }
         echo json_encode(['success' => true]);
     } catch (Throwable $e) {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -541,8 +541,8 @@ if ($action === 'reset_password') {
     $hashed = password_hash($new, PASSWORD_DEFAULT);
     $stmt = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
     $stmt->execute([$hashed, $id]);
-    $admin_id = 1; // TODO session
-    audit($pdo, $admin_id, 'Reset user password', 'User ID: ' . $id);
+    $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
+    if ($admin_id > 0) { audit($pdo, $admin_id, 'Reset user password', 'User ID: ' . $id); }
     echo json_encode(['success' => true, 'new_password' => $_POST['new_password'] ? null : $new]);
     exit;
 }

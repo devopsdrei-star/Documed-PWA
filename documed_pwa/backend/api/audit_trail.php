@@ -11,7 +11,9 @@ if ($action === 'list') {
     $admin = $_GET['admin'] ?? $_POST['admin'] ?? '';
     $q = $_GET['q'] ?? $_POST['q'] ?? '';
     $limit = intval($_GET['limit'] ?? $_POST['limit'] ?? 200);
-    $adminsOnly = $_GET['admins_only'] ?? $_POST['admins_only'] ?? '1';
+    // Default behavior: include all rows even if the related admin account no longer exists.
+    // Frontend can pass admins_only=1 to restrict to rows with a matching admins table entry.
+    $adminsOnly = $_GET['admins_only'] ?? $_POST['admins_only'] ?? '0';
     if ($limit <= 0 || $limit > 1000) $limit = 200;
 
     $where = [];

@@ -268,18 +268,76 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 	}
 
-	// Settings: Manage Users
+	// Settings: Manage Users (enhanced with status + loading overlay)
 	const userManage = document.getElementById('userManage');
+	function ensureLoadingOverlay(){
+		let ov = document.getElementById('usersLoadingOverlay');
+		if (!ov) {
+			ov = document.createElement('div');
+			ov.id = 'usersLoadingOverlay';
+			ov.style.cssText = 'position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,0.6);backdrop-filter:blur(3px);z-index:3000;font-size:1.2rem;font-weight:600;color:#2563eb;';
+			ov.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;"><div class="spinner-border text-primary" role="status" style="width:48px;height:48px;"><span class="visually-hidden">Loading...</span></div><span>Processing...</span></div>';
+			document.body.appendChild(ov);
+		}
+		return ov;
+	}
+	function showOverlay(){ ensureLoadingOverlay().style.display='flex'; }
+	function hideOverlay(){ const ov=ensureLoadingOverlay(); setTimeout(()=>{ ov.style.display='none'; }, 150); }
+	async function loadUsers(){
+		if (!userManage) return;
+		showOverlay();
+		try {
+			const res = await fetch('../../backend/api/auth.php?action=list&cacheBust=' + Date.now());
+			const data = await res.json();
+			if (data.users && data.users.length) {
+				userManage.innerHTML = `<table style="width:100%;margin-bottom:12px;" id="usersTable"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${data.users.map(u => `<tr data-id="${u.id}"><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><span class="badge ${u.status==='inactive'?'text-bg-danger':'text-bg-success'}" id="status-${u.id}">${u.status||'active'}</span></td><td><button class='btn btn-sm btn-outline-${u.status==='inactive'?'success':'warning'}' data-action='toggle' data-id='${u.id}' style='margin-right:4px;'>${u.status==='inactive'?'Activate':'Deactivate'}</button><button class='btn btn-sm btn-danger' data-action='delete' data-id='${u.id}' style='margin-right:4px;'>Delete</button><button class='btn btn-sm btn-primary' data-action='edit' data-id='${u.id}'>Edit</button></td></tr>`).join('')}</tbody></table><button class='btn btn-success' id='addUserBtn' style='padding:6px 14px;'>Add User</button>`;
+			} else {
+				userManage.textContent = 'No users found.';
+			}
+		} catch(e){ userManage.textContent = 'Error loading users.'; }
+		finally { hideOverlay(); }
+	}
 	if (userManage) {
-		fetch('../../backend/api/auth.php?action=list')
-			.then(res => res.json())
-			.then(data => {
-				if (data.users && data.users.length) {
-					userManage.innerHTML = `<table style="width:100%;margin-bottom:12px;"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody>${data.users.map(u => `<tr><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><button class='btn' onclick='deleteUser(${u.id})' style='background:#e11d48;padding:4px 12px;'>Delete</button> <button class='btn' onclick='editUser(${u.id})' style='background:#2563eb;padding:4px 12px;'>Edit</button></td></tr>`).join('')}</tbody></table><button class='btn' id='addUserBtn' style='background:#22c55e;'>Add User</button>`;
-				} else {
-					userManage.textContent = 'No users found.';
-				}
-			});
+		loadUsers();
+		userManage.addEventListener('click', async (e) => {
+			const btn = e.target.closest('button[data-action]');
+			if (!btn) return;
+			const id = btn.getAttribute('data-id');
+			const action = btn.getAttribute('data-action');
+			if (!id) return;
+			if (action === 'delete') {
+				if (!confirm('Delete this user?')) return;
+				showOverlay();
+				try {
+					await fetch('../../backend/api/auth.php?action=delete', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`id=${encodeURIComponent(id)}` });
+					// Remove row instantly
+					const row = userManage.querySelector(`tr[data-id='${id}']`); if (row) row.remove();
+				} finally { hideOverlay(); }
+				return;
+			}
+			if (action === 'toggle') {
+				// Compute next status
+				const badge = document.getElementById('status-'+id);
+				const current = badge ? badge.textContent.trim() : 'active';
+				const next = current === 'inactive' ? 'active' : 'inactive';
+				showOverlay();
+				try {
+					await fetch('../../backend/api/manage_user.php?action=toggle_status', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`id=${encodeURIComponent(id)}&status=${encodeURIComponent(next)}` });
+					// Update badge immediately
+					if (badge) {
+						badge.textContent = next;
+						badge.className = 'badge ' + (next==='inactive'?'text-bg-danger':'text-bg-success');
+					}
+					// Update toggle button label/style
+					btn.className = 'btn btn-sm btn-outline-' + (next==='inactive'?'success':'warning');
+					btn.textContent = next==='inactive'?'Activate':'Deactivate';
+				} finally { hideOverlay(); }
+				return;
+			}
+			if (action === 'edit') {
+				alert('Edit user feature coming soon!');
+			}
+		});
 	}
 
 	// Settings: Audit Trail
@@ -318,25 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		// document.getElementById('profileInfoLink').onclick = function(e) { ... }
 	}
 
-	// User management actions (delete/edit/add)
-	window.deleteUser = function(id) {
-		if (confirm('Delete this user?')) {
-			fetch('../../backend/api/auth.php?action=delete', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-				body: `id=${id}`
-			}).then(() => location.reload());
-		}
-	};
-	window.editUser = function(id) {
-		alert('Edit user feature coming soon!');
-	};
-	const addUserBtn = document.getElementById('addUserBtn');
-	if (addUserBtn) {
-		addUserBtn.onclick = function() {
-			alert('Add user feature coming soon!');
-		};
-	}
+	// Legacy global functions removed (now inline handlers)
 });
 
 // --- PWA bootstrap (enable manifest + service worker for Admin & Doc/Nurse pages) ---
@@ -358,13 +398,48 @@ document.addEventListener('DOMContentLoaded', function() {
 			document.head.appendChild(m);
 		}
 		if ('serviceWorker' in navigator) {
-			// Prefer the top-level service-worker in repo root; compute relative URL from current page
 			const swUrl = new URL('../../service-worker.js', window.location.href).toString();
-			navigator.serviceWorker.register(swUrl).then(() => {
+			navigator.serviceWorker.register(swUrl).then(reg => {
 				console.debug('[PWA] service worker registered', swUrl);
-			}).catch(()=>{
-				// swallow errors -- other pages may register a different SW (public/service-worker.js)
-			});
+				// Listen for invalidation broadcasts from SW to refresh dynamic data
+				navigator.serviceWorker.addEventListener('message', (evt) => {
+					const msg = evt.data || {};
+					if (msg.type === 'invalidate') {
+						// Throttle multiple rapid invalidate events
+						if (window.__docmedInvalidateTimer) return;
+						window.__docmedInvalidateTimer = setTimeout(() => { window.__docmedInvalidateTimer = null; }, 1200);
+						// Prefer soft refresh: re-fetch active tables if present instead of full reload
+						const hasUserTable = document.getElementById('userManage');
+						const auditTrailTable = document.getElementById('auditTrail') || document.querySelector('#auditTrailTable');
+						let updated = false;
+						if (hasUserTable) {
+							// Re-fetch users list
+							fetch('../../backend/api/auth.php?action=list&cacheBust=' + Date.now())
+								.then(r => r.json()).then(d => {
+									if (d.users) {
+										hasUserTable.innerHTML = `<table style="width:100%;margin-bottom:12px;"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody>${d.users.map(u => `<tr><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><button class='btn' onclick='deleteUser(${u.id})' style='background:#e11d48;padding:4px 12px;'>Delete</button> <button class='btn' onclick='editUser(${u.id})' style='background:#2563eb;padding:4px 12px;'>Edit</button></td></tr>`).join('')}</tbody></table>`;
+									}
+								});
+							updated = true;
+						}
+						if (auditTrailTable && auditTrailTable.tagName !== 'TABLE') {
+							// Re-fetch audit trail summary (settings section variant)
+							fetch('../../backend/api/audit_trail.php?action=list&limit=50&cacheBust=' + Date.now())
+								.then(r => r.json()).then(d => {
+									if (d.logs && d.logs.length) {
+										auditTrailTable.innerHTML = `<table style="width:100%;margin-bottom:12px;"><thead><tr><th>Admin</th><th>Action</th><th>Details</th><th>Date & Time</th></tr></thead><tbody>${d.logs.map(log => `<tr><td>${log.admin_name || 'Admin #' + log.admin_id}</td><td>${log.action}</td><td>${log.details}</td><td>${new Date(log.timestamp).toLocaleString()}</td></tr>`).join('')}</tbody></table>`;
+									}
+								});
+							updated = true;
+						}
+						// If no targeted component updated, fallback to a mild reload (avoid full hard reload) to reflect changes
+						if (!updated) {
+							// Use location.reload(false) to leverage HTTP cache but our SW network-first ensures fresh API
+							location.reload();
+						}
+					}
+				});
+			}).catch(()=>{/* ignore */});
 		}
 	} catch (e) { console.debug('[PWA] init failed', e); }
 })();
