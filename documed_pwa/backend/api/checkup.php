@@ -72,6 +72,95 @@ try { $pdo->exec("ALTER TABLE checkups CHANGE physical_exam_chest_lung physical_
 // Add note_for_physical_exam column to store free-text notes from the clinical exam
 try { $pdo->exec("ALTER TABLE checkups ADD COLUMN note_for_physical_exam TEXT NULL AFTER physical_exam_musculoskeletal"); } catch (Throwable $e) { /* ignore */ }
 
+// -------------------------------------------------------------
+// Helper: Parse medicines and quantities from remarks text.
+// Logic derives quantities from nearby patterns (explicit unit totals
+// or per-dose x frequency x days). Falls back to 1 if nothing found.
+// -------------------------------------------------------------
+function parse_medicines_from_remarks(PDO $pdo, string $remarks): array {
+    $out = [];
+    $text = strtolower($remarks);
+    if (trim($text) === '') return $out;
+    // Mapping (same labels as report.php medMap subset). Synonyms lowercased.
+    $medMap = [
+        'amoxicillin 500mg'=>['amoxicillin 500mg','amoxicillin'],
+        'ibuprofen/alaxan fr'=>['ibuprofen','alaxan'],
+        'ambroxol tablet'=>['ambroxol'],
+        'amlodipine besilate 5mg'=>['amlodipine besilate 5mg','amlodipine'],
+        'antacid (maralox/maalox/myrecid)'=>['antacid','maalox','maralox','myrecid'],
+        'ascorbic acid'=>['ascorbic','vitamin c','vit c'],
+        'clonidine/nifedipine'=>['clonidine','nifedipine'],
+        'biogesic/paracetamol'=>['biogesic','paracetamol','acetaminophen'],
+        'cetirizine 10mg'=>['cetirizine','cetrizine','citrizine'],
+        'carbocisteine (solmux)'=>['carbocisteine','solmux'],
+        'cotrimoxazole 800/160mg'=>['cotrimoxazole','co-trimoxazole'],
+        'losartan potassium 100mg'=>['losartan'],
+        'mefenamic 500mg capsule'=>['mefenamic'],
+        'multivitamins'=>['multivitamin','multivitamins'],
+        'multivitamins with iron'=>['multivitamin with iron','multivitamins with iron'],
+        'omeprazole 20mg'=>['omeprazole'],
+        'vitamin b complex'=>['vitamin b complex','b-complex','b complex'],
+        'silver sulfadiazine/mupirocin'=>['silver sulfadiazine','mupirocin'],
+        'face mask'=>['face mask','facemask'],
+        'gloves'=>['gloves'],
+        'gauze'=>['gauze'],
+        'cotton'=>['cotton'],
+        'plaster (micropore)'=>['micropore','plaster'],
+        'isopropyl alcohol 70%'=>['isopropyl','alcohol 70'],
+        'ferrous sulfate'=>['ferrous'],
+        'loperamide (immodium)'=>['loperamide','imodium','immodium'],
+        'metformin 500mg'=>['metformin'],
+        'salbutamol nebule'=>['salbutamol neb','nebule'],
+        'eye mo'=>['eye mo'],
+        'hydrocortisone'=>['hydrocortisone'],
+    ];
+    // Preload existing medicines (name -> id)
+    $stmt = $pdo->prepare('SELECT id, name FROM medicines');
+    try { $stmt->execute(); $rows = $stmt->fetchAll(PDO::FETCH_ASSOC); } catch (Throwable $e) { $rows = []; }
+    $nameToId = [];
+    foreach ($rows as $r) { $nameToId[strtolower(trim($r['name']))] = (int)$r['id']; }
+
+    $parseQty = function(string $window): int {
+        $w = strtolower($window);
+        // Remove strength units to prevent misinterpret as quantity
+        $w = preg_replace('/\b\d+(?:\s*\/\s*\d+)?\s*mg\b/', '', $w);
+        $w = preg_replace('/\b\d+\s*%\b/', '', $w);
+        // Explicit totals (e.g. 10 tabs)
+        if (preg_match_all('/\b(\d+)\s*(tab|tabs|tablet|tablets|cap|caps|capsule|capsules|pc|pcs|piece|pieces|sachet|sachets|bottle|bottles|vial|vials|amp|ampoule|ampoules|dose|doses|nebule|nebules)\b/', $w, $matches, PREG_SET_ORDER)) {
+            $max = 0; foreach ($matches as $m) { $n = (int)$m[1]; if ($n > $max) $max = $n; }
+            if ($max > 0) return $max;
+        }
+        // Frequency patterns
+        $freq = 1; $days = 1; $perDose = 1;
+        if (preg_match('/\b(\d+)\s*(?:x|times?)\b/', $w, $m)) { $freq = max(1, (int)$m[1]); }
+        elseif (preg_match('/\b(once|twice|thrice)\b/', $w, $m)) { $freq = ['once'=>1,'twice'=>2,'thrice'=>3][$m[1]] ?? 1; }
+        elseif (preg_match('/\b(od|qd|bid|tid|qid)\b/', $w, $m)) { $freq = ['od'=>1,'qd'=>1,'bid'=>2,'tid'=>3,'qid'=>4][$m[1]] ?? 1; }
+        elseif (preg_match('/\bq\s*(\d+)\s*(?:h|hr|hrs|hour|hours)\b/', $w, $m)) { $h = max(1,(int)$m[1]); $freq = max(1,min(24,(int)round(24/$h))); }
+        if (preg_match('/\b(\d+)\s*(?:day|days|d)\b/', $w, $m)) { $days = max(1,(int)$m[1]); }
+        elseif (preg_match('/\b(\d+)\s*(?:week|weeks|w)\b/', $w, $m)) { $days = max(1,(int)$m[1])*7; }
+        if (preg_match('/\b(\d+)\s*(tab|tabs|tablet|tablets|cap|caps|capsule|capsules)\b/', $w, $m)) { $perDose = max(1,(int)$m[1]); }
+        $calc = $perDose * $freq * $days;
+        return max(1, $calc);
+    };
+
+    foreach ($medMap as $label => $syns) {
+        $foundPos = null;
+        foreach ($syns as $syn) {
+            $pos = strpos($text, strtolower($syn));
+            if ($pos !== false) { $foundPos = $pos; break; }
+        }
+        if ($foundPos === null) continue; // not mentioned
+        $window = substr($text, max(0,$foundPos-25), 150); // capture nearby dosage text
+        $qty = $parseQty($window);
+        $medId = $nameToId[strtolower($label)] ?? null;
+        if ($medId) {
+            if (!isset($out[$medId])) $out[$medId] = 0;
+            $out[$medId] += $qty;
+        }
+    }
+    return $out; // medicine_id => qty
+}
+
 function jsonResponse($arr) {
     echo json_encode($arr);
     exit;
@@ -282,6 +371,40 @@ if ($action === 'add') {
                 }
 
                 $issuedSummary[] = ['medicine_id' => $medicine_id, 'requested' => $reqQty, 'issued' => $toIssue];
+            }
+        }
+        // If no explicit medicines array, derive from remarks text
+        if (!$medsRaw) {
+            $remarksText = $_POST['remarks'] ?? '';
+            $parsed = parse_medicines_from_remarks($pdo, $remarksText);
+            foreach ($parsed as $medicine_id => $reqQty) {
+                if ($medicine_id <= 0 || $reqQty <= 0) continue;
+                // Available stock via batches first
+                $availStmt = $pdo->prepare("SELECT COALESCE(SUM(qty),0) FROM medicine_batches WHERE medicine_id = ? AND campus = ?");
+                $defaultCampus = 'Lingayen';
+                $availStmt->execute([$medicine_id, $defaultCampus]);
+                $avail = (int)$availStmt->fetchColumn();
+                if ($avail <= 0) { $mq = $pdo->prepare("SELECT COALESCE(quantity,0) FROM medicines WHERE id = ?"); $mq->execute([$medicine_id]); $avail = (int)$mq->fetchColumn(); }
+                $toIssue = min($reqQty, $avail);
+                if ($toIssue <= 0) { $issuedSummary[] = ['medicine_id'=>$medicine_id,'requested'=>$reqQty,'issued'=>0,'note'=>'no stock']; continue; }
+                $ins = $pdo->prepare("INSERT INTO checkup_medicines (checkup_id, medicine_id, qty, campus) VALUES (?, ?, ?, ?)");
+                $ins->execute([$insertId, $medicine_id, $toIssue, $defaultCampus]);
+                $cmid = $pdo->lastInsertId();
+                $updMed = $pdo->prepare("UPDATE medicines SET quantity = GREATEST(quantity - ?, 0), updated_at = NOW() WHERE id = ?");
+                $updMed->execute([$toIssue, $medicine_id]);
+                // Consume batches FIFO
+                $need = $toIssue; $bstmt = $pdo->prepare("SELECT id, qty FROM medicine_batches WHERE medicine_id = ? AND campus = ? AND qty > 0 ORDER BY COALESCE(expiry_date,'9999-12-31') ASC, id ASC");
+                $bstmt->execute([$medicine_id, $defaultCampus]);
+                while ($need > 0 && ($batch = $bstmt->fetch(PDO::FETCH_ASSOC))) {
+                    $consume = min($need, (int)$batch['qty']);
+                    if ($consume <= 0) continue;
+                    $updateBatch = $pdo->prepare("UPDATE medicine_batches SET qty = qty - ? WHERE id = ?");
+                    $updateBatch->execute([$consume, $batch['id']]);
+                    $insb = $pdo->prepare("INSERT INTO checkup_medicine_batches (checkup_medicine_id, batch_id, qty) VALUES (?, ?, ?)");
+                    $insb->execute([$cmid, $batch['id'], $consume]);
+                    $need -= $consume;
+                }
+                $issuedSummary[] = ['medicine_id'=>$medicine_id,'requested'=>$reqQty,'issued'=>$toIssue,'source'=>'remarks'];
             }
         }
     } catch (Throwable $e) {
@@ -598,6 +721,39 @@ if ($action === 'update') {
                     }
 
                     $issuedSummary[] = ['medicine_id' => $medicine_id, 'requested' => $reqQty, 'issued' => $toIssue];
+                }
+            }
+            // If no explicit array, derive from new remarks
+            if (!$medsRaw) {
+                $remarksText = $_POST['remarks'] ?? ($before['remarks'] ?? '');
+                $parsed = parse_medicines_from_remarks($pdo, $remarksText);
+                foreach ($parsed as $medicine_id => $reqQty) {
+                    if ($medicine_id <= 0 || $reqQty <= 0) continue;
+                    $defaultCampus = 'Lingayen';
+                    $availStmt = $pdo->prepare("SELECT COALESCE(SUM(qty),0) FROM medicine_batches WHERE medicine_id = ? AND campus = ?");
+                    $availStmt->execute([$medicine_id, $defaultCampus]);
+                    $avail = (int)$availStmt->fetchColumn();
+                    if ($avail <= 0) { $mq = $pdo->prepare("SELECT COALESCE(quantity,0) FROM medicines WHERE id = ?"); $mq->execute([$medicine_id]); $avail = (int)$mq->fetchColumn(); }
+                    $toIssue = min($reqQty, $avail);
+                    if ($toIssue <= 0) { $issuedSummary[] = ['medicine_id'=>$medicine_id,'requested'=>$reqQty,'issued'=>0,'note'=>'no stock']; continue; }
+                    $ins = $pdo->prepare("INSERT INTO checkup_medicines (checkup_id, medicine_id, qty, campus) VALUES (?, ?, ?, ?)");
+                    $ins->execute([$id, $medicine_id, $toIssue, $defaultCampus]);
+                    $cmid = $pdo->lastInsertId();
+                    $updMed = $pdo->prepare("UPDATE medicines SET quantity = GREATEST(quantity - ?, 0), updated_at = NOW() WHERE id = ?");
+                    $updMed->execute([$toIssue, $medicine_id]);
+                    // Consume batches FIFO
+                    $need = $toIssue; $bstmt = $pdo->prepare("SELECT id, qty FROM medicine_batches WHERE medicine_id = ? AND campus = ? AND qty > 0 ORDER BY COALESCE(expiry_date,'9999-12-31') ASC, id ASC");
+                    $bstmt->execute([$medicine_id, $defaultCampus]);
+                    while ($need > 0 && ($batch = $bstmt->fetch(PDO::FETCH_ASSOC))) {
+                        $consume = min($need, (int)$batch['qty']);
+                        if ($consume <= 0) continue;
+                        $updateBatch = $pdo->prepare("UPDATE medicine_batches SET qty = qty - ? WHERE id = ?");
+                        $updateBatch->execute([$consume, $batch['id']]);
+                        $insb = $pdo->prepare("INSERT INTO checkup_medicine_batches (checkup_medicine_id, batch_id, qty) VALUES (?, ?, ?)");
+                        $insb->execute([$cmid, $batch['id'], $consume]);
+                        $need -= $consume;
+                    }
+                    $issuedSummary[] = ['medicine_id'=>$medicine_id,'requested'=>$reqQty,'issued'=>$toIssue,'source'=>'remarks'];
                 }
             }
 

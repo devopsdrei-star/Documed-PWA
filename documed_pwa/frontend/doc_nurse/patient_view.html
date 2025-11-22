@@ -172,13 +172,14 @@
             if (!info) return;
             const safe = v => (v == null ? '' : v);
             const role = p.role_effective || p.role || '';
-            const photoFallback = '../assets/images/user_photo.png';
+            // Use an existing asset as fallback to avoid 404s
+            const photoFallback = '../assets/images/documed_logo.png';
             const basePhoto = p.photo || '';
             // Personal info only (no medical findings)
 
             const headerHtml = (ph) => `
             <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;text-align:center;">
-                <img id="pvPhoto" src="${ph || photoFallback}" alt="Photo" style="width:192px;height:192px;border-radius:12px;object-fit:cover;border:1px solid #e5e7eb;background:#f9fafb;"/>
+              <img id="pvPhoto" src="${ph || photoFallback}" alt="Photo" onerror="this.onerror=null;this.src='${photoFallback}';" style="width:192px;height:192px;border-radius:12px;object-fit:cover;border:1px solid #e5e7eb;background:#f9fafb;"/>
                 <div style="font-weight:800;color:#111827;font-size:1.4rem;">${safe(p.name)}</div>
                 <div style="color:#6b7280;margin-top:2px;font-size:1rem;">School ID: ${safe(p.student_faculty_id)}</div>
                 <div id="pvRole" style="color:#6b7280;margin-top:0;font-size:1rem;">Role: ${safe(role)}</div>
@@ -209,15 +210,33 @@
                 </div>
               </div>`;
 
-            info.innerHTML = headerHtml(basePhoto) + detailsHtml;
+            info.innerHTML = headerHtml(null) + detailsHtml;
+            // Resolve photo asynchronously to avoid 404 noise
+            (function resolveInitialPhoto(){
+              const img = document.getElementById('pvPhoto');
+              if (!img) return;
+              const candidate = basePhoto;
+              if (!candidate) { img.src = photoFallback; return; }
+              try {
+                fetch(candidate, { method: 'HEAD' }).then(r => {
+                  if (r && r.ok) { img.src = candidate; } else { img.src = photoFallback; }
+                }).catch(()=>{ img.src = photoFallback; });
+              } catch(_) { img.src = photoFallback; }
+            })();
             // Try to enhance photo from user profile if available
             if (sid) {
               fetch('../../backend/api/auth.php?action=get_user_by_sid', {
                 method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ sid })
               }).then(r=>r.json()).then(uRes=>{
                 const u = (uRes && uRes.success) ? uRes.user : null;
-                const ph = (u && u.photo) ? u.photo : (basePhoto || photoFallback);
-                const img = document.getElementById('pvPhoto'); if (img) img.src = ph;
+                const ph = (u && u.photo) ? u.photo : (basePhoto || '');
+                const img = document.getElementById('pvPhoto');
+                if (img) {
+                  img.onerror = () => { img.onerror = null; img.src = photoFallback; };
+                  if (ph) {
+                    try { fetch(ph, { method:'HEAD' }).then(r=>{ if(r && r.ok){ img.src = ph; } }); } catch(_) {}
+                  }
+                }
                 // Update role from user profile if missing in checkup view payload
                 const roleEl = document.getElementById('pvRole');
                 if (roleEl) {

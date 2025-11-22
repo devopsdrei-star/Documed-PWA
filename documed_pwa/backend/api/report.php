@@ -532,6 +532,44 @@ if ($action === 'clinic_overview') {
 		$end = date('Y-m-t');
 	}
 
+	// Auto-sync medicines used in mappings into inventory (idempotent)
+	try {
+		// Basic mapping reference (same labels as medMap below). We only insert if missing.
+		$campus = 'Lingayen';
+		$today = new DateTime('today');
+		$pharmaExpiry = (clone $today)->modify('+180 days')->format('Y-m-d');
+		$nonPharmaExpiry = (clone $today)->modify('+365 days')->format('Y-m-d');
+		$ensureMedicine = function($name) use($pdo,$campus,$pharmaExpiry,$nonPharmaExpiry){
+			// Skip empty
+			if (!$name) return;
+			$chk = $pdo->prepare('SELECT id, quantity FROM medicines WHERE name = ? AND campus = ?');
+			$chk->execute([$name,$campus]);
+			$row = $chk->fetch(PDO::FETCH_ASSOC);
+			if ($row) return; // exists
+			// Decide default quantity (baseline) - conservative starter stock
+			$defaultQty = 100;
+			$unit = null; $form = null; $strength = null;
+			if (preg_match('/\b(\d+\s*mg)\b/i',$name,$m)) { $strength = $m[1]; }
+			if (preg_match('/(tablet|tab)/i',$name)) { $unit='tabs'; $form='tablet'; }
+			elseif (preg_match('/(capsule|cap)/i',$name)) { $unit='caps'; $form='capsule'; }
+			elseif (preg_match('/(nebule)/i',$name)) { $unit='nebules'; $form='nebule'; }
+			elseif (preg_match('/(vaccine)/i',$name)) { $unit='dose'; $form='vaccine'; $defaultQty = 50; }
+			elseif (preg_match('/(bandage|bandaid|elastic)/i',$name)) { $unit='pcs'; $form='supply'; $defaultQty = 200; }
+			elseif (preg_match('/(mask|glove|gauze|cotton|plaster)/i',$name)) { $unit='pcs'; $form='supply'; $defaultQty = 300; }
+			// Insert medicine
+			$ins = $pdo->prepare('INSERT INTO medicines (name,campus,unit,form,strength,quantity,baseline_qty,reorder_threshold_percent) VALUES (?,?,?,?,?,?,?,?)');
+			$ins->execute([$name,$campus,$unit,$form,$strength,$defaultQty,$defaultQty,20]);
+			$id = (int)$pdo->lastInsertId();
+			if ($id > 0) {
+				$expiry = ($form === 'supply' || preg_match('/(mask|glove|gauze|cotton|plaster|bandage)/i',$name)) ? $nonPharmaExpiry : $pharmaExpiry;
+				$batch = $pdo->prepare('INSERT INTO medicine_batches (medicine_id,campus,qty,expiry_date,received_at,batch_no,notes) VALUES (?,?,?,?,?,?,?)');
+				$batch->execute([$id,$campus,$defaultQty,$expiry,date('Y-m-d'), 'AUTO-SYNC', 'Auto-added from clinic overview usage mapping']);
+			}
+		};
+		// We will call ensureMedicine later after $medMap is declared; store names here for deferred run.
+		$__pendingEnsure = [];
+	} catch (Throwable $e) { /* ignore sync failures */ }
+
 	// Determine if legacy role column exists; prefer client_type
 	$dbName = $pdo->query('SELECT DATABASE()')->fetchColumn();
 	$hasLegacyRole = false;
@@ -585,6 +623,9 @@ if ($action === 'clinic_overview') {
 		}
 		$r = $roleMap[$mapKey] ?? ($roleMap[$valTrim] ?? null);
 		if ($r===null) {
+			// Explicit teacher / non-teaching detection BEFORE student heuristics to avoid misclassification (e.g., 'Teacher II')
+			if (preg_match('/TEACHER/i', $val)) return 'Faculty';
+			if (preg_match('/NON[ -]?TEACHING/i', $val)) return 'Staff';
 			// heuristic: contains year tokens => student
 			if (preg_match('/\b(i|ii|iii|iv|1st|2nd|3rd|4th|freshman|sophomore|junior|senior)\b/i',$val)) return 'Student';
 			return 'Staff'; // default fallback
@@ -697,6 +738,10 @@ if ($action === 'clinic_overview') {
 		'Eye Mo'=>['eye mo'],
 		'Hydrocortisone'=>['hydrocortisone']
 	];
+	// Run inventory ensure for each label (idempotent); only if closure prepared
+	if (isset($__pendingEnsure)) {
+		foreach (array_keys($medMap) as $label) { try { $ensureMedicine($label); } catch (Throwable $e) { /* ignore */ } }
+	}
 
 	// Services mapping
 	$serviceMap = [

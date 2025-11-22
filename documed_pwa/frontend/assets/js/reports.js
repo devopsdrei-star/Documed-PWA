@@ -1,17 +1,20 @@
 // Reports page JS: fetch and display reports from backend
 document.addEventListener('DOMContentLoaded', function() {
-	// Load Chart.js CDN if not present
+	// Load specific Chart.js + plugin versions to avoid API mismatch (helpers undefined)
+	const ensureCharts = () => {
+		if (!window.ChartDataLabels) {
+			const script2 = document.createElement('script');
+			script2.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0';
+			document.head.appendChild(script2);
+		}
+	};
 	if (!window.Chart) {
 		const script = document.createElement('script');
-		script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-		script.onload = () => {};
+		script.src = 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';
+		script.onload = () => { ensureCharts(); };
 		document.head.appendChild(script);
-	}
-	// Load datalabels plugin for Chart.js (for percentages on pie)
-	if (!window.ChartDataLabels) {
-		const script2 = document.createElement('script');
-		script2.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2';
-		document.head.appendChild(script2);
+	} else {
+		ensureCharts();
 	}
 	const reportType = document.getElementById('reportType');
 	const dailyDate = document.getElementById('dailyDate');
@@ -36,6 +39,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	const analyticsRow = document.getElementById('analyticsRow');
 	const pieChartContainer = document.getElementById('pieChartContainer');
 	const reportSubtitle = document.getElementById('reportSubtitle');
+
+	// Performance caches & state
+	const CACHE_TTL = 120000; // 2 min
+	const illnessCache = {}; // key -> { ts, data }
+	const overviewCache = {}; // key -> { ts, data }
+	let illnessInFlight = {}; // key -> Promise
+	let overviewInFlight = {}; // key -> Promise
+	let _renderTO = null; // debounce timer
 
 	// Course catalog per department
 	const COURSE_CATALOG = {
@@ -434,10 +445,22 @@ document.addEventListener('DOMContentLoaded', function() {
 			return { start: d1.toISOString().slice(0,10), end: d2.toISOString().slice(0,10) };
 		};
 		const { start, end } = deriveRange();
-		const url = `../../backend/api/report.php?action=clinic_overview&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+		const cacheKey = `${start}|${end}`;
+		const now = Date.now();
+		let data;
+		if (overviewCache[cacheKey] && (now - overviewCache[cacheKey].ts) < CACHE_TTL) {
+			data = overviewCache[cacheKey].data;
+		} else if (overviewInFlight[cacheKey]) {
+			data = await overviewInFlight[cacheKey];
+		} else {
+			const url = `../../backend/api/report.php?action=clinic_overview&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+			overviewInFlight[cacheKey] = fetch(url).then(r=>r.json()).catch(()=>({success:false}));
+			data = await overviewInFlight[cacheKey];
+			delete overviewInFlight[cacheKey];
+			if (data && data.success) overviewCache[cacheKey] = { ts: now, data };
+		}
 		reportResult.innerHTML = '';
 		if (analyticsRow) analyticsRow.style.display = 'none';
-		const res = await fetch(url); const data = await res.json();
 		if (!data || !data.success) {
 			if (clinicOverview) clinicOverview.style.display = 'none';
 			reportResult.innerHTML = '<span style="color:red">No data</span>';
@@ -445,6 +468,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			return;
 		}
 		if (clinicOverview) clinicOverview.style.display = 'block';
+		if (pieChartContainer) pieChartContainer.style.display = 'none';
 
 		// PSU print header (print-only) with values from localStorage if present
 		const campusRaw = (localStorage.getItem('psu_campus') || 'Lingayen').trim();
@@ -617,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Static illness lists based on the provided image
 	async function fetchIllnessStats(audience) {
 		const role = audience;
-		// date params when illness stats selected
 		let url = `../../backend/api/report.php?action=illness_stats&role=${encodeURIComponent(role)}`;
 		const mode = illnessDateMode ? illnessDateMode.value : 'all';
 		if (mode && mode !== 'all') {
@@ -631,7 +654,6 @@ document.addEventListener('DOMContentLoaded', function() {
 				if (year && month) url += `&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`;
 			}
 		}
-		// role-specific detail filters
 		if (audience === 'Student') {
 			const dept = deptFilter ? deptFilter.value : 'All';
 			const year = yearFilter ? (yearFilter.value || '') : '';
@@ -643,10 +665,27 @@ document.addEventListener('DOMContentLoaded', function() {
 			const dept = deptFilter ? deptFilter.value : 'All';
 			if (dept && dept !== 'All') url += `&department=${encodeURIComponent(dept)}`;
 		}
-		const res = await fetch(url);
-		const data = await res.json();
-		if (data && data.labels && data.values) return data;
-		return { labels: [], values: [] };
+		// Build cache key
+		const cacheKey = url; // url already encodes params uniquely
+		const now = Date.now();
+		if (illnessCache[cacheKey] && (now - illnessCache[cacheKey].ts) < CACHE_TTL) {
+			return illnessCache[cacheKey].data;
+		}
+		if (illnessInFlight[cacheKey]) {
+			return illnessInFlight[cacheKey];
+		}
+		illnessInFlight[cacheKey] = fetch(url)
+			.then(r=>r.json())
+			.then(data => {
+				delete illnessInFlight[cacheKey];
+				if (data && data.labels && data.values) {
+					illnessCache[cacheKey] = { ts: now, data };
+					return data;
+				}
+				return { labels: [], values: [] };
+			})
+			.catch(() => { delete illnessInFlight[cacheKey]; return { labels: [], values: [] }; });
+		return illnessInFlight[cacheKey];
 	}
 
 	function renderPie(labels, values, title = 'Illness Statistics') {
@@ -788,8 +827,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		triggerRender();
 	});
 
-	function triggerRender() {
-		// Default to illness stats if sorter is removed
+	function doRender() {
 		if (!reportType || reportType.value === 'illness_stats') {
 			return renderIllnessPie();
 		}
@@ -798,15 +836,20 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	}
 
-	// Initial render: show illness stats by default
-	// Auto render once when arriving on the page if Illness Stats is selected
-	// Default to Illness Stats on doc_nurse page for immediate visual output
+	function triggerRender() {
+		if (_renderTO) clearTimeout(_renderTO);
+		_renderTO = setTimeout(() => { doRender(); }, 180); // debounce rapid filter changes
+	}
+
+	// Initial render: respect existing selection; fallback to illness_stats only if empty
 	setTimeout(() => {
-		try { if (reportType) reportType.value = 'illness_stats'; } catch(e) {}
+		try {
+			if (reportType && !reportType.value) reportType.value = 'illness_stats';
+		} catch(e) {}
 		updateInputs();
 		try { syncCourses(); } catch(_) {}
 		triggerRender();
-	}, 150);
+	}, 120);
 
 	// Auto-generate on filter changes
 	const autoEls = [reportType, illnessDateMode, dailyDate, weekStart, weekEnd, monthInput, rangeStart, rangeEnd, audienceFilter];

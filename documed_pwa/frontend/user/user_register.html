@@ -178,7 +178,7 @@
 </head>
 <body>
   <div class="container login-card" style="max-width:700px;">
-    <h1 style="text-align:center;color:#2563eb;font-size:2rem;font-weight:700;margin-bottom:28px;letter-spacing:1px;">Registration to Login</h1>
+    <h1 style="text-align:center;color:#2563eb;font-size:2rem;font-weight:700;margin-bottom:28px;letter-spacing:1px;">Patient Registration</h1>
     <form id="userRegisterForm" enctype="multipart/form-data">
   <!-- reCAPTCHA v3 badge handled globally; token attached on submit -->
   <div>
@@ -204,55 +204,57 @@
             <label for="address">Address</label>
             <input type="text" id="address" name="address" placeholder="House No., Street, City" required>
           </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"></div>
-            <div class="input-group">
-              <label for="civil_status">Civil Status</label>
-              <select id="civil_status" name="civil_status" aria-label="Select civil status" required>
-              <option value="">Select civil status</option>
-              <option value="Single">Single</option>
-              <option value="Married">Married</option>
-              <option value="Widowed">Widowed</option>
-              <option value="Separated">Separated</option>
-              <option value="Divorce">Divorce</option>
-              <option value="Annuled">Annuled</option>
-              </select>
-            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="input-group">
+                <label for="civil_status">Civil Status</label>
+                <select id="civil_status" name="civil_status" aria-label="Select civil status" required>
+                <option value="">Select civil status</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Separated">Separated</option>
+                <option value="Divorce">Divorce</option>
+                <option value="Annuled">Annuled</option>
+                </select>
+              </div>
 
-            <div class="input-group">
-              <label for="gender">Gender</label>
-              <select id="gender" name="gender" aria-label="Select gender" required>
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
+              <div class="input-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" aria-label="Select gender" required>
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
             </div>
+          
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="input-group">
+                <label for="nationality">Nationality</label>
+                <input type="text" id="nationality" name="nationality" list="nationalityOptions" placeholder="Select or type nationality" required>
+                <datalist id="nationalityOptions">
+                  <option value="Filipino"></option>
+                  <option value="American"></option>
+                  <option value="Chinese"></option>
+                  <option value="Indian"></option>
+                  <option value="Japanese"></option>
+                  <option value="Korean"></option>
+                </datalist>
+              </div>
 
-            <div class="input-group">
-              <label for="nationality">Nationality</label>
-              <input type="text" id="nationality" name="nationality" list="nationalityOptions" placeholder="Select or type nationality" required>
-              <datalist id="nationalityOptions">
-                <option value="Filipino"></option>
-                <option value="American"></option>
-                <option value="Chinese"></option>
-                <option value="Indian"></option>
-                <option value="Japanese"></option>
-                <option value="Korean"></option>
-              </datalist>
-            </div>
-
-            <div class="input-group">
-              <label for="religion">Religion</label>
-              <input type="text" id="religion" name="religion" list="religionOptions" placeholder="Select or type religion" required>
-              <datalist id="religionOptions">
-                <option value="Roman Catholic"></option>
-                <option value="Christian (Protestant)"></option>
-                <option value="Islam"></option>
-                <option value="Iglesia ni Cristo"></option>
-                <option value="Buddhism"></option>
-                <option value="Hinduism"></option>
-                <option value="Judaism"></option>
-              </datalist>
-            </div>
+              <div class="input-group">
+                <label for="religion">Religion</label>
+                <input type="text" id="religion" name="religion" list="religionOptions" placeholder="Select or type religion" required>
+                <datalist id="religionOptions">
+                  <option value="Roman Catholic"></option>
+                  <option value="Christian (Protestant)"></option>
+                  <option value="Islam"></option>
+                  <option value="Iglesia ni Cristo"></option>
+                  <option value="Buddhism"></option>
+                  <option value="Hinduism"></option>
+                  <option value="Judaism"></option>
+                </datalist>
+              </div>
             </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div class="input-group">
