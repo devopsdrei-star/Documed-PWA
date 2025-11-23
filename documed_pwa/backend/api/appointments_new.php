@@ -98,18 +98,7 @@ if ($action === 'add') {
     $purpose = $_POST['purpose'] ?? '';
     $date = $_POST['appointment_date'] ?? '';
     $timeSlot = $_POST['time_slot'] ?? '';
-    $recaptcha_token = $_POST['g-recaptcha-response'] ?? '';
-    // Verify reCAPTCHA v2
-    $recaptcha_secret = '6LeRSQ8sAAAAADjtMmXzP93bITGN7Z1duLdESN3A';
-    $recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify';
-    $recaptcha = file_get_contents($recaptcha_url . '?secret=' . urlencode($recaptcha_secret) . '&response=' . urlencode($recaptcha_token));
-    $recaptcha = json_decode($recaptcha, true);
-    if (!$recaptcha || empty($recaptcha['success'])) {
-        jsonResponse([
-            'success' => false,
-            'message' => 'reCAPTCHA validation failed.'
-        ]);
-    }
+    // reCAPTCHA validation removed for booking flow
 
     // Validate required fields
     if (!$name || !$email || !$date || !$timeSlot) {

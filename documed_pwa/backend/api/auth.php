@@ -1,4 +1,6 @@
 <?php
+// Start session for optional passwordless QR approvals
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once '../config/db.php';
 require_once __DIR__ . '/../config/email.php';
 header('Content-Type: application/json');
@@ -46,6 +48,51 @@ function jsonResponse($arr) {
 }
 
 // Utility: check if a column exists (case-insensitive)
+// ✅ Session ping (returns whichever principal is active)
+if ($action === 'session_ping') {
+    $out = ['success' => false, 'message' => 'No active session'];
+    try {
+        if (!empty($_SESSION['user_id'])) {
+            $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+            $stmt->execute([$_SESSION['user_id']]);
+            if ($u = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                unset($u['password'], $u['qr_token_hash'], $u['qr_token_lookup']);
+                if (isset($u['client_type']) && !isset($u['role'])) { $u['role'] = $u['client_type']; }
+                $out = ['success'=>true,'type'=>'user','user'=>$u];
+            }
+        } elseif (!empty($_SESSION['admin_id'])) {
+            $stmt = $pdo->prepare('SELECT * FROM admins WHERE id = ? LIMIT 1');
+            $stmt->execute([$_SESSION['admin_id']]);
+            if ($a = $stmt->fetch(PDO::FETCH_ASSOC)) { unset($a['password']); $out = ['success'=>true,'type'=>'admin','admin'=>$a]; }
+        } elseif (!empty($_SESSION['doc_nurse_id'])) {
+            // Support doctor/nurse/dentist (stored by manage_user.php)
+            $stmt = $pdo->prepare('SELECT * FROM doc_nurse WHERE id = ? LIMIT 1');
+            $stmt->execute([$_SESSION['doc_nurse_id']]);
+            if ($d = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                unset($d['password']);
+                $photoVal = $d['photo'] ?? ($d['dn_photo'] ?? '');
+                $d['photo'] = $photoVal; $d['dn_photo'] = $photoVal;
+                $out = ['success'=>true,'type'=>'doc_nurse','doc_nurse'=>$d];
+            }
+        }
+    } catch (Throwable $e) { $out = ['success'=>false,'message'=>'Session error']; }
+    jsonResponse($out);
+}
+
+// ✅ Logout (destroy session for any actor)
+if ($action === 'logout') {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        // Clear session array
+        $_SESSION = [];
+        // Delete cookie
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+        }
+        @session_destroy();
+    }
+    jsonResponse(['success'=>true]);
+}
 function col_exists($pdo, $table, $col) {
     try {
         $db = $pdo->query('SELECT DATABASE()')->fetchColumn();
@@ -574,6 +621,8 @@ if ($action === 'user_login') {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['password'])) {
+        // Regenerate session ID to prevent fixation
+        if (session_status() === PHP_SESSION_ACTIVE) { @session_regenerate_id(true); }
         // Opportunistic password rehash if algorithm/cost changed
         try {
             if (password_needs_rehash($user['password'], PASSWORD_DEFAULT)) {
@@ -586,6 +635,8 @@ if ($action === 'user_login') {
         } catch (Throwable $e) { /* ignore rehash failure */ }
         // Remove sensitive data
         unset($user['password']);
+        // Persist session identity for passwordless QR approval
+        $_SESSION['user_id'] = $user['id'];
         
         // Ensure QR code path is included
         if ($user['qr_code']) {
@@ -722,6 +773,9 @@ if ($action === 'qr_login') {
         }
         // Build the same response shape as user_login
         unset($user['password'], $user['qr_token_hash'], $user['qr_token_lookup']);
+        if (session_status() === PHP_SESSION_ACTIVE) { @session_regenerate_id(true); }
+        // Persist session identity for passwordless QR approval
+        $_SESSION['user_id'] = $user['id'];
         if (isset($user['client_type']) && !isset($user['role'])) { $user['role'] = $user['client_type']; }
         // Optional: rotate on use (disabled by default)
         jsonResponse(['success' => true, 'user' => $user, 'login' => 'qr']);
@@ -859,6 +913,13 @@ if ($action === 'qr_approve_challenge') {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row && password_verify($token, $row['qr_token_hash'])) { $user = $row; }
     }
+    // Allow passwordless approval if existing authenticated session present
+    if (!$user && isset($_SESSION['user_id']) && $_SESSION['user_id']) {
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$_SESSION['user_id']]);
+        $sessUser = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($sessUser) { $user = $sessUser; }
+    }
     if (!$user) jsonResponse(['success' => false, 'message' => 'Invalid approver credentials']);
 
     // Approve
@@ -920,7 +981,9 @@ if ($action === 'admin_login') {
 
     if ($admin && password_verify($password, $admin['password'])) {
         unset($admin['password']);
-        jsonResponse(['success' => true, 'admin' => $admin]);
+        if (session_status() === PHP_SESSION_ACTIVE) { @session_regenerate_id(true); }
+        $_SESSION['admin_id'] = $admin['id'];
+        jsonResponse(['success' => true, 'admin' => $admin, 'session' => true]);
     } else {
         jsonResponse(['error' => 'Invalid credentials']);
     }

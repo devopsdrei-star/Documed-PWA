@@ -785,6 +785,8 @@ label {
   font-size: 1rem;
   letter-spacing: 0.5px;
 }
+/* Required field star */
+.req-star { color:#dc2626; font-weight:600; }
 input[type="text"], input[type="date"], input[type="file"], select, textarea {
   background: #fff;
   border: 1px solid #2563eb;

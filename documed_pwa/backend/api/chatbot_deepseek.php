@@ -29,6 +29,46 @@ if (!$userMessage) {
     exit;
 }
 
+// ---------------------------------------------------------------------------
+// Early rule-based intents (bypass external model when we can answer safely)
+// ---------------------------------------------------------------------------
+// We only provide general, non-diagnostic information. For medicine questions
+// we return OTC guidance plus red‑flag warnings. For medical certificate we
+// clarify face‑to‑face only issuance.
+// Returned structure mirrors provider replies: { reply, info }
+function documed_rule_intents(string $msg): ?array {
+    $m = strtolower($msg);
+    // Normalize multiple spaces
+    $m = preg_replace('/\s+/', ' ', $m);
+
+    // Medical certificate (med cert) queries
+    if (preg_match('/\b(medical certificate|med cert|medical cert|certificate for|medical clearance)\b/i', $msg)) {
+        $reply = "Medical certificates are only issued face-to-face at the Campus Medical Clinic after an in-person assessment. We do not provide online medical certificate issuance. Please visit during clinic hours (Mon–Fri 08:00–17:00) with a valid campus ID and explain the purpose (e.g., absence excuse, activity clearance).";
+        return ['reply' => $reply, 'info' => 'served_by_rules_med_cert'];
+    }
+
+    // Headache / medicine queries
+    $headachePattern = '/\b(headache|head ache|migraine|sumasakit ang ulo|masakit ang ulo)\b/i';
+    $medicinePattern  = '/\b(medicine|medication|gamot|take.*medicine|cure|anong gamot|what.*medicine|pain reliever|painkiller)\b/i';
+    if (preg_match($headachePattern, $msg) && preg_match($medicinePattern, $msg)) {
+        $reply = "General guidance: Mild tension headaches can sometimes improve with rest, hydration, balanced meals, and avoiding prolonged screen strain. Over-the-counter pain relievers such as paracetamol (acetaminophen) or ibuprofen may help if you have no allergy, stomach ulcer, kidney problems, or other contraindications. Always follow the package directions and never exceed the recommended dose. Seek an in-person clinic evaluation urgently if the headache is sudden and severe (\"worst headache\"), persistent beyond 24–48 hours, occurs with fever, stiff neck, vomiting, vision changes, weakness, numbness, confusion, fainting, after a head injury, or if you are immunocompromised. For personalized assessment and any prescription needs, please visit the Campus Medical Clinic. This is not a diagnosis or a substitute for professional medical advice.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_headache_medicine'];
+    }
+
+    // Generic medicine inquiry without specific condition — provide safe disclaimer
+    if (preg_match('/\b(what.*medicine|anong gamot|which medicine|recommend.*medicine|can I take.*medicine)\b/i', $msg)) {
+        $reply = "I can only give very general guidance. For most minor symptoms, proper rest, hydration, and evaluation of triggers helps. Any decision to start, stop, or combine medicines should be based on an in-person assessment. Please visit the Campus Medical Clinic for evaluation—online recommendations cannot replace a clinician. If symptoms are severe or involve chest pain, breathing difficulty, fainting, sudden weakness, confusion, or uncontrollable vomiting, seek immediate medical attention.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_general_medicine'];
+    }
+
+    return null; // No rule matched
+}
+
+if ($rule = documed_rule_intents($userMessage)) {
+    echo json_encode($rule);
+    exit;
+}
+
 $system_prompt = "You are a helpful assistant for the Campus Medical Clinic (DocuMed). You must only answer questions about the Campus Medical Clinic and its services (appointments, clinic hours, locations, walk-in policy, immunizations, minor procedures handled by the clinic, medical certificates, basic laboratory tests, referral processes, patient record access, and how to use this system). Always reply in English and keep answers concise and friendly. If a user asks for medical diagnoses, detailed treatment plans, dosing, or clinical management beyond administrative or clinic-process information, refuse to provide medical instructions and instead advise the user to consult a clinician or go to emergency services when appropriate. If the user asks about topics outside the Campus Medical Clinic (insurance policy beyond the clinic, unrelated medical specialties, or general medical textbooks), reply: 'I am only able to answer about the Campus Medical Clinic services and this system — please contact the clinic or a licensed clinician for that question.'";
 
 // Load fallback FAQ early so we can use an out-of-scope message for sanitization

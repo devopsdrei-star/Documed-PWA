@@ -60,9 +60,9 @@
               updated = true;
             }
             // Fallback: soft reload to reflect other changes
-            if (!updated) {
-              location.reload();
-            }
+              if (!updated) {
+                // No-op: do not reload, allow modal and dynamic components to update without page refresh
+              }
           }
         });
       }).catch(()=>{});

@@ -56,7 +56,6 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button id="btnBack" style="background:#6b7280;color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">Back</button>
   <button id="btnFollowup" style="background:#10b981;color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">Follow Up Check-Up</button>
-  <button id="btnCheckup" style="background:#2563eb;color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">New Check-Up</button>
       </div>
     </div>
   <div id="patientInfo" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;"></div>
@@ -172,23 +171,32 @@
             if (!info) return;
             const safe = v => (v == null ? '' : v);
             const role = p.role_effective || p.role || '';
-            // Use an existing asset as fallback to avoid 404s
+            // Use existing logo as fallback (user_photo.png does not exist globally)
             const photoFallback = '../assets/images/documed_logo.png';
             const basePhoto = p.photo || '';
+            function resolvePhotoPath(ph){
+              if(!ph) return photoFallback;
+              const s = String(ph).trim();
+              if(!s) return photoFallback;
+              if(/^https?:\/\//i.test(s)) return s;
+              if(s.startsWith('../') || s.startsWith('/')) return s;
+              if(s.startsWith('assets/')) return '../'+s;
+              return '../assets/images/'+s; // bare filename
+            }
             // Personal info only (no medical findings)
 
             const headerHtml = (ph) => `
             <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;text-align:center;">
-              <img id="pvPhoto" src="${ph || photoFallback}" alt="Photo" onerror="this.onerror=null;this.src='${photoFallback}';" style="width:192px;height:192px;border-radius:12px;object-fit:cover;border:1px solid #e5e7eb;background:#f9fafb;"/>
+                <img id="pvPhoto" src="${ph || photoFallback}" alt="Photo" style="width:192px;height:192px;border-radius:12px;object-fit:cover;border:1px solid #e5e7eb;background:#f9fafb;"/>
                 <div style="font-weight:800;color:#111827;font-size:1.4rem;">${safe(p.name)}</div>
                 <div style="color:#6b7280;margin-top:2px;font-size:1rem;">School ID: ${safe(p.student_faculty_id)}</div>
                 <div id="pvRole" style="color:#6b7280;margin-top:0;font-size:1rem;">Role: ${safe(role)}</div>
               </div>`;
 
-            const line = (label, value) => `
-              <div style="display:flex;gap:10px;align-items:baseline;margin:10px 0;text-align:left;">
-                <div style="min-width:180px;color:#2563eb;font-weight:700;font-size:1rem;">${label}:</div>
-                <div style="color:#111827;font-size:1.05rem;">${safe(value)}</div>
+            const line = (label, value, idAttr='') => `
+              <div ${idAttr} style="display:flex;gap:10px;align-items:baseline;margin:10px 0;text-align:left;flex-wrap:nowrap;">
+                <div style="min-width:180px;color:#2563eb;font-weight:700;font-size:1rem;white-space:nowrap;">${label}:</div>
+                <div style="color:#111827;font-size:1.05rem;white-space:nowrap;">${safe(value)}</div>
               </div>`;
 
     const detailsHtml = `
@@ -202,48 +210,46 @@
                   ${line('CONTACT PERSON', p.contact_person)}
                 </div>
                   <div class=\"pvColDivider\" aria-hidden=\"true\"></div>
-                <div style="display:flex; flex-direction:column; align-items:right;">
+                <div style="display:flex; flex-direction:column; align-items:flex-start;">
                   ${line('BIRTHDATE', p.date_of_birth)}
                   ${line('PLACE OF BIRTH', p.place_of_birth)}
                   ${line('NATIONALITY', p.nationality)}
-                  ${line('YEAR & COURSE', p.year_and_course)}
+                  ${line('YEAR & COURSE', p.year_and_course, 'id="pvYearCourse"')}
+                  ${line('DEPARTMENT', p.department, 'id="pvDepartment"')}
                 </div>
               </div>`;
 
-            info.innerHTML = headerHtml(null) + detailsHtml;
-            // Resolve photo asynchronously to avoid 404 noise
-            (function resolveInitialPhoto(){
-              const img = document.getElementById('pvPhoto');
-              if (!img) return;
-              const candidate = basePhoto;
-              if (!candidate) { img.src = photoFallback; return; }
-              try {
-                fetch(candidate, { method: 'HEAD' }).then(r => {
-                  if (r && r.ok) { img.src = candidate; } else { img.src = photoFallback; }
-                }).catch(()=>{ img.src = photoFallback; });
-              } catch(_) { img.src = photoFallback; }
-            })();
+            info.innerHTML = headerHtml(resolvePhotoPath(basePhoto)) + detailsHtml;
+            // Toggle Year & Course vs Department based on role (robust ID-based)
+            try {
+              const roleVal = (p.role_effective || p.role || '').toString().toLowerCase();
+              const yearEl = document.getElementById('pvYearCourse');
+              const deptEl = document.getElementById('pvDepartment');
+              if (roleVal.includes('teacher') || roleVal.includes('non-teaching')) {
+                if (yearEl) yearEl.style.display = 'none';
+                if (deptEl) deptEl.style.display = 'flex';
+              } else {
+                if (deptEl) deptEl.style.display = 'none';
+                if (yearEl) yearEl.style.display = 'flex';
+              }
+            } catch(_) {}
             // Try to enhance photo from user profile if available
             if (sid) {
               fetch('../../backend/api/auth.php?action=get_user_by_sid', {
                 method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ sid })
               }).then(r=>r.json()).then(uRes=>{
                 const u = (uRes && uRes.success) ? uRes.user : null;
-                const ph = (u && u.photo) ? u.photo : (basePhoto || '');
+                const ph = resolvePhotoPath((u && u.photo) ? u.photo : (basePhoto || photoFallback));
                 const img = document.getElementById('pvPhoto');
-                if (img) {
-                  img.onerror = () => { img.onerror = null; img.src = photoFallback; };
-                  if (ph) {
-                    try { fetch(ph, { method:'HEAD' }).then(r=>{ if(r && r.ok){ img.src = ph; } }); } catch(_) {}
-                  }
+                if (img){
+                  img.src = ph;
+                  img.onerror = function(){ this.onerror=null; this.src = photoFallback; };
                 }
                 // Update role from user profile if missing in checkup view payload
                 const roleEl = document.getElementById('pvRole');
                 if (roleEl) {
                   let effRole = (u && (u.role_effective || u.role)) || (p.role_effective || p.role) || '';
-                  // Optional mapping (Teacher->Faculty, Non-Teaching->Staff)
-                  const map = { 'Teacher': 'Faculty', 'Non-Teaching': 'Staff' };
-                  if (effRole && map[effRole]) effRole = map[effRole];
+                  // Preserve original backend role naming (Teacher / Non-Teaching)
                   if (effRole) roleEl.textContent = `Role: ${effRole}`;
                 }
               }).catch(()=>{});
@@ -269,32 +275,32 @@
                   if(da && db && !isNaN(da) && !isNaN(db)) return db-da;
                   const ia=Number(a&&a.id); const ib=Number(b&&b.id); if(isFinite(ia)&&isFinite(ib)) return ib-ia; return 0;
                 });
-                const rows = arr.map((it, idx) => {
+                const rowsHtml = arr.map((it, idx) => {
                   const dt = it.created_at || it.updated_at || '';
                   const dateStr = dt ? new Date(dt).toLocaleDateString() : '';
                   const performer = it.doctor_nurse || '-';
                   return `<tr>
-                    <td style="padding:8px;">${idx+1}</td>
-                    <td style="padding:8px;">${dateStr}</td>
-                    <td style="padding:8px;">${it.assessment || ''}</td>
-                    <td style="padding:8px;">${performer}</td>
-                    <td style="padding:8px;"><a href="medical_exam_report.html?id=${encodeURIComponent(it.id)}" style="color:#2563eb;text-decoration:none;">View</a></td>
+                    <td style=\"padding:8px;\">${idx+1}</td>
+                    <td style=\"padding:8px;\">${dateStr}</td>
+                    <td style=\"padding:8px;\">${(it.assessment||'')}</td>
+                    <td style=\"padding:8px;\">${performer}</td>
+                    <td style=\"padding:8px;\"><a href=\"medical_exam_report.html?id=${encodeURIComponent(it.id)}\" style=\"color:#2563eb;text-decoration:none;\">View</a></td>
                   </tr>`;
                 }).join('');
                 container.innerHTML = `
-                  <h2 style="margin:16px 0 8px;color:#374151;">Patient Check-Up History</h2>
-                  <div style="overflow:auto;">
-                    <table style="width:100%;border-collapse:collapse;">
+                  <h2 style=\"margin:16px 0 8px;color:#374151;\">Patient Check-Up History</h2>
+                  <div style=\"overflow:auto;\">
+                    <table style=\"width:100%;border-collapse:collapse;\">
                       <thead>
                         <tr>
-                          <th style="text-align:left;padding:8px;">#</th>
-                          <th style="text-align:left;padding:8px;">Date</th>
-                          <th style="text-align:left;padding:8px;">Assessment</th>
-                          <th style="text-align:left;padding:8px;">By</th>
-                          <th style="text-align:left;padding:8px;">Action</th>
+                          <th style=\"text-align:left;padding:8px;\">#</th>
+                          <th style=\"text-align:left;padding:8px;\">Date</th>
+                          <th style=\"text-align:left;padding:8px;\">Assessment</th>
+                          <th style=\"text-align:left;padding:8px;\">By</th>
+                          <th style=\"text-align:left;padding:8px;\">Action</th>
                         </tr>
                       </thead>
-                      <tbody>${rows}</tbody>
+                      <tbody>${rowsHtml}</tbody>
                     </table>
                   </div>`;
               })

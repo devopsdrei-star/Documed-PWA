@@ -9,6 +9,9 @@
   if (!tbody) return;
 
   let all = [];
+  let filtered = [];
+  let currentPage = 1;
+  const pageSize = 6; // fixed size per new design (updated)
   let checkedByMap = new Map(); // sid -> latest non-empty doctor_nurse
   // Pick newer of two records (by created_at, fallback id)
   function pickNewer(a, b) {
@@ -75,26 +78,60 @@
       tr.innerHTML = `
         <td>${p.student_faculty_id || ''}</td>
         <td>${p.name || [p.last_name, p.first_name, p.middle_initial].filter(Boolean).join(' ')}</td>
-        <td>${p.address || ''}</td>
         <td>${p.role || p.role_effective || ''}</td>
-        <td>${p.contact_number || ''}</td>
-        <td>${p.date_of_birth || ''}</td>
         <td>${p.assessment || ''}</td>
         <td>${createdAt ? createdAt.toLocaleDateString() : ''}</td>
         <td>${checkedBy}</td>
         <td>${nextFollowUpLabel}</td>
         <td style="white-space:nowrap;">
           <span class="actions-wrap">
-            <button class="btnView" data-id="${p.id}" style="background:#2563eb;color:#fff;border:none;cursor:pointer;">View</button>
+            <button class="btnView" data-id="${p.id}" style="background:#2563eb;color:#fff;border:none;cursor:pointer;padding:6px 12px;border-radius:6px;">View</button>
             ${isArchived
-              ? `<button class="btnUnarchive" data-id="${p.id}" style="background:#10b981;color:#fff;border:none;cursor:pointer;">Unarchive</button>`
-              : `<button class="btnArchive" data-id="${p.id}" style="background:#d97706;color:#fff;border:none;cursor:pointer;">Archive</button>`}
+              ? `<button class="btnUnarchive" data-id="${p.id}" style="background:#10b981;color:#fff;border:none;cursor:pointer;padding:6px 12px;border-radius:6px;">Unarchive</button>`
+              : `<button class="btnArchive" data-id="${p.id}" style="background:#d97706;color:#fff;border:none;cursor:pointer;padding:6px 12px;border-radius:6px;">Archive</button>`}
           </span>
         </td>`;
       tbody.appendChild(tr);
     });
     setMsg('');
   }
+
+  function renderPage(){
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    const start = (currentPage - 1) * pageSize;
+    const pageRows = filtered.slice(start, start + pageSize);
+    render(pageRows);
+        const pagWrap = document.getElementById('patientsPagination');
+    const prevBtn = document.getElementById('patientsPrev');
+    const nextBtn = document.getElementById('patientsNext');
+    const pageInfo = document.getElementById('patientsPageInfo');
+      if (pagWrap){
+          if (total <= pageSize){ pagWrap.style.display='none'; }
+          else {
+              pagWrap.style.display='flex';
+              if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                          if (prevBtn){
+                              const disabled = currentPage <= 1;
+                              prevBtn.disabled = disabled;
+                              prevBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+                              prevBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+                              prevBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                              prevBtn.style.opacity = disabled ? '0.6' : '1';
+                          }
+                          if (nextBtn){
+                              const disabled = currentPage >= totalPages;
+                              nextBtn.disabled = disabled;
+                              nextBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+                              nextBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+                              nextBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                              nextBtn.style.opacity = disabled ? '0.6' : '1';
+                          }
+          }
+        }
+    }
 
   function load(){
     setMsg('');
@@ -164,7 +201,9 @@
         return normalized === wanted;
       });
     }
-    render(rows);
+    filtered = rows;
+    currentPage = 1;
+    renderPage();
   }
 
   document.addEventListener('click', e => {
@@ -238,6 +277,19 @@
   if (search){ search.addEventListener('input', applyFilters); }
   if (roleFilter){ roleFilter.addEventListener('change', applyFilters); }
   if (archivedFilter){ archivedFilter.addEventListener('change', load); }
+
+  document.addEventListener('click', e => {
+    if (e.target && e.target.id === 'patientsPrev'){
+      currentPage -= 1;
+      renderPage();
+    }
+    if (e.target && e.target.id === 'patientsNext'){
+      currentPage += 1;
+      renderPage();
+    }
+  });
+
+  // Removed page size selector logic
 
   load();
 })();

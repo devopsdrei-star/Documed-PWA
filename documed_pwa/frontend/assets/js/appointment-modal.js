@@ -476,16 +476,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const purpose = document.getElementById('purposeModal') ? document.getElementById('purposeModal').value.trim() : '';
             const date = (document.getElementById('selectedAppointmentDate') || {}).value || '';
             const time_slot = (document.getElementById('timeModal') || {}).value || '';
-            const recaptchaResponse = document.querySelector('.g-recaptcha [name="g-recaptcha-response"]')?.value || document.getElementById('g-recaptcha-response')?.value || '';
 
             if (!name || !email || !date || !time_slot || !role) {
                 if (formMsg) { formMsg.className = 'alert alert-danger'; formMsg.textContent = 'Please complete all required fields.'; }
                 return;
             }
-            if (!recaptchaResponse) {
-                if (formMsg) { formMsg.className = 'alert alert-danger'; formMsg.textContent = 'Please complete the reCAPTCHA.'; }
-                return;
-            }
+            // No reCAPTCHA required
 
             try {
                 const body = new URLSearchParams();
@@ -498,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body.append('year_course', year_course);
                 body.append('department', department);
                 body.append('purpose', purpose);
-                body.append('g-recaptcha-response', recaptchaResponse);
+                // reCAPTCHA removed
                 const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

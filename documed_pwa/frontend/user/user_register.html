@@ -15,6 +15,35 @@
       min-height: 100vh;
       font-family: 'Segoe UI', Arial, sans-serif;
     }
+     .main-wrapper {
+      background: #fff;
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+      max-width: 100%;
+      width: 100%;
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: visible;
+      position: relative;
+    }
+    .top-nav { padding: 0 24px; width: 100%; }
+    /* Use shared .nav-logo sizing from global stylesheet */
+    .nav-links { gap: 32px; font-weight: 500; font-size: 1.08rem; }
+    .nav-links a {
+      color: #222;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: #00d1c7;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
     .container {
       max-width: 900px;
       margin: 48px auto;
@@ -174,9 +203,45 @@
     .terms-agree input[type="checkbox"] { width:18px; height:18px; margin:0; }
     .terms-agree .terms-label { margin:0; font-weight:500; color:#111827; }
     .terms-note { color:#6b7280; }
+    .field-error { display:none; color:#dc2626; font-size:0.82rem; font-weight:600; margin-top:4px; }
+    .field-error.show { display:block; }
+    /* Password strength helpers */
+    .pwd-hint { font-size:0.72rem; color:#64748b; margin-top:4px; font-weight:500; letter-spacing:0.3px; }
+    /* Reserve space even when hidden so columns align */
+    .pwd-meter { display:block; visibility:hidden; margin-top:6px; height:6px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+    .pwd-meter-fill { height:100%; width:0; background:#dc2626; transition:width .25s ease, background .25s ease; }
+    .pwd-meter.show { visibility:visible; }
+    /* Gray, non-interactive age field styling */
+    #age[readonly] {
+      background:#e5e7eb !important;
+      color:#555;
+      cursor:not-allowed;
+    }
+    #age[readonly]:focus {
+      border:1px solid #d1d5db;
+      box-shadow:none;
+      outline:none;
+    }
   </style>
 </head>
 <body>
+  <div class="main-wrapper">
+    <nav class="top-nav">
+      <div class="d-flex align-items-center">
+        <div class="nav-logo">
+          <img src="../assets/images/documed_logo.png" alt="DocuMed Logo">
+        </div>
+        <button class="nav-burger" aria-label="Toggle navigation"><span></span></button>
+        <div class="nav-links" id="navLinks">
+          <a href="user_dashboard.html">Home</a>
+          <a href="#services" id="navServices">Services</a>
+          <a href="#about" id="navAbout">About Us</a>
+          <a href="#contact" id="navContact">Contact</a>
+          <a href="#" id="navHelp">Help</a>
+        </div>
+      </div>
+    </nav>
+    <div id="userBanner" style="display:none;background:#e0f2fe;color:#084c61;padding:10px 16px;text-align:center;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
   <div class="container login-card" style="max-width:700px;">
     <h1 style="text-align:center;color:#2563eb;font-size:2rem;font-weight:700;margin-bottom:28px;letter-spacing:1px;">Patient Registration</h1>
     <form id="userRegisterForm" enctype="multipart/form-data">
@@ -274,6 +339,7 @@
             <div class="input-group">
               <label for="contact_number">Contact No.</label>
               <input type="text" id="contact_number" name="contact_number" placeholder="11-digit mobile number" inputmode="numeric" pattern="^\d{11}$" maxlength="11" required>
+              <span id="contactError" class="field-error" aria-live="polite">Numbers only.</span>
             </div>
           </div>
           
@@ -306,26 +372,33 @@
             </select>
           </div>
                     <div class="input-group">
-            <label for="student_faculty_id">School ID Number</label>
-            <input type="text" id="student_faculty_id" name="student_faculty_id" placeholder="Student/Employee ID Number" maxlength="10" pattern="^[A-Za-z0-9\-]{1,10}$" required>
+            <label for="student_faculty_id">Student/Employee ID Number</label>
+            <input type="text" id="student_faculty_id" name="student_faculty_id" placeholder="00-LN-0000/LN-00000" maxlength="10" pattern="^[A-Za-z0-9\-]{1,10}$" required>
           </div>
           </div>
       <div class="input-group" style="margin-top:2px;">
         <label for="photo">2x2 Photo</label>
   <input type="file" id="photo" name="photo" accept="image/*" placeholder="Upload 2x2 photo" required>
+        <span id="photoError" class="field-error" aria-live="polite">Image must be ≤ 2MB.</span>
       </div>
         <div class="input-group">
               <label for="email">Email</label>
               <input type="email" id="email" name="email" placeholder="name@example.com" required>
+              <span id="emailError" class="field-error" aria-live="polite">Email must include @</span>
             </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div class="input-group">
               <label for="password">Password</label>
               <input type="password" id="password" name="password" placeholder="Enter password" required>
+              <div class="pwd-hint" id="pwdHint">Use 8+ chars with upper, lower, number & symbol.</div>
+              <div class="pwd-meter" id="pwdMeter"><div class="pwd-meter-fill" id="pwdMeterFill"></div></div>
             </div>
         <div class="input-group">
             <label for="confirm_password">Confirm Password</label>
             <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
+            <!-- Invisible spacers to keep alignment with password column -->
+            <div class="pwd-hint" aria-hidden="true" style="visibility:hidden;">Use 8+ chars with upper, lower, number & symbol.</div>
+            <div class="pwd-meter" aria-hidden="true" style="visibility:hidden;"></div>
           </div>
           </div>
 
@@ -338,12 +411,12 @@
       </div>
 
       <button type="submit" class="btn" style="width:100%;margin-top:24px;">Register</button>
-    <div id="userRegisterMsg" style="margin-top:12px;"></div>
-    </form>
-  <!-- Registration uses server-side validation only; no reCAPTCHA -->
-    <div style="margin-top:8px;">
+      <!-- Registration uses server-side validation only; no reCAPTCHA -->
+      <div style="margin-top:8px;">
         <button type="button" class="btn" style="width:100%;margin-top:-2px;" onclick="window.location.href='user_dashboard.html'">Back</button>
-    </div>
+      </div>
+      <div id="userRegisterMsg" style="margin-top:16px;"></div>
+    </form>
   </div>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <script src="../assets/js/pwa.js"></script>
@@ -466,6 +539,87 @@
     })();
   </script>
   <script>
+    // Client-side validation: email must include '@'; contact digits only; photo size limit
+    (function(){
+      const emailEl = document.getElementById('email');
+      const emailErr = document.getElementById('emailError');
+      const contactEl = document.getElementById('contact_number');
+      const contactErr = document.getElementById('contactError');
+      const photoEl = document.getElementById('photo');
+      const photoErr = document.getElementById('photoError');
+      const form = document.getElementById('userRegisterForm');
+
+      function validateEmail(){
+        const v = (emailEl.value||'').trim();
+        const hasAt = v.includes('@');
+        // show only if user typed something and missing '@'
+        emailErr.classList.toggle('show', v !== '' && !hasAt);
+        return hasAt || v === '';
+      }
+      function validateContact(){
+        const v = (contactEl.value||'').trim();
+        const digitsOnly = /^[0-9]*$/.test(v); // allow empty until required kicks in on submit
+        contactErr.classList.toggle('show', v !== '' && !digitsOnly);
+        return digitsOnly;
+      }
+      function validatePhoto(){
+        const f = photoEl.files && photoEl.files[0];
+        if(!f){ photoErr.classList.remove('show'); return true; }
+        const ok = f.size <= 2 * 1024 * 1024; // 2MB
+        photoErr.classList.toggle('show', !ok);
+        return ok;
+      }
+      emailEl.addEventListener('input', validateEmail);
+      contactEl.addEventListener('input', validateContact);
+      photoEl.addEventListener('change', validatePhoto);
+      form.addEventListener('submit', function(e){
+        const eOk = validateEmail();
+        const cOk = validateContact();
+        const pOk = validatePhoto();
+        // built-in required will still enforce presence; we only show custom errors per new rules
+        if(!(eOk && cOk && pOk)){
+          e.preventDefault();
+          if(!eOk) emailEl.focus(); else if(!cOk) contactEl.focus(); else if(!pOk) photoEl.focus();
+        }
+      });
+    })();
+  </script>
+  <script>
+    // Password strength meter (appears only while typing)
+    (function(){
+      const pwdEl = document.getElementById('password');
+      const meter = document.getElementById('pwdMeter');
+      const fill = document.getElementById('pwdMeterFill');
+      if(!pwdEl || !meter || !fill) return;
+
+      function scorePassword(p){
+        let score = 0;
+        if(p.length >= 8) score++;
+        if(/[A-Z]/.test(p)) score++;
+        if(/[a-z]/.test(p)) score++;
+        if(/\d/.test(p)) score++;
+        if(/[^A-Za-z0-9]/.test(p)) score++;
+        return score; // 0-5
+      }
+
+      function updateMeter(){
+        const v = pwdEl.value;
+        if(!v){ meter.classList.remove('show'); fill.style.width='0'; return; }
+        meter.classList.add('show');
+        const s = scorePassword(v);
+        const pct = (s/5)*100;
+        fill.style.width = pct + '%';
+        let color = '#dc2626';
+        if(s >= 2) color='#f97316';
+        if(s >= 3) color='#eab308';
+        if(s >= 4) color='#16a34a';
+        fill.style.background = color;
+      }
+
+      pwdEl.addEventListener('input', updateMeter);
+    })();
+  </script>
+  <script>
     // Compute age from date_of_birth and enforce valid date selection
     (function(){
       const dobEl = document.getElementById('date_of_birth');
@@ -493,5 +647,15 @@
       syncAge();
     })();
   </script>
+  </div> 
+  <footer style="background:#0a6ecb;color:#fff;padding:32px 0 18px 0;margin-top:48px;width:100vw;">
+    <div style="max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;">
+      <div id="footerClinicName" style="font-size:1.15rem;font-weight:600;letter-spacing:1px;">DocuMed Campus Clinic &copy; 2025</div>
+      <div style="font-size:1rem;">For inquiries: <a href="mailto:clinic@documed.com" style="color:#fff;text-decoration:underline;">clinic@documed.com</a></div>
+      <div style="font-size:1rem;">Powered by <span style="color:#00d1c7;font-weight:600;">DocuMed</span></div>
+    </div>
+  </footer>
+  <script src="../assets/js/mobile-nav.js"></script>
+  <script src="../assets/js/required_star.js"></script>
 </body>
 </html>

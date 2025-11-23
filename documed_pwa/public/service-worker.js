@@ -5,7 +5,8 @@
   - Runtime caching for same-origin GET requests (NetworkFirst for HTML, CacheFirst for static assets)
 */
 
-const APP_VERSION = 'v3';
+// Version bump to trigger update & apply revised strategies
+const APP_VERSION = 'v3-2025-11-23';
 const CORE_CACHE = `docmed-core-${APP_VERSION}`;
 const RUNTIME_CACHE = `docmed-runtime-${APP_VERSION}`;
 
@@ -117,16 +118,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets (css/js/png/svg etc) use CacheFirst
-  if (/\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico)$/i.test(url.pathname)) {
+  // Split strategy: JS network-first (to avoid stale code), others cache-first
+  if (/\.(?:js)$/i.test(url.pathname)) {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(request, { cache: 'no-store' });
+        const copy = fresh.clone();
+        caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+        return fresh;
+      } catch (e) {
+        const cached = await caches.match(request);
+        return cached || new Response('Offline JS', { status: 503 });
+      }
+    })());
+    return;
+  }
+  if (/\.(?:css|png|jpg|jpeg|gif|svg|webp|ico)$/i.test(url.pathname)) {
     event.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
         return fetch(request).then(resp => {
           const copy = resp.clone();
-            caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+          caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
           return resp;
-        });
+        }).catch(() => cached || new Response('Offline asset', { status: 503 }));
       })
     );
     return;

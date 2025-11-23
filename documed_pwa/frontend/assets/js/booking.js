@@ -137,8 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 department: document.getElementById('department').value.trim(),
                 purpose: document.getElementById('purpose').value.trim(),
                 appointment_date: document.getElementById('selectedDate').value,
-                time_slot: document.getElementById('selectedTime').value,
-                'g-recaptcha-response': sessionStorage.getItem('recaptchaToken') || ''
+                time_slot: document.getElementById('selectedTime').value
             };
 
             if (!formData.name || !formData.email || !formData.role || !formData.appointment_date || !formData.time_slot || !formData.purpose) {
@@ -146,11 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            if (!formData['g-recaptcha-response']) {
-                showMessage('Please verify you are human before booking.', 'danger');
-                setTimeout(() => { window.location.href = 'recaptcha.html?next=book_appointment.html'; }, 1200);
-                return;
-            }
+            // No reCAPTCHA required for booking
 
             try {
                 const body = new URLSearchParams();
@@ -166,10 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const data = await res.json();
                 if (data.success) {
-                    try {
-                        sessionStorage.removeItem('recaptchaToken');
-                        sessionStorage.removeItem('recaptchaTokenIssuedAt');
-                    } catch (_) {}
                     showMessage(data.message || 'Appointment booked successfully!', 'success');
                     setTimeout(() => {
                         window.location.href = 'appointments.html';
@@ -177,16 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     const message = data.message || 'Failed to book appointment.';
                     showMessage(message, 'danger');
-                    if (Array.isArray(data.recaptcha_errors) && data.recaptcha_errors.length) {
-                        console.warn('reCAPTCHA errors:', data.recaptcha_errors);
-                        try {
-                            sessionStorage.removeItem('recaptchaToken');
-                            sessionStorage.removeItem('recaptchaTokenIssuedAt');
-                        } catch (_) {}
-                        setTimeout(() => {
-                            window.location.href = 'recaptcha.html?next=book_appointment.html';
-                        }, 1500);
-                    }
                 }
             } catch (err) {
                 console.error('Booking error:', err);

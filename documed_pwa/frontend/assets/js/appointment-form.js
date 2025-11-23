@@ -1,5 +1,5 @@
 // Compatibility shim for legacy appointment form behaviors
-// Ensures the Book Dental Appointment control routes to recaptcha.html
+// Ensures the Book Dental Appointment control opens the booking modal (no reCAPTCHA)
 // and exposes minimal no-op hooks to avoid JS errors on older pages.
 (function(){
   try { console.log('[appointment-form.js] loaded'); } catch(_) {}
@@ -7,12 +7,18 @@
     // Normalize Book button behavior on appointments page
     var btn = document.getElementById('bookAppointmentBtn');
     if (btn) {
-      // Prefer anchor href; if it's a button, force-assignment
-      try { btn.setAttribute('href', 'recaptcha.html'); } catch(_) {}
       btn.addEventListener('click', function(e){
-        // If element is not an anchor, or any stale handler tries to change it, force navigate
-        if (btn.tagName !== 'A') { e.preventDefault(); }
-        window.location.assign('recaptcha.html');
+        e.preventDefault();
+        try {
+          var modalEl = document.getElementById('bookAppointmentModal');
+          if (modalEl && window.bootstrap && bootstrap.Modal) {
+            var m = bootstrap.Modal.getOrCreateInstance(modalEl);
+            m.show();
+            return;
+          }
+        } catch(_) {}
+        // Fallback: navigate to booking page if modal unavailable
+        window.location.assign('book_appointment.html');
       });
     }
 

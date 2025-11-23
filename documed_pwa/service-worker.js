@@ -5,7 +5,8 @@
  * - CacheFirst for static assets
  * - API: POST -> network only + broadcast invalidate; GET -> network-first (no-store)
  */
-const DM_APP_VERSION = 'pwa-v2025-11-20-1';
+// Bump version to force new SW install & cache purge
+const DM_APP_VERSION = 'pwa-v2025-11-23-1';
 const DM_CORE = `documed-core-${DM_APP_VERSION}`;
 const DM_RUNTIME = `documed-runtime-${DM_APP_VERSION}`;
 // Derive base directory (e.g., /DocMed/documed_pwa)
@@ -105,15 +106,37 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: CacheFirst
-  if (/\.(?:css|js|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf)$/i.test(url.pathname)) {
+  // Static assets split strategy:
+  //  - JS: NetworkFirst (ensure latest scripts without hard refresh)
+  //  - CSS/Images/Fonts: CacheFirst
+  if (/\.(?:js)$/i.test(url.pathname)) {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req, { cache: 'no-store' });
+        const copy = fresh.clone();
+        caches.open(DM_RUNTIME).then(c => c.put(req, copy));
+        return fresh;
+      } catch (_) {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        // As last resort fail gracefully
+        return new Response('Offline JS', { status: 503 });
+      }
+    })());
+    return;
+  }
+  if (/\.(?:css|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf)$/i.test(url.pathname)) {
     event.respondWith((async () => {
       const cached = await caches.match(req);
       if (cached) return cached;
-      const r = await fetch(req);
-      const copy = r.clone();
-      caches.open(DM_RUNTIME).then((c) => c.put(req, copy));
-      return r;
+      try {
+        const r = await fetch(req);
+        const copy = r.clone();
+        caches.open(DM_RUNTIME).then((c) => c.put(req, copy));
+        return r;
+      } catch (_) {
+        return cached || new Response('Offline asset', { status: 503 });
+      }
     })());
     return;
   }

@@ -1,4 +1,6 @@
 <?php
+// Enable session for doc/nurse/dentist login persistence
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once dirname(__DIR__) . '/config/db.php';
 header('Content-Type: application/json');
 
@@ -638,8 +640,11 @@ if ($action === 'login_doc_nurse') {
     }
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($user && password_verify($password, $user['password'])) {
+        if (session_status() === PHP_SESSION_ACTIVE) { @session_regenerate_id(true); }
         $photoVal = $user['photo'] ?? ($user['dn_photo'] ?? '');
-        echo json_encode(['success' => true, 'user' => [
+        $_SESSION['doc_nurse_id'] = $user['id'];
+        $_SESSION['doc_nurse_role'] = $user['role'];
+        echo json_encode(['success' => true, 'session' => true, 'user' => [
             'id' => $user['id'],
             'name' => $user['name'],
             'role' => $user['role'],

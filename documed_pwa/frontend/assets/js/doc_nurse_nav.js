@@ -36,7 +36,15 @@
                 });
               updated = true;
             }
-            if (!updated) { location.reload(); }
+            // If no targeted component updated, do nothing (never reload)
+            // Optionally, show a toast or log for debugging
+            if (!updated) {
+              if (window.showToast) {
+                showToast('info', 'Data updated in background.');
+              } else {
+                console.info('[DocMed] Data updated in background (no reload).');
+              }
+            }
           }
         });
       }).catch(()=>{});

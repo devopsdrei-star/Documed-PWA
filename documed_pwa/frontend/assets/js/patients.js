@@ -1,6 +1,8 @@
 // Fetch and display patient records for admin
 let allPatients = [];
 let dedupedPatients = [];
+let currentPatientPage = 1;
+const PATIENTS_PER_PAGE = 6;
 // Lightweight toast popup
 function showToast(message, opts={}){
     const duration = opts.duration || 2000;
@@ -80,10 +82,20 @@ function isArchivedMode() {
 function renderPatients(patients) {
     const patientsTable = document.getElementById('patientsTable').getElementsByTagName('tbody')[0];
     const patientsMsg = document.getElementById('patientsMsg');
+    const pagWrap = document.getElementById('patientsPagination');
+    const prevBtn = document.getElementById('patientsPrev');
+    const nextBtn = document.getElementById('patientsNext');
+    const pageInfo = document.getElementById('patientsPageInfo');
     patientsTable.innerHTML = '';
     const archived = isArchivedMode();
+    const totalPages = Math.ceil(patients.length / PATIENTS_PER_PAGE) || 1;
+    if (currentPatientPage > totalPages) currentPatientPage = totalPages;
+    if (currentPatientPage < 1) currentPatientPage = 1;
+    const startIdx = (currentPatientPage - 1) * PATIENTS_PER_PAGE;
+    const endIdx = startIdx + PATIENTS_PER_PAGE;
+    const pagePatients = patients.slice(startIdx, endIdx);
     if (patients.length > 0) {
-        patients.forEach(p => {
+        pagePatients.forEach(p => {
             const row = document.createElement('tr');
             const createdAt = p.created_at ? new Date(p.created_at) : null;
             // Helper: render Next Check-Up state with hints
@@ -95,10 +107,7 @@ function renderPatients(patients) {
             row.innerHTML = `
                 <td>${p.student_faculty_id || ''}</td>
                 <td>${p.name}</td>
-                <td>${p.address}</td>
                 <td>${p.client_type || p.role || p.client_type_effective || p.role_effective || ''}</td>
-                <td>${p.contact_number}</td>
-                <td>${p.date_of_birth || ''}</td>
                 <td>${p.assessment || ''}</td>
                 <td>${createdAt ? createdAt.toLocaleDateString() : ''}</td>
                 <td>${nextFollowUpLabel}</td>
@@ -111,6 +120,46 @@ function renderPatients(patients) {
         patientsMsg.textContent = '';
     } else {
         patientsMsg.textContent = 'No patient records found.';
+    }
+    // Enhanced Pagination controls
+    if (pagWrap) {
+        const total = patients.length;
+        const pageSize = PATIENTS_PER_PAGE;
+        const currentPage = currentPatientPage;
+        if (total <= pageSize) {
+            pagWrap.style.display = 'none';
+        } else {
+            pagWrap.style.display = 'flex';
+            if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            if (prevBtn) {
+                const disabled = currentPage <= 1;
+                prevBtn.disabled = disabled;
+                prevBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+                prevBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+                prevBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                prevBtn.style.opacity = disabled ? '0.6' : '1';
+                prevBtn.onclick = function() {
+                    if (!disabled) {
+                        currentPatientPage--;
+                        renderPatients(patients);
+                    }
+                };
+            }
+            if (nextBtn) {
+                const disabled = currentPage >= totalPages;
+                nextBtn.disabled = disabled;
+                nextBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+                nextBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+                nextBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                nextBtn.style.opacity = disabled ? '0.6' : '1';
+                nextBtn.onclick = function() {
+                    if (!disabled) {
+                        currentPatientPage++;
+                        renderPatients(patients);
+                    }
+                };
+            }
+        }
     }
 }
 
@@ -293,18 +342,14 @@ document.addEventListener('click', function(e) {
         }
         const msg = `Archive this patient record${name ? ` for ${name}` : ''}${sid ? ` (ID: ${sid})` : ''}? It will be moved to Archived Patients and can be restored.`;
         if (!confirm(msg)) return;
-        // Archive all records for this student's SID so the patient won't reappear due to other checkups
-        const sidVal = sid || (tr && tr.children && tr.children[0] ? (tr.children[0].textContent||'').trim() : '');
-        fetch(`../../backend/api/checkup.php?action=archive`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `student_faculty_id=${encodeURIComponent(sidVal)}`
-        })
+        fetch(`../../backend/api/checkup.php?action=archive&id=${id}`, { method: 'POST' })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    try { showToast('Patient record archived. Redirecting to Archived Patients...'); } catch(_) { /* no-op */ }
-                    window.location.href = 'patients_archive.html';
+                    // Stay on the same page: show confirmation and refresh the current list
+                    try { showToast('Patient record archived.'); } catch(_) { /* no-op */ }
+                    // Re-fetch patients so the archived record disappears from active list
+                    try { fetchPatients(); } catch(_) { /* no-op */ }
                 } else alert(data.message || 'Archive failed.');
             })
             .catch(() => alert('Network error while archiving.'));
@@ -724,45 +769,25 @@ window.addEventListener('load', function() {
 
             if (!user) { scanMsg.textContent = 'Could not extract user info from QR.'; return; }
 
-            // If user already has checkup records, offer redirect to latest record
-            let redirected = false;
-            let hadExisting = false;
+            // New behavior: always open checkup form prefilled (no redirect prompt)
+            // Fetch existing records only to optionally set a hint (non-blocking)
             try {
                 const sid = (user.student_faculty_id || user.sid || '').toString();
                 if (sid) {
-                    const r = await fetch(`../../backend/api/checkup.php?action=list&student_faculty_id=${encodeURIComponent(sid)}`);
-                    const l = await r.json();
-                    const arr = Array.isArray(l.checkups) ? l.checkups : [];
-                    if (arr.length) {
-                        hadExisting = true;
-                        // pick newest by created_at desc then id desc
-                        arr.sort((a,b)=>{
-                            const da=a&&a.created_at?new Date(a.created_at):null; const db=b&&b.created_at?new Date(b.created_at):null;
-                            if(da && db && !isNaN(da) && !isNaN(db)) return db-da;
-                            const ia=Number(a&&a.id); const ib=Number(b&&b.id); if(isFinite(ia)&&isFinite(ib)) return ib-ia; return 0;
-                        });
-                        const latest = arr[0];
-                        const wants = await showRedirectPrompt(user.name || sid, sid);
-                        if (wants) {
-                            // Optional: ensure scan modal is closed before redirect
-                            if (scanModal) scanModal.style.display = 'none';
-                            window.location.href = `patient_view.html?id=${encodeURIComponent(latest.id)}`;
-                            redirected = true;
-                        } else {
-                            // User declined: just close the Scan QR modal and finish (do not open new checkup)
-                            if (scanModal) scanModal.style.display = 'none';
-                            scanMsg.textContent = '';
-                            return;
-                        }
-                    }
+                    fetch(`../../backend/api/checkup.php?action=list&student_faculty_id=${encodeURIComponent(sid)}`)
+                        .then(r=>r.json())
+                        .then(d=>{
+                            const arr = Array.isArray(d.checkups)?d.checkups:[];
+                            if (arr.length && scanMsg) {
+                                scanMsg.style.color = '#2563eb';
+                                scanMsg.textContent = 'Existing records found. Adding new checkup.';
+                                setTimeout(()=>{ if (scanMsg) scanMsg.textContent=''; }, 2500);
+                            }
+                        })
+                        .catch(()=>{});
                 }
-            } catch(_) { /* ignore */ }
-
-            if (redirected) return;
-
-            // Otherwise, open and fill the checkup modal to add a new record
-            // Only do this if no existing records were found
-            if (hadExisting) return;
+            } catch(_) {}
+            // Prefill and show modal
             fillCheckupFormFromUser(user);
             if (checkupModal) checkupModal.style.display = 'flex';
             if (scanModal) scanModal.style.display = 'none';
@@ -1008,34 +1033,39 @@ window.addEventListener('load', function() {
 // clear any open modals and form data so the checkup modal doesn't auto-show.
 window.addEventListener('pageshow', function (e) {
     try {
-        // If coming from bfcache, force a clean reload to reset all UI state
-        if (e && e.persisted) {
-            // Also strip action parameter to avoid deep-link triggers on reload
-            try {
-                const qs = new URLSearchParams(window.location.search);
-                if (qs.has('action')) {
-                    qs.delete('action');
-                    const newUrl = `${location.pathname}?${qs.toString()}`.replace(/[?&]$/,'');
-                    history.replaceState(null, '', newUrl);
-                }
-            } catch(_) {}
-            window.location.reload();
-            return;
-        }
-        // Not from bfcache: ensure modal is closed and form cleared
-        const checkupModal = document.getElementById('checkupModal');
-        const checkupForm = document.getElementById('addCheckupForm');
-        const checkupMsg = document.getElementById('checkupMsg');
-        if (checkupModal) checkupModal.style.display = 'none';
-        if (checkupForm) checkupForm.reset();
-        if (checkupMsg) checkupMsg.textContent = '';
-        // Also remove action param to prevent any future auto-open triggers
+        // Soft restore only; never force reload (keeps camera & scan workflow snappy)
+        const fromBfcache = !!(e && e.persisted);
+        // Strip any action param quietly
         try {
             const qs = new URLSearchParams(window.location.search);
             if (qs.has('action')) {
                 qs.delete('action');
                 const newUrl = `${location.pathname}?${qs.toString()}`.replace(/[?&]$/,'');
                 history.replaceState(null, '', newUrl);
+            }
+        } catch(_) {}
+        // Close modals & clear forms (avoid auto-open artifacts)
+        const checkupModal = document.getElementById('checkupModal');
+        const scanModal = document.getElementById('scanModal');
+        const checkupForm = document.getElementById('addCheckupForm');
+        const checkupMsg = document.getElementById('checkupMsg');
+        if (checkupModal) checkupModal.style.display = 'none';
+        if (scanModal) scanModal.style.display = 'none';
+        if (checkupForm) checkupForm.reset();
+        if (checkupMsg) checkupMsg.textContent = '';
+        // Conditional data refresh (only once if flag set)
+        try {
+            if (sessionStorage.getItem('documed_need_refresh') === '1') {
+                sessionStorage.removeItem('documed_need_refresh');
+                if (typeof fetchPatients === 'function') {
+                    fetchPatients();
+                }
+            } else if (fromBfcache) {
+                // Light refresh after bfcache return (no full reload): re-fetch if stale timestamp > 2 min
+                const lastFetchTs = window.__patients_last_fetch_ts || 0;
+                if (Date.now() - lastFetchTs > 120000 && typeof fetchPatients === 'function') {
+                    fetchPatients();
+                }
             }
         } catch(_) {}
     } catch(_) {}

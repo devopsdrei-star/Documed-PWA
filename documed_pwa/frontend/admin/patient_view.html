@@ -61,8 +61,21 @@
               if (!info) return;
               const safe = v => (v == null ? '' : v);
               const role = p.role_effective || p.role || '';
-              const photoFallback = '../assets/images/user_photo.png';
+              // Use an existing bundled image as fallback to avoid 404s
+              const photoFallback = '../assets/images/documed_logo.png';
               const basePhoto = p.photo || '';
+
+              // Normalize photo paths coming from DB (older rows may store just the filename)
+              function resolvePhotoPath(ph) {
+                if (!ph) return photoFallback;
+                const s = String(ph).trim();
+                if (!s) return photoFallback;
+                if (/^https?:\/\//i.test(s)) return s;           // absolute URL
+                if (s.startsWith('../') || s.startsWith('/')) return s; // already relative/absolute
+                if (s.startsWith('assets/')) return '../' + s;     // missing leading ../
+                // bare filename like "user_abc.png"
+                return '../assets/images/' + s;
+              }
 
               const headerHtml = (ph) => `
               <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;text-align:center;">
@@ -72,10 +85,10 @@
                   <div id="pvRole" style="color:#6b7280;margin-top:0;font-size:1rem;">Role: ${safe(role)}</div>
                 </div>`;
 
-              const line = (label, value) => `
-                <div style="display:flex;gap:10px;align-items:baseline;margin:10px 0;text-align:left;">
-                  <div style="min-width:180px;color:#2563eb;font-weight:700;font-size:1rem;">${label}:</div>
-                  <div style="color:#111827;font-size:1.05rem;">${safe(value)}</div>
+              const line = (label, value, idAttr='') => `
+                <div ${idAttr} style="display:flex;gap:10px;align-items:baseline;margin:10px 0;text-align:left;flex-wrap:nowrap;">
+                  <div style="min-width:180px;color:#2563eb;font-weight:700;font-size:1rem;white-space:nowrap;">${label}:</div>
+                  <div style="color:#111827;font-size:1.05rem;white-space:nowrap;">${safe(value)}</div>
                 </div>`;
 
               const detailsHtml = `
@@ -89,27 +102,44 @@
                     ${line('CONTACT PERSON', p.contact_person)}
                   </div>
                   <div class="pvColDivider" aria-hidden="true"></div>
-                  <div style="display:flex; flex-direction:column; align-items:right;">
+                  <div style="display:flex; flex-direction:column; align-items:flex-start;">
                     ${line('BIRTHDATE', p.date_of_birth)}
                     ${line('PLACE OF BIRTH', p.place_of_birth)}
                     ${line('NATIONALITY', p.nationality)}
-                    ${line('YEAR & COURSE', p.year_and_course)}
+                    ${line('YEAR & COURSE', p.year_and_course, 'id="pvYearCourse"')}
+                    ${line('DEPARTMENT', p.department, 'id="pvDepartment"')}
                   </div>
                 </div>`;
 
-              info.innerHTML = headerHtml(basePhoto) + detailsHtml;
+              info.innerHTML = headerHtml(resolvePhotoPath(basePhoto)) + detailsHtml;
+              // Toggle Year & Course vs Department based on role
+              try {
+                const roleVal = (p.role_effective || p.role || '').toString().toLowerCase();
+                const yearEl = document.getElementById('pvYearCourse');
+                const deptEl = document.getElementById('pvDepartment');
+                if (roleVal.includes('teacher') || roleVal.includes('non-teaching')) {
+                  if (yearEl) yearEl.style.display = 'none';
+                  if (deptEl) deptEl.style.display = 'flex';
+                } else { // Student or other
+                  if (deptEl) deptEl.style.display = 'none';
+                  if (yearEl) yearEl.style.display = 'flex';
+                }
+              } catch(_) {}
               if (sid) {
                 fetch('../../backend/api/auth.php?action=get_user_by_sid', {
                   method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ sid })
                 }).then(r=>r.json()).then(uRes=>{
                   const u = (uRes && uRes.success) ? uRes.user : null;
-                  const ph = (u && u.photo) ? u.photo : (basePhoto || photoFallback);
-                  const img = document.getElementById('pvPhoto'); if (img) img.src = ph;
+                  const ph = resolvePhotoPath((u && u.photo) ? u.photo : (basePhoto || photoFallback));
+                  const img = document.getElementById('pvPhoto');
+                  if (img) {
+                    img.src = ph;
+                    img.onerror = function(){ this.onerror = null; this.src = photoFallback; };
+                  }
                   const roleEl = document.getElementById('pvRole');
                   if (roleEl) {
                     let effRole = (u && (u.role_effective || u.role)) || (p.role_effective || p.role) || '';
-                    const map = { 'Teacher': 'Faculty', 'Non-Teaching': 'Staff' };
-                    if (effRole && map[effRole]) effRole = map[effRole];
+                    // Use raw backend role names without converting to Faculty/Staff
                     if (effRole) roleEl.textContent = `Role: ${effRole}`;
                   }
                 }).catch(()=>{});
@@ -132,14 +162,14 @@
                     if(da && db && !isNaN(da) && !isNaN(db)) return db-da;
                     const ia=Number(a&&a.id); const ib=Number(b&&b.id); if(isFinite(ia)&&isFinite(ib)) return ib-ia; return 0;
                   });
-                  const rows = arr.map((it, idx) => {
+                  const rowsHtml = arr.map((it, idx) => {
                     const dt = it.created_at || it.updated_at || '';
                     const dateStr = dt ? new Date(dt).toLocaleDateString() : '';
                     const performer = it.doctor_nurse || '-';
                     return `<tr>
                       <td style="padding:8px;">${idx+1}</td>
                       <td style="padding:8px;">${dateStr}</td>
-                      <td style="padding:8px;">${it.assessment || ''}</td>
+                      <td style="padding:8px;">${(it.assessment||'')}</td>
                       <td style="padding:8px;">${performer}</td>
                       <td style="padding:8px;"><a href="../doc_nurse/medical_exam_report.html?id=${encodeURIComponent(it.id)}" style="color:#2563eb;text-decoration:none;">View</a></td>
                     </tr>`;
@@ -157,7 +187,7 @@
                             <th style="text-align:left;padding:8px;">Action</th>
                           </tr>
                         </thead>
-                        <tbody>${rows}</tbody>
+                        <tbody>${rowsHtml}</tbody>
                       </table>
                     </div>`;
                 })
