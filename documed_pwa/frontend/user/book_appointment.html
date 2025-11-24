@@ -483,4 +483,50 @@
             });
         };
     </script>
+
+    <style>
+      .btn-primary, .btn-light {
+        width: 100%; /* Ensure both buttons have the same width */
+        height: auto; /* Ensure both buttons have consistent height */
+        padding: 12px; /* Adjust padding for uniform appearance */
+        font-size: 1rem; /* Ensure consistent font size */
+      }
+    </style>
+
+    <footer style="background:#0a6ecb;color:#fff;padding:32px 0 18px 0;margin-top:48px;width:100vw;">
+      <div style="max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;">
+        <div id="footerClinicName" style="font-size:1.15rem;font-weight:600;letter-spacing:1px;">DocuMed Campus Clinic &copy; 2025</div>
+        <div style="font-size:1rem;">For inquiries: <a href="mailto:clinic@documed.com" style="color:#fff;text-decoration:underline;">clinic@documed.com</a></div>
+        <div style="font-size:1rem;">Powered by <span style="color:#00d1c7;font-weight:600;">DocuMed</span></div>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const timeSlotsContainer = document.getElementById('timeSlots');
+        const calendar = document.getElementById('calendar');
+
+        // Simulate faster loading of time slots
+        setTimeout(() => {
+          timeSlotsContainer.innerHTML = `
+            <button class="time-slot-btn">8:00 AM - 9:00 AM</button>
+            <button class="time-slot-btn">9:00 AM - 10:00 AM</button>
+            <button class="time-slot-btn">10:00 AM - 11:00 AM</button>
+            <button class="time-slot-btn">11:00 AM - 12:00 PM</button>
+            <button class="time-slot-btn">1:00 PM - 2:00 PM</button>
+            <button class="time-slot-btn">2:00 PM - 3:00 PM</button>
+          `;
+        }, 500); // Simulate faster loading with a short delay
+
+        // Optional: Add loading indicator
+        // calendar.innerHTML = '<div>Loading time slots...</div>';
+      });
+    </script>
+      <footer style="background:#0a6ecb;color:#fff;padding:32px 0 18px 0;margin-top:48px;width:100vw;">
+    <div style="max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;">
+      <div id="footerClinicName" style="font-size:1.15rem;font-weight:600;letter-spacing:1px;">DocuMed Campus Clinic &copy; 2025</div>
+      <div style="font-size:1rem;">For inquiries: <a href="mailto:clinic@documed.com" style="color:#fff;text-decoration:underline;">clinic@documed.com</a></div>
+      <div style="font-size:1rem;">Powered by <span style="color:#00d1c7;font-weight:600;">DocuMed</span></div>
+    </div>
+  </footer>
 </html>

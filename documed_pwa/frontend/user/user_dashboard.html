@@ -562,11 +562,11 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content" style="border-radius:16px;">
         <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
-          <h5 class="modal-title" id="loginModalLabel">User Login</h5>
+          <h5 class="modal-title" id="loginModalLabel">Patient Login</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-       <form id="userLoginFormModal">
+       <form id="patientLoginFormModal">
          <div class="mt-2 text-end" style="font-size:0.95rem;color:#334155;margin-bottom:10px;">
               <span>Are you a </span>
               <a href="../doc_nurse/doc_nurse_login.html" style="color:#2563eb;font-weight:600;text-decoration:underline;">Doctor/Nurse</a>
@@ -575,12 +575,12 @@
               <span>?</span>
             </div>
             <div class="mb-3" id="loginFieldEmail">
-              <label for="loginEmail" class="form-label">Email or School ID</label>
-              <input type="text" class="form-control" id="loginEmail" name="email" required placeholder="Enter email or School ID">
+              <label for="loginEmail" class="form-label"><span class="icon">👤</span> Email or School ID</label>
+              <input type="text" class="form-control" id="loginEmail" name="email" required placeholder="Enter Email or School ID">
             </div>
             <div class="mb-3" id="loginFieldPassword">
-              <label for="loginPassword" class="form-label">Password</label>
-              <input type="password" class="form-control" id="loginPassword" name="password" required placeholder="Enter your password">
+              <label for="loginPassword" class="form-label"><span class="icon">🔒</span> Password</label>
+              <input type="password" class="form-control" id="loginPassword" name="password" required placeholder="Enter your Password">
             </div>
             <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">Login</button>
             <div class="d-grid gap-0 mt-0" id="loginQrBtnRow">

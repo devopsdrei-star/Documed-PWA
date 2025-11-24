@@ -253,12 +253,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		if (!rows) return '';
 		let html = `<div style="overflow-x:auto;">`;
 		if (title) html += `<div style=\"font-weight:700;margin:8px 0 6px;\">${title}</div>`;
-		html += `<table class="report"><thead><tr><th style="min-width:280px;">Particulars</th><th>Students</th><th>Faculty</th><th>Staff</th></tr></thead><tbody>`;
+		html += `<table class="report"><thead><tr><th style="min-width:280px;">Particulars</th><th>Students</th><th>Teachers</th><th>Non-Teaching</th></tr></thead><tbody>`;
 		rows.forEach(r=>{
-			html += `<tr><td>${r.label}</td><td>${r.Student||0}</td><td>${r.Faculty||0}</td><td>${r.Staff||0}</td></tr>`;
+				html += `<tr><td>${r.label}</td><td>${r.Student||0}</td><td>${r.Teacher||0}</td><td>${r['Non-Teaching']||0}</td></tr>`;
 		});
 		if (showTotals && totals) {
-			html += `<tr><th>Total</th><th>${totals.Student||0}</th><th>${totals.Faculty||0}</th><th>${totals.Staff||0}</th></tr>`;
+				html += `<tr><th>Total</th><th>${totals.Student||0}</th><th>${totals.Teacher||0}</th><th>${totals['Non-Teaching']||0}</th></tr>`;
 		}
 		html += `</tbody></table></div>`;
 		return html;
@@ -376,11 +376,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		canvas.width = width; canvas.height = h;
 		const ds = [
 			{ label: 'Students', data: roleSeries.Student || [], backgroundColor: '#2563eb' },
-			{ label: 'Faculty', data: roleSeries.Faculty || [], backgroundColor: '#22c55e' },
-			{ label: 'Staff', data: roleSeries.Staff || [], backgroundColor: '#eab308' }
+			{ label: 'Teachers', data: roleSeries.Teacher || [], backgroundColor: '#22c55e' },
+			{ label: 'Non-Teaching', data: roleSeries['Non-Teaching'] || [], backgroundColor: '#eab308' }
 		];
 		// no data overlay handling
-		const totalSum = [...(roleSeries.Student||[]), ...(roleSeries.Faculty||[]), ...(roleSeries.Staff||[])]
+		const totalSum = [...(roleSeries.Student||[]), ...(roleSeries.Teacher||[]), ...(roleSeries['Non-Teaching']||[])]
 			.reduce((a,b)=>a+Number(b||0),0);
 		card.style.position = 'relative';
 		let overlay = card.querySelector(`#${canvasId}NoData`);
@@ -502,11 +502,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		// Cases seen (header box)
 		const cs = data.casesSeen || { withIllness:{}, otherServices:{}, grandTotal:{} };
 		const csTable = `
-			<table class="report"><thead><tr><th>Cases Seen</th><th>No. of Students</th><th>No. of Faculty</th><th>No. of Staff</th></tr></thead>
+			<table class="report"><thead><tr><th>Cases Seen</th><th>No. of Students</th><th>No. of Teachers</th><th>No. of Non-Teaching</th></tr></thead>
 			<tbody>
-			<tr><td>With Illness</td><td>${cs.withIllness.Student||0}</td><td>${cs.withIllness.Faculty||0}</td><td>${cs.withIllness.Staff||0}</td></tr>
-			<tr><td>Other Services except consultation and treatment of diseases</td><td>${cs.otherServices.Student||0}</td><td>${cs.otherServices.Faculty||0}</td><td>${cs.otherServices.Staff||0}</td></tr>
-			<tr><td>Pre Assessment Health Form</td><td><strong>Total:</strong></td><td></td><td><strong>${(cs.grandTotal.Student||0)+(cs.grandTotal.Faculty||0)+(cs.grandTotal.Staff||0)}</strong></td></tr>
+			<tr><td>With Illness</td><td>${cs.withIllness.Student||0}</td><td>${cs.withIllness.Teacher||0}</td><td>${cs.withIllness['Non-Teaching']||0}</td></tr>
+			<tr><td>Other Services except consultation and treatment of diseases</td><td>${cs.otherServices.Student||0}</td><td>${cs.otherServices.Teacher||0}</td><td>${cs.otherServices['Non-Teaching']||0}</td></tr>
+			<tr><td>Pre Assessment Health Form</td><td><strong>Total:</strong></td><td></td><td><strong>${(cs.grandTotal.Student||0)+(cs.grandTotal.Teacher||0)+(cs.grandTotal['Non-Teaching']||0)}</strong></td></tr>
 			</tbody></table>`;
 		const tableTitleBlock = quarterTitle ? `<div class="print-only" style="text-align:center; font-weight:700; margin:8px 0;">TABLE 38 MEDICAL SERVICES</div>
 		<div class="print-only" style="text-align:center; font-weight:700; margin-bottom:8px;">${quarterTitle}</div>` : `<div class="print-only" style="text-align:center; font-weight:700; margin:8px 0;">TABLE 38 MEDICAL SERVICES</div>`;
@@ -531,23 +531,23 @@ document.addEventListener('DOMContentLoaded', function() {
 		const rows = [1,2,3,4,5].map(i=>({
 			label: i,
 			Student: tb.Student?.[i-1] || '',
-			Faculty: tb.Faculty?.[i-1] || '',
-			Staff: tb.Staff?.[i-1] || ''
+			Teacher: tb.Teacher?.[i-1] || '',
+			NonTeaching: tb['Non-Teaching']?.[i-1] || ''
 		}));
 		const topIllTable = `
-			<table class="report"><thead><tr><th style="width:60px;"></th><th>Among Students</th><th>Among Faculty</th><th>Among Staff</th></tr></thead>
-			<tbody>${rows.map(r=>`<tr><td>${r.label}</td><td>${r.Student}</td><td>${r.Faculty}</td><td>${r.Staff}</td></tr>`).join('')}</tbody></table>`;
+			<table class="report"><thead><tr><th style="width:60px;"></th><th>Among Students</th><th>Among Teachers</th><th>Among Non-Teaching</th></tr></thead>
+			<tbody>${rows.map(r=>`<tr><td>${r.label}</td><td>${r.Student}</td><td>${r.Teacher}</td><td>${r.NonTeaching}</td></tr>`).join('')}</tbody></table>`;
 		document.getElementById('combinedTopIllness').innerHTML = topIllTable;
 
 		// Medications Given to: summary block from totals
-		const medTotals = data.medicines?.totals || { Student:0, Faculty:0, Staff:0 };
-		const medGrand = (data.medicines?.grand ?? ((medTotals.Student||0)+(medTotals.Faculty||0)+(medTotals.Staff||0)));
+		const medTotals = data.medicines?.totals || { Student:0, Teacher:0, 'Non-Teaching':0 };
+		const medGrand = (data.medicines?.grand ?? ((medTotals.Student||0)+(medTotals.Teacher||0)+(medTotals['Non-Teaching']||0)));
 		const medsSummary = `
 			<div class="print-only" style="margin-top:14px;"><strong>Medications Given to:</strong></div>
 			<div class="print-only" style="display:grid; grid-template-columns:180px 1fr; max-width:420px; gap:4px 8px;">
 				<div>Students&nbsp;:</div><div>${medTotals.Student||0} tabs/caps</div>
-				<div>Faculty&nbsp;:</div><div>${medTotals.Faculty||0} tabs/caps</div>
-				<div>Staff&nbsp;:</div><div>${medTotals.Staff||0} tabs/caps</div>
+				<div>Teachers&nbsp;:</div><div>${medTotals.Teacher||0} tabs/caps</div>
+				<div>Non-Teaching&nbsp;:</div><div>${medTotals['Non-Teaching']||0} tabs/caps</div>
 				<div><strong>Total&nbsp;:</strong></div><div><strong>${medGrand||0} tabs/caps</strong></div>
 			</div>`;
 		casesSeenEl.insertAdjacentHTML('beforeend', medsSummary);
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			if (dept && dept !== 'All') url += `&department=${encodeURIComponent(dept)}`;
 			if (year) url += `&year=${encodeURIComponent(year)}`;
 			if (course) url += `&course=${encodeURIComponent(course)}`;
-		} else if (audience === 'Faculty' || audience === 'Staff') {
+		} else if (audience === 'Teacher' || audience === 'Non-Teaching') {
 			const dept = deptFilter ? deptFilter.value : 'All';
 			if (dept && dept !== 'All') url += `&department=${encodeURIComponent(dept)}`;
 		}
@@ -809,8 +809,8 @@ document.addEventListener('DOMContentLoaded', function() {
 								summaryBody.innerHTML = body + (data.roleCounts ? `<hr style="margin:8px 0;">` +
 									`<div style="font-weight:600;margin-bottom:4px;">Role Totals</div>` +
 									`<div style=\"display:flex;justify-content:space-between;gap:8px;\"><span>Students</span><span><strong>${data.roleCounts.Student||0}</strong></span></div>` +
-									`<div style=\"display:flex;justify-content:space-between;gap:8px;\"><span>Faculty</span><span><strong>${data.roleCounts.Faculty||0}</strong></span></div>` +
-									`<div style=\"display:flex;justify-content:space-between;gap:8px;\"><span>Staff</span><span><strong>${data.roleCounts.Staff||0}</strong></span></div>`
+									`<div style=\"display:flex;justify-content:space-between;gap:8px;\"><span>Teachers</span><span><strong>${data.roleCounts.Teacher||0}</strong></span></div>` +
+									`<div style=\"display:flex;justify-content:space-between;gap:8px;\"><span>Non-Teaching</span><span><strong>${data.roleCounts['Non-Teaching']||0}</strong></span></div>`
 								: '');
 								summaryTotal.textContent = `Total: ${total}`;
 						}

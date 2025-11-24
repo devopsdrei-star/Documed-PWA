@@ -284,7 +284,7 @@
                     <td style=\"padding:8px;\">${dateStr}</td>
                     <td style=\"padding:8px;\">${(it.assessment||'')}</td>
                     <td style=\"padding:8px;\">${performer}</td>
-                    <td style=\"padding:8px;\"><a href=\"medical_exam_report.html?id=${encodeURIComponent(it.id)}\" style=\"color:#2563eb;text-decoration:none;\">View</a></td>
+                    <td style=\"padding:8px;\"><a href=\"patient_checkup_form.html?id=${encodeURIComponent(it.id)}\" style=\"color:#2563eb;text-decoration:none;\">View</a></td>
                   </tr>`;
                 }).join('');
                 container.innerHTML = `
@@ -333,6 +333,7 @@
                     <td style="padding:8px;">${it.temp || ''}</td>
                     <td style="padding:8px;">${it.impression || ''}</td>
                     <td style="padding:8px;">${it.treatment || ''}</td>
+                    <td style="padding:8px;"><a href="patient_followup_form.html?id=${encodeURIComponent(it.id)}&sid=${encodeURIComponent(sid)}" style="color:#2563eb;text-decoration:none;">View</a></td>
                   </tr>`;
                 }).join('');
                 container.innerHTML = `
@@ -348,6 +349,7 @@
                           <th style="text-align:left;padding:8px;">Temp</th>
                           <th style="text-align:left;padding:8px;">Impression</th>
                           <th style="text-align:left;padding:8px;">Treatment</th>
+                          <th style="text-align:left;padding:8px;">Action</th>
                         </tr>
                       </thead>
                       <tbody>${rows}</tbody>
@@ -414,6 +416,20 @@
             const btn = document.getElementById('fuSave');
             if (!form) return;
             const fd = new FormData(form);
+            // Also persist basic demographics for patients table
+            try {
+              if (p) {
+                if (!fd.has('name')) fd.set('name', (p.name || '').toString());
+                if (!fd.has('address')) fd.set('address', (p.address || '').toString());
+                if (!fd.has('age_sex')) {
+                  const age = (p.age || '').toString().trim();
+                  const sex = (p.gender || p.sex || '').toString().trim();
+                  const combined = age && sex ? `${age} / ${sex}` : (age || sex);
+                  fd.set('age_sex', combined || '');
+                }
+                if (!fd.has('contact_number')) fd.set('contact_number', (p.contact_number || '').toString());
+              }
+            } catch(_) {}
             // Normalize/trim fields and ensure date format
             const dateEl = document.getElementById('fuDate');
             const complaintEl = document.getElementById('fuComplaint');

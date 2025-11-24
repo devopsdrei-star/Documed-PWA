@@ -343,12 +343,19 @@ if ($action === 'illness_stats') {
 		if ($g === 'male' || $g === 'm') $genderCounts['Male']++; elseif ($g === 'female' || $g === 'f') $genderCounts['Female']++; elseif ($g !== '') $genderCounts['Other']++;
 	}
 
+	// Map internal Faculty/Staff buckets to Teacher/Non-Teaching for the frontend
+	$roleCountsDisplay = [
+		'Student' => $roleCounts['Student'] ?? 0,
+		'Teacher' => $roleCounts['Faculty'] ?? 0,
+		'Non-Teaching' => $roleCounts['Staff'] ?? 0
+	];
+
 		echo json_encode([
 			'success'=>true,
 			'labels'=>$labels,
 			'values'=>$values,
 			'total'=>$total,
-			'roleCounts'=>$roleCounts,
+			'roleCounts'=>$roleCountsDisplay,
 			'genderCounts'=>$genderCounts,
 			'debug'=>array_merge([
 				'filters'=>$origFilters,

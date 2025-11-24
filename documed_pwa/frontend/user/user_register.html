@@ -361,8 +361,8 @@
           </div>
           <div class="input-group" id="department-group" style="display:none;">
             <label for="department">Department</label>
-            <select id="department" name="department" aria-label="Select department">
-              <option value="">Select Department</option>
+            <input type="text" id="department" name="department" list="departmentOptions" placeholder="Select or type department" aria-label="Select department">
+            <datalist id="departmentOptions">
               <option value="CCS">CCS</option>
               <option value="CASL">CASL</option>
               <option value="CBPA">CBPA</option>

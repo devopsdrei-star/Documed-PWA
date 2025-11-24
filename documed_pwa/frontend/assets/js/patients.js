@@ -1,8 +1,6 @@
 // Fetch and display patient records for admin
 let allPatients = [];
 let dedupedPatients = [];
-let currentPatientPage = 1;
-const PATIENTS_PER_PAGE = 6;
 // Lightweight toast popup
 function showToast(message, opts={}){
     const duration = opts.duration || 2000;
@@ -79,23 +77,20 @@ function isArchivedMode() {
     } catch(_) { return false; }
 }
 
+// Pagination state (shared across views using this script)
+let patientsCurrentPage = 1;
+const patientsPageSize = 10; // 10 rows per page
+
+// Core renderer for a slice of patients
 function renderPatients(patients) {
-    const patientsTable = document.getElementById('patientsTable').getElementsByTagName('tbody')[0];
+    const table = document.getElementById('patientsTable');
+    if (!table) return;
+    const patientsTable = table.getElementsByTagName('tbody')[0];
     const patientsMsg = document.getElementById('patientsMsg');
-    const pagWrap = document.getElementById('patientsPagination');
-    const prevBtn = document.getElementById('patientsPrev');
-    const nextBtn = document.getElementById('patientsNext');
-    const pageInfo = document.getElementById('patientsPageInfo');
     patientsTable.innerHTML = '';
     const archived = isArchivedMode();
-    const totalPages = Math.ceil(patients.length / PATIENTS_PER_PAGE) || 1;
-    if (currentPatientPage > totalPages) currentPatientPage = totalPages;
-    if (currentPatientPage < 1) currentPatientPage = 1;
-    const startIdx = (currentPatientPage - 1) * PATIENTS_PER_PAGE;
-    const endIdx = startIdx + PATIENTS_PER_PAGE;
-    const pagePatients = patients.slice(startIdx, endIdx);
     if (patients.length > 0) {
-        pagePatients.forEach(p => {
+        patients.forEach(p => {
             const row = document.createElement('tr');
             const createdAt = p.created_at ? new Date(p.created_at) : null;
             // Helper: render Next Check-Up state with hints
@@ -107,6 +102,7 @@ function renderPatients(patients) {
             row.innerHTML = `
                 <td>${p.student_faculty_id || ''}</td>
                 <td>${p.name}</td>
+                <td>${p.address}</td>
                 <td>${p.client_type || p.role || p.client_type_effective || p.role_effective || ''}</td>
                 <td>${p.assessment || ''}</td>
                 <td>${createdAt ? createdAt.toLocaleDateString() : ''}</td>
@@ -121,47 +117,66 @@ function renderPatients(patients) {
     } else {
         patientsMsg.textContent = 'No patient records found.';
     }
-    // Enhanced Pagination controls
-    if (pagWrap) {
-        const total = patients.length;
-        const pageSize = PATIENTS_PER_PAGE;
-        const currentPage = currentPatientPage;
-        if (total <= pageSize) {
-            pagWrap.style.display = 'none';
-        } else {
-            pagWrap.style.display = 'flex';
-            if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-            if (prevBtn) {
-                const disabled = currentPage <= 1;
-                prevBtn.disabled = disabled;
-                prevBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-                prevBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
-                prevBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
-                prevBtn.style.opacity = disabled ? '0.6' : '1';
-                prevBtn.onclick = function() {
-                    if (!disabled) {
-                        currentPatientPage--;
-                        renderPatients(patients);
-                    }
-                };
-            }
-            if (nextBtn) {
-                const disabled = currentPage >= totalPages;
-                nextBtn.disabled = disabled;
-                nextBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-                nextBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
-                nextBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
-                nextBtn.style.opacity = disabled ? '0.6' : '1';
-                nextBtn.onclick = function() {
-                    if (!disabled) {
-                        currentPatientPage++;
-                        renderPatients(patients);
-                    }
-                };
-            }
-        }
-    }
 }
+
+// Render a specific page (1-based) of the global dedupedPatients
+function renderPatientsPage(page) {
+    const table = document.getElementById('patientsTable');
+    const pager = document.getElementById('patientsPagination');
+    const info = document.getElementById('patientsPageInfo');
+    const prevBtn = document.getElementById('patientsPrev');
+    const nextBtn = document.getElementById('patientsNext');
+
+    if (!table || !pager || !info || !prevBtn || !nextBtn) {
+        // Fallback: if controls not present (e.g., other pages), just render all
+        renderPatients(dedupedPatients);
+        return;
+    }
+
+    const total = dedupedPatients.length;
+    if (!total) {
+        pager.style.display = 'none';
+        renderPatients([]);
+        return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(total / patientsPageSize));
+    patientsCurrentPage = Math.min(Math.max(1, page || 1), totalPages);
+
+    const start = (patientsCurrentPage - 1) * patientsPageSize;
+    const end = start + patientsPageSize;
+    const slice = dedupedPatients.slice(start, end);
+
+    renderPatients(slice);
+
+    pager.style.display = 'flex';
+    info.textContent = `Page ${patientsCurrentPage} of ${totalPages}`;
+
+    const isFirst = patientsCurrentPage <= 1;
+    const isLast = patientsCurrentPage >= totalPages;
+
+    prevBtn.disabled = isFirst;
+    nextBtn.disabled = isLast;
+
+    // Visual state: gray when disabled, blue when active
+    prevBtn.style.background = isFirst ? '#9ca3af' : '#2563eb';
+    prevBtn.style.cursor = isFirst ? 'default' : 'pointer';
+    nextBtn.style.background = isLast ? '#9ca3af' : '#2563eb';
+    nextBtn.style.cursor = isLast ? 'default' : 'pointer';
+
+    prevBtn.onclick = function () {
+        if (patientsCurrentPage > 1) {
+            renderPatientsPage(patientsCurrentPage - 1);
+        }
+    };
+
+    nextBtn.onclick = function () {
+        if (patientsCurrentPage < totalPages) {
+            renderPatientsPage(patientsCurrentPage + 1);
+        }
+    };
+}
+
 
 // Format "Next Check-Up" column with relative hints
 function formatNextFollowUp(dateStr) {
@@ -302,7 +317,8 @@ function fetchPatients() {
                 }
             }
 
-            renderPatients(dedupedPatients);
+            // Initial render with pagination if controls are present
+            renderPatientsPage(1);
             // Update gender stats if elements present (doc_nurse dashboard or similar reuse)
             try {
                 const maleEl = document.getElementById('statMaleCheckups');
@@ -539,7 +555,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return (p.name && p.name.toLowerCase().includes(filter)) ||
                        (p.student_faculty_id && p.student_faculty_id.toLowerCase().includes(filter));
             });
-            renderPatients(filtered);
+            // When searching, re-page results from page 1
+            dedupedPatients = filtered;
+            renderPatientsPage(1);
         });
     }
 });
@@ -769,25 +787,45 @@ window.addEventListener('load', function() {
 
             if (!user) { scanMsg.textContent = 'Could not extract user info from QR.'; return; }
 
-            // New behavior: always open checkup form prefilled (no redirect prompt)
-            // Fetch existing records only to optionally set a hint (non-blocking)
+            // If user already has checkup records, offer redirect to latest record
+            let redirected = false;
+            let hadExisting = false;
             try {
                 const sid = (user.student_faculty_id || user.sid || '').toString();
                 if (sid) {
-                    fetch(`../../backend/api/checkup.php?action=list&student_faculty_id=${encodeURIComponent(sid)}`)
-                        .then(r=>r.json())
-                        .then(d=>{
-                            const arr = Array.isArray(d.checkups)?d.checkups:[];
-                            if (arr.length && scanMsg) {
-                                scanMsg.style.color = '#2563eb';
-                                scanMsg.textContent = 'Existing records found. Adding new checkup.';
-                                setTimeout(()=>{ if (scanMsg) scanMsg.textContent=''; }, 2500);
-                            }
-                        })
-                        .catch(()=>{});
+                    const r = await fetch(`../../backend/api/checkup.php?action=list&student_faculty_id=${encodeURIComponent(sid)}`);
+                    const l = await r.json();
+                    const arr = Array.isArray(l.checkups) ? l.checkups : [];
+                    if (arr.length) {
+                        hadExisting = true;
+                        // pick newest by created_at desc then id desc
+                        arr.sort((a,b)=>{
+                            const da=a&&a.created_at?new Date(a.created_at):null; const db=b&&b.created_at?new Date(b.created_at):null;
+                            if(da && db && !isNaN(da) && !isNaN(db)) return db-da;
+                            const ia=Number(a&&a.id); const ib=Number(b&&b.id); if(isFinite(ia)&&isFinite(ib)) return ib-ia; return 0;
+                        });
+                        const latest = arr[0];
+                        const wants = await showRedirectPrompt(user.name || sid, sid);
+                        if (wants) {
+                            // Optional: ensure scan modal is closed before redirect
+                            if (scanModal) scanModal.style.display = 'none';
+                            window.location.href = `patient_view.html?id=${encodeURIComponent(latest.id)}`;
+                            redirected = true;
+                        } else {
+                            // User declined: just close the Scan QR modal and finish (do not open new checkup)
+                            if (scanModal) scanModal.style.display = 'none';
+                            scanMsg.textContent = '';
+                            return;
+                        }
+                    }
                 }
-            } catch(_) {}
-            // Prefill and show modal
+            } catch(_) { /* ignore */ }
+
+            if (redirected) return;
+
+            // Otherwise, open and fill the checkup modal to add a new record
+            // Only do this if no existing records were found
+            if (hadExisting) return;
             fillCheckupFormFromUser(user);
             if (checkupModal) checkupModal.style.display = 'flex';
             if (scanModal) scanModal.style.display = 'none';

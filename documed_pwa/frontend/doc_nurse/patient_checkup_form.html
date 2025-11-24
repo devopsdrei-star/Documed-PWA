@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMed - Patient's Medical Record</title>
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11px; color:#111; margin: 0; }
+    .sheet { max-width: 820px; margin: 18px auto; padding: 8px 10px 14px; border: 1px solid #111; box-sizing: border-box; background:#fff; position:relative; }
+    .header { text-align:center; font-weight:700; margin-bottom:8px; margin-top: 25px; }
+    .top-right { position:absolute; top:6px; right:10px; font-size:7px; line-height:1.3; text-align:right; }
+    .label { font-weight: bold; padding-right:4px; white-space:nowrap; }
+    .field { border-bottom: 1px solid #111; min-height: 16px; padding: 1px 4px; font-size:10px; }
+    .section { margin-top: 8px; border: 1px solid #111; padding: 8px; }
+    .section h4 { margin: 0 0 6px 0; font-size: 12px; }
+    .box { min-height: 18px; border-bottom: 1px solid #111; padding: 2px 4px; white-space: pre-wrap; }
+    .checks { display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .sign { margin-top: 18px; display:flex; justify-content: space-between; }
+    .photo { width: 130px; height: 130px; border:1px solid #111; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .btn { padding:6px 10px;border:none;border-radius:4px;cursor:pointer;font-size:11px; }
+    .btn-muted { background:#6b7280;color:#fff; }
+    .muted { color:#6b7280; font-size:11px; }
+    @media print {
+      body { margin:0; padding:0; }
+      @page { size: 8.5in 13in; margin: 0.25in; }
+      .main-content { padding:0 !important; box-shadow:none !important; }
+      .btn { display:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-content" style="max-width:none;margin:0 auto;background:#f3f4f6;padding:12px;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+      <div class="muted" id="subtitle"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button id="btnBack" class="btn btn-muted">Back</button>
+      </div>
+    </div>
+
+    <div id="record" class="sheet"></div>
+  </div>
+
+  <script>
+    (function(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (!id) {
+        const rec = document.getElementById('record');
+        if (rec) rec.innerHTML = '<p class="muted">Missing record id.</p>';
+        return;
+      }
+
+      fetch(`../../backend/api/checkup.php?action=view&id=${encodeURIComponent(id)}`)
+        .then(r=>r.json())
+        .then(data=>{
+          if (!data || !data.success || !data.patient) {
+            const rec = document.getElementById('record');
+            if (rec) rec.innerHTML = '<p class="muted">Record not found.</p>';
+            return;
+          }
+          const p = data.patient;
+          const sid = p.student_faculty_id || '';
+          const subtitleEl = document.getElementById('subtitle');
+          if (subtitleEl) subtitleEl.textContent = sid ? `School ID: ${sid}` : '';
+
+          const btnBack = document.getElementById('btnBack');
+          if (btnBack) btnBack.onclick = () => window.history.back();
+
+          const dateStr = (() => {
+            const dt = p.created_at || p.updated_at || '';
+            if (!dt) return '';
+            const d = new Date(dt);
+            return isNaN(d) ? dt : d.toLocaleString();
+          })();
+
+          const rec = document.getElementById('record');
+          if (!rec) return;
+          let fullName = p.name || '';
+          if (!fullName) {
+            fullName = p.student_faculty_id || '';
+          }
+          const age = p.u_age || p.age || '';
+          const addr = p.u_address || p.address || '';
+          const cstatus = p.u_civil_status || p.civil_status || '';
+          const nationality = p.u_nationality || p.nationality || '';
+          const religion = p.u_religion || p.religion || '';
+          const dob = p.u_dob || p.date_of_birth || '';
+          const pob = p.u_pob || p.place_of_birth || '';
+          const yc = p.year_and_course || p.u_year_course || p.year_course || '';
+          const contactPerson = p.u_contact_person || p.contact_person || '';
+          const contactNumber = p.u_contact_number || p.contact_number || '';
+
+          const check = v => v ? '☑' : '☐';
+
+          rec.innerHTML = `
+            <div class="top-right" id="pfTopRight">FM-AA-MDS-04<br>Rev. 0<br>03-Oct-2017</div> <br>
+            <div class="header">PATIENT'S MEDICAL RECORD<br><small>Pangasinan State University - Lingayen Campus</small></div>
+            <table style="width:100%; margin-top:8px; border-collapse:collapse;">
+              <tr>
+                <td style="width:72%; vertical-align:top; padding-right:6px;">
+                  <table style="width:100%; border-collapse:collapse;">
+                    <col style="width:16%"><col style="width:44%"><col style="width:12%"><col style="width:28%">
+                    <tr>
+                      <td class="label">DATE:</td>
+                      <td class="field" colspan="3">${dateStr}</td>
+                    </tr>
+                    <tr>
+                      <td class="label">NAME:</td>
+                      <td class="field">${fullName}</td>
+                      <td class="label">AGE:</td>
+                      <td class="field">${age}</td>
+                    </tr>
+                    <tr>
+                      <td class="label">ADDRESS:</td>
+                      <td class="field">${addr}</td>
+                      <td class="label">CIVIL STATUS:</td>
+                      <td class="field">${cstatus}</td>
+                    </tr>
+                    <tr>
+                      <td class="label">NATIONALITY:</td>
+                      <td class="field">${nationality}</td>
+                      <td class="label">RELIGION:</td>
+                      <td class="field">${religion}</td>
+                    </tr>
+                    <tr>
+                      <td class="label">DATE OF BIRTH:</td>
+                      <td class="field">${dob}</td>
+                      <td class="label">PLACE OF BIRTH:</td>
+                      <td class="field">${pob}</td>
+                    </tr>
+                    <tr>
+                      <td class="label">YEAR &amp; COURSE:</td>
+                      <td class="field">${yc}</td>
+                      <td class="label">CONTACT PERSON:</td>
+                      <td class="field">${contactPerson}</td>
+                    </tr>
+                    <tr>
+                      <td class="label">CONTACT NO.:</td>
+                      <td class="field">${contactNumber}</td>
+                      <td class="label">STUDENT/EMP ID:</td>
+                      <td class="field">${sid}</td>
+                    </tr>
+                  </table>
+                </td>
+                <td style="width:28%; vertical-align:top; text-align:center;">
+                  <div class="photo">2 x 2<br>PHOTO</div>
+                  <div class="muted" style="margin-top:4px;">Place 2x2 photo here</div>
+                </td>
+              </tr>
+            </table>
+
+            <div class="section">
+              <h4>MEDICAL HISTORY</h4>
+              <div><span class="label">I. HISTORY OF PAST ILLNESS (if any)</span><div class="box">${p.history_past_illness || ''}</div></div>
+              <div><span class="label">II. PRESENT ILLNESS</span><div class="box">${p.present_illness || ''}</div></div>
+              <div><span class="label">III. OPERATIONS AND HOSPITALIZATIONS</span><div class="box">${p.operations_hospitalizations || ''}</div></div>
+              <div><span class="label">IV. IMMUNIZATION HISTORY</span><div class="box">${p.immunization_history || ''}</div></div>
+              <div><span class="label">V. SOCIAL AND ENVIRONMENTAL HISTORY</span><div class="box">${p.social_environmental_history || ''}</div></div>
+              <div><span class="label">VI. OB/GYNECOLOGICAL HISTORY (for female only)</span><div class="box">${p.ob_gyne_history || ''}</div></div>
+            </div>
+
+            <div class="section">
+              <h4>PHYSICAL EXAMINATION (Check all that apply)</h4>
+              <div class="checks">
+                <div>${check(p.physical_exam_general_survey)} General Survey</div>
+                <div>${check(p.physical_exam_heart)} Heart</div>
+                <div>${check(p.physical_exam_skin)} Skin</div>
+                <div>${check(p.physical_exam_abdomen)} Abdomen</div>
+                <div>${check(p.physical_exam_chest_lungs)} Chest and Lungs</div>
+                <div>${check(p.physical_exam_genitourinary)} Genitourinary</div>
+                <div>${check(p.physical_exam_musculoskeletal)} Musculoskeletal</div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div><span class="label">NEUROLOGICAL EXAMINATION:</span><div class="box">${p.neurological_exam || ''}</div></div>
+              <div><span class="label">LABORATORY RESULTS:</span><div class="box">${p.laboratory_results || ''}</div></div>
+              <div><span class="label">ASSESSMENT:</span><div class="box">${p.assessment || ''}</div></div>
+              <div><span class="label">REMARKS:</span><div class="box">${p.remarks || ''}</div></div>
+            </div>
+
+            <div class="sign">
+              <div class="muted">Generated by DocuMed</div>
+              <div class="muted">Doctor/Nurse: ${(p.doctor_nurse_effective || p.doctor_nurse || '-')}</div>
+            </div>
+          `;
+        })
+        .catch(()=>{
+          const rec = document.getElementById('record');
+          if (rec) rec.innerHTML = '<p class="muted">Failed to load record.</p>';
+        });
+    })();
+  </script>
+</body>
+</html>

@@ -7,7 +7,17 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 // Ensure follow-up columns exist (best-effort, non-breaking)
 try { $pdo->exec("ALTER TABLE patients ADD COLUMN follow_up TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) { /* ignore */ }
 try { $pdo->exec("ALTER TABLE patients ADD COLUMN follow_up_date DATE NULL"); } catch (Throwable $e) { /* ignore */ }
+try { $pdo->exec("ALTER TABLE patients MODIFY COLUMN date_of_examination DATE NULL"); } catch (Throwable $e) { /* ignore */ }
+try { $pdo->exec("ALTER TABLE patients MODIFY COLUMN last_visit DATETIME NULL"); } catch (Throwable $e) { /* ignore */ }
 
+
+// Normalize bad date values (empty string -> NULL) for Railway/MySQL safety
+try {
+    $pdo->exec("UPDATE patients SET date_of_examination = NULL WHERE date_of_examination = ''");
+    $pdo->exec("UPDATE patients SET last_visit = NULL WHERE last_visit = ''");
+} catch (Throwable $e) {
+    // non-fatal; just avoid breaking API
+}
 
 // Count patients for dashboard/stat card
 if ($action === 'count') {
@@ -21,10 +31,11 @@ if ($action === 'count') {
 if ($action === 'list') {
     $user_id = $_GET['user_id'] ?? $_POST['user_id'] ?? '';
     if ($user_id !== '') {
+        // NOTE: use date-safe expressions; never let MySQL implicitly cast bad strings to DATE
         $stmt = $pdo->prepare("SELECT p.*, CONCAT(u.last_name, ', ', u.first_name, ' ', u.middle_initial) AS user_name, u.email
                                FROM patients p LEFT JOIN users u ON p.user_id = u.student_faculty_id
                                WHERE p.user_id = ?
-                               ORDER BY COALESCE(NULLIF(p.date_of_examination,''), p.last_visit) DESC, p.id DESC");
+                               ORDER BY COALESCE(p.date_of_examination, p.last_visit) DESC, p.id DESC");
         $stmt->execute([$user_id]);
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
@@ -133,5 +144,7 @@ if ($action === 'delete') {
     echo json_encode(['success' => true]);
     exit;
 }
+
+
 
 echo json_encode(['error' => 'Invalid action']);

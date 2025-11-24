@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient's Form - Follow Up</title>
+  <link rel="icon" type="image/png" href="../assets/images/documed_logo.png" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background:#fff; }
+    .sheet { width: 100%; max-width: 1120px; margin: 0 auto; border: 1px solid #000; padding: 20px 30px 30px 30px; box-sizing: border-box; }
+    .label { font-weight: bold; margin-right: 4px; }
+    .line { flex: 1; border-bottom: 1px solid #000; min-height: 18px; display: inline-flex; align-items: flex-end; padding-left: 4px; box-sizing: border-box; }
+    .field-group { margin-bottom: 8px; display: flex; align-items: baseline; flex-wrap: wrap; }
+    .field-group .label { display: inline-block; min-width: 130px; }
+    .multi-line { border: 1px solid #000; min-height: 56px; margin-top: 4px; padding: 6px 8px; white-space: pre-wrap; box-sizing: border-box; }
+    .top-right { font-size: 0.75rem; text-align: right; margin-top: -4px; margin-right: 2px; line-height: 1.2; }
+    .header-title { text-align: center; font-weight: bold; margin-top: 25px; margin-bottom: 9px; font-size: larger; }
+    .sub-title { text-align: center; margin-bottom: 30px; font-size: small;}
+    @media print {
+      body { margin: 0; padding: 0; background:#fff; }
+      .sheet { border: 1px solid #000; margin: 0 auto; width: 100%; max-width: 1120px; }
+    }
+    .sheet2 { padding: 0 20px 20px 20px; box-sizing: border-box; margin: auto; border: 1px solid #000; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="top-right" id="pfTopRight">FM-AA-MDS-03 <br> Rev. 0 <br> 01-Feb-2017</div>
+    <div class="sheet2">
+        <div class="header-title">PATIENT'S FORM</div>
+        <div class="sub-title">PANGASINAN STATE UNIVERSITY</div>
+
+        <div class="field-group">
+        <span class="label">NAME :</span>
+        <span class="line" id="pfName"></span>
+        <span class="label" style="margin-left:40px;">AGE / SEX :</span>
+        <span class="line" id="pfAgeSex"></span>
+        </div>
+        <div class="field-group">
+        <span class="label">ADDRESS :</span>
+        <span class="line" id="pfAddress"></span>
+        <span class="label" style="margin-left:40px;">CONTACT NUMBER :</span>
+        <span class="line" id="pfContact"></span>
+        </div>
+
+        <div class="field-group">
+        <span class="label">DATE OF EXAMINATION:</span>
+        <span class="line" id="pfExamDate"></span>
+        </div>
+        <div class="field-group">
+        <span class="label">CHIEF COMPLAINT:</span>
+        <span class="line" id="pfComplaint"></span>
+        </div>
+
+        <div class="field-group">
+        <span class="label">BP :</span>
+        <span class="line" style="max-width:160px;" id="pfBP"></span>
+        <span class="label" style="margin-left:32px;">CR :</span>
+        <span class="line" style="max-width:160px;" id="pfCR"></span>
+        <span class="label" style="margin-left:32px;">RR :</span>
+        <span class="line" style="max-width:160px;" id="pfRR"></span>
+        </div>
+        <div class="field-group">
+        <span class="label">TEMP :</span>
+        <span class="line" style="max-width:160px;" id="pfTemp"></span>
+        <span class="label" style="margin-left:32px;">WT :</span>
+        <span class="line" style="max-width:160px;" id="pfWT"></span>
+        <span class="label" style="margin-left:32px;">HT :</span>
+        <span class="line" style="max-width:160px;" id="pfHT"></span>
+        <span class="label" style="margin-left:32px;">BMI :</span>
+        <span class="line" style="max-width:110px;" id="pfBMI"></span>
+        </div>
+
+        <div class="field-group" style="align-items:flex-start;">
+        <div class="label">IMPRESSION</div>
+        <div class="multi-line" style="flex:1;" id="pfImpression"></div>
+        </div>
+        <div class="field-group" style="align-items:flex-start;">
+        <div class="label">TREATMENT</div>
+        <div class="multi-line" style="flex:1;" id="pfTreatment"></div>
+        </div>
+        <div class="field-group" style="align-items:flex-start;">
+        <div class="label">NURSES NOTES</div>
+        <div class="multi-line" style="flex:1;" id="pfNotes"></div>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const sid = params.get('sid');
+      if (!id || !sid) return;
+
+      fetch(`../../backend/api/patient.php?action=list&user_id=${encodeURIComponent(sid)}`)
+        .then(r=>r.json())
+        .then(data=>{
+          const arr = Array.isArray(data.patients) ? data.patients : [];
+          const rec = arr.find(x => String(x.id) === String(id));
+          if (!rec) return;
+          const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
+          setText('pfName', rec.name || '');
+          setText('pfAgeSex', rec.age_sex || '');
+          setText('pfAddress', rec.address || '');
+          setText('pfContact', rec.contact_number || '');
+          setText('pfExamDate', (rec.date_of_examination || '').toString().slice(0,10));
+          setText('pfComplaint', rec.chief_complaint || '');
+          setText('pfBP', rec.bp || '');
+          setText('pfCR', rec.cr || '');
+          setText('pfRR', rec.rr || '');
+          setText('pfTemp', rec.temp || '');
+          setText('pfWT', rec.wt || '');
+          setText('pfHT', rec.ht || '');
+          setText('pfBMI', rec.bmi || '');
+          setText('pfImpression', rec.impression || '');
+          setText('pfTreatment', rec.treatment || '');
+          setText('pfNotes', rec.nurses_notes || '');
+        })
+        .catch(()=>{});
+    })();
+  </script>
+</body>
+</html>
