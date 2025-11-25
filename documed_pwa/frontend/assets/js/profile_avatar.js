@@ -9,7 +9,7 @@
       if (!img) return;
       // Dentist login stores profile under 'documed_docnurse'
       var raw = localStorage.getItem('documed_docnurse') || localStorage.getItem('documed_doc_nurse');
-  var fallback = '../assets/images/documed_logo.png';
+      var fallback = '../assets/images/admin_photo.png';
       if (!raw) { img.src = fallback; return; }
       var user = {};
       try { user = JSON.parse(raw) || {}; } catch(_) { user = {}; }
