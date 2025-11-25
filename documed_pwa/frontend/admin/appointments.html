@@ -160,6 +160,20 @@
           <tbody></tbody>
         </table>
         <div id="appointmentsMsg" style="margin-top:12px;"></div>
+        <!-- <div class="d-flex justify-content-center align-items-center gap-2" id="appointmentsPaginationContainer" style="margin-top:18px;">
+           <button id="appointmentsPrev" class="btn btn-sm" style="width:38px;height:38px;background:#9ca3af;color:#fff;border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;" aria-label="Previous" aria-disabled="true" disabled>
+               <i class="bi bi-chevron-left"></i>
+           </button>
+           <span id="appointmentsPageInfo" class="fw-semibold" style="font-size:1rem;">Page 1 of 1</span>
+           <button id="appointmentsNext" class="btn btn-sm" style="width:38px;height:38px;background:#2563eb;color:#fff;border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;" aria-label="Next" aria-disabled="true" disabled>
+               <i class="bi bi-chevron-right"></i>
+           </button> -->
+           <div id="appointmentsPaginationContainer" style="display:none;align-items:center;gap:12px;justify-content:center;margin-top:12px;">
+                  <button id="appointmentsPrev" style="background:#6b7280;color:#fff;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;">&#9664;</button>
+                  <span id="appointmentsPageInfo" style="font-size:0.9rem;color:#374151;"></span>
+                  <button id="appointmentsNext" style="background:#2563eb;color:#fff;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;">&#9654;</button>
+                </div>
+        </div>
       </div>
     </main>
   </div>
@@ -201,6 +215,96 @@
   <!-- Bootstrap Bundle for modal functionality -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/appointments.js"></script>
+    <script>
+      // Pagination logic for appointments
+      let appointments = [];
+      let currentPage = 1;
+      const rowsPerPage = 10;
+      function renderAppointments(filter = '') {
+        const tbody = document.querySelector('#appointmentsTable tbody');
+        tbody.innerHTML = '';
+        // Filter logic (if needed, e.g. by patient name/date/purpose)
+        let filtered = appointments;
+        if (filter && filter.trim() !== '') {
+          const f = filter.trim().toLowerCase();
+          filtered = appointments.filter(appt => {
+            return (appt.patient && appt.patient.toLowerCase().includes(f)) ||
+                   (appt.date && appt.date.toLowerCase().includes(f)) ||
+                   (appt.purpose && appt.purpose.toLowerCase().includes(f));
+          });
+        }
+        const totalRows = filtered.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+        const startIdx = (currentPage - 1) * rowsPerPage;
+        const pageRows = filtered.slice(startIdx, startIdx + rowsPerPage);
+        pageRows.forEach(appt => {
+          // Render each appointment row (adapt fields as needed)
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${appt.booked || ''}</td>
+            <td>${appt.patient || ''}</td>
+            <td>${appt.date || ''}</td>
+            <td>${appt.time || ''}</td>
+            <td>${appt.purpose || ''}</td>
+            <td>${appt.status || ''}</td>
+            <td style="white-space:nowrap;">
+              <button class='btn btn-xs btn-primary' style='padding:2px 8px;font-size:0.85rem;'>Accept</button>
+              <button class='btn btn-xs btn-warning' style='padding:2px 8px;font-size:0.85rem;'>Decline</button>
+              <button class='btn btn-xs btn-info' style='padding:2px 8px;font-size:0.85rem;'>Reschedule</button>
+              <button class='btn btn-xs btn-danger' style='padding:2px 8px;font-size:0.85rem;'>Cancel</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        // Pagination controls
+        const pagWrap = document.getElementById('appointmentsPaginationContainer');
+        const prevBtn = document.getElementById('appointmentsPrev');
+        const nextBtn = document.getElementById('appointmentsNext');
+        const pageInfo = document.getElementById('appointmentsPageInfo');
+        if (pagWrap) {
+          if (totalRows <= rowsPerPage) {
+            pagWrap.style.display = 'none';
+          } else {
+            pagWrap.style.display = 'flex';
+            if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            if (prevBtn) {
+              const disabled = currentPage <= 1;
+              prevBtn.disabled = disabled;
+              prevBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+              prevBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+              prevBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+              prevBtn.style.opacity = disabled ? '0.6' : '1';
+              prevBtn.onclick = function(e) {
+                e.preventDefault();
+                if (!disabled) {
+                  currentPage--;
+                  renderAppointments(filter);
+                }
+              };
+            }
+            if (nextBtn) {
+              const disabled = currentPage >= totalPages;
+              nextBtn.disabled = disabled;
+              nextBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+              nextBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+              nextBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+              nextBtn.style.opacity = disabled ? '0.6' : '1';
+              nextBtn.onclick = function(e) {
+                e.preventDefault();
+                if (!disabled) {
+                  currentPage++;
+                  renderAppointments(filter);
+                }
+              };
+            }
+          }
+        }
+      }
+      // TODO: Load appointments data into 'appointments' array and call renderAppointments() after fetch
+      // Example: appointments = [...]; renderAppointments();
+    </script>
   <script>
     (function(){
       const baseUrl = window.location.pathname.split('/frontend/')[0];
@@ -276,6 +380,8 @@
         } catch { document.getElementById('reschedError').textContent = 'Network error'; }
       });
     })();
+
+    
   </script>
   <script src="../assets/js/settings_dropdown.js"></script>
   <script src="../assets/js/dashboard_interactive.js"></script>

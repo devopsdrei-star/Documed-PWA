@@ -11,7 +11,7 @@
   let all = [];
   let filtered = [];
   let currentPage = 1;
-  const pageSize = 6; // fixed size per new design (updated)
+  const pageSize = 10; // fixed size per new design (updated)
   let checkedByMap = new Map(); // sid -> latest non-empty doctor_nurse
   // Pick newer of two records (by created_at, fallback id)
   function pickNewer(a, b) {

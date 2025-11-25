@@ -87,6 +87,12 @@ function normalizeTime($slot) {
     return null;
 }
 
+// Helper: log admin action to audit trail
+function log_admin_action($pdo, $admin_id, $action, $details = '') {
+    $stmt = $pdo->prepare("INSERT INTO audit_trail (admin_id, action, details) VALUES (?, ?, ?)");
+    $stmt->execute([$admin_id, $action, $details]);
+}
+
 // Book new appointment
 if ($action === 'add') {
     // Get form data
@@ -204,6 +210,10 @@ if ($action === 'add') {
                 $name, $email, $role, $year_course, $department, $purpose,
                 $date, $time, 'scheduled'
             ]);
+            // After successful booking, log admin action
+            if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+                log_admin_action($pdo, $_POST['admin_id'], 'Add Appointment', 'Name: ' . $name . ', Date: ' . $date . ', Time: ' . $time);
+            }
             jsonResponse([
                 'success' => true,
                 'message' => 'Your appointment has been booked successfully!'

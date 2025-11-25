@@ -43,8 +43,8 @@ if ($action === 'list') {
     $role = trim($_GET['role'] ?? '');
     $status = trim($_GET['status'] ?? '');
     $hasStatus = col_exists($pdo, 'users', 'status');
-    // Resolve role/client_type column dynamically
-    $roleCol = resolve_column_name($pdo, 'users', ['client_type','role']) ?? 'role';
+    // Always use client_type for role filtering
+    $roleCol = 'client_type';
     $sql = "SELECT *, {$roleCol} AS resolved_role FROM users WHERE 1=1";
     $params = [];
     if ($q !== '') {
@@ -55,15 +55,13 @@ if ($action === 'list') {
     if ($role !== '' && strcasecmp($role,'All') !== 0) {
         $r = strtolower(trim($role));
         if ($r === 'student') {
-            // Include legacy records with empty role but having student fields
-            $sql .= " AND (LOWER(TRIM(COALESCE(role,'')))='student' OR role IS NULL OR role='' OR (year_course IS NOT NULL AND TRIM(year_course)<>''))";
+            $sql .= " AND (LOWER(TRIM(COALESCE(client_type,'')))='student' OR client_type IS NULL OR client_type='' OR (year_course IS NOT NULL AND TRIM(year_course)<>''))";
         } elseif ($r === 'teacher') {
-            // Include teacher if role says teacher OR department field present
-            $sql .= " AND (LOWER(TRIM(COALESCE(role,'')))='teacher' OR (department IS NOT NULL AND TRIM(department)<>''))";
+            $sql .= " AND (LOWER(TRIM(COALESCE(client_type,'')))='teacher' OR (department IS NOT NULL AND TRIM(department)<>''))";
         } elseif (in_array($r, ['non-teaching','nonteaching','non_teaching'], true)) {
-            $sql .= " AND (LOWER(TRIM(COALESCE(role,''))) IN ('non-teaching','nonteaching','non_teaching'))";
+            $sql .= " AND (LOWER(TRIM(COALESCE(client_type,''))) IN ('non-teaching','nonteaching','non_teaching'))";
         } else {
-            $sql .= " AND LOWER(TRIM(role)) = ?"; $params[] = $r;
+            $sql .= " AND LOWER(TRIM(client_type)) = ?"; $params[] = $r;
         }
     }
     if ($hasStatus && $status !== '' && strcasecmp($status,'All') !== 0) {

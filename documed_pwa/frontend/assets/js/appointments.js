@@ -61,34 +61,50 @@ document.addEventListener('DOMContentLoaded', function() {
 				return order==='newest' ? tb.localeCompare(ta) : ta.localeCompare(tb);
 			});
 
+
+
+			// Pagination logic
+			const rowsPerPage = 10;
+			const pagWrap = document.getElementById('appointmentsPaginationContainer');
+			const prevBtn = document.getElementById('appointmentsPrev');
+			const nextBtn = document.getElementById('appointmentsNext');
+			const pageInfo = document.getElementById('appointmentsPageInfo');
+			const totalRows = rows.length;
+			const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+			if (currentPage > totalPages) currentPage = totalPages;
+			if (currentPage < 1) currentPage = 1;
+			const startIdx = (currentPage - 1) * rowsPerPage;
+			const pageRows = rows.slice(startIdx, startIdx + rowsPerPage);
+
 			tableBody.innerHTML = '';
 			if (rows.length === 0) {
 				setMsg('No appointments match your filters.');
+				if (pagWrap) pagWrap.style.display = 'none';
 				return;
 			}
-						rows.forEach(app => {
+			pageRows.forEach(app => {
 				const tr = document.createElement('tr');
 				const name = app.name || app.patient_name || app.email || app.patient_id || '';
-					// Display time in 12-hour format with AM/PM, keep raw for values
-					const rawTime = app.time && app.time.length > 5 ? app.time.slice(0,5) : (app.time || '');
-					const time = (function(t){ if(!t) return ''; const parts=t.split(':'); let h=parseInt(parts[0]||'0',10); const mm=(parts[1]||'00'); const am=h<12; if(h===0)h=12; if(h>12)h-=12; return `${h}:${mm} ${am?'AM':'PM'}`; })(rawTime);
-								// Format created_at (booking timestamp) to readable 12-hour
-								const bookedAt = (function(v){
-									if (!v) return '';
-									try {
-										// Expect formats like '2025-10-04 14:23:00' or ISO
-										const d = new Date(v.replace(' ','T'));
-										if (isNaN(d.getTime())) return String(v);
-										const yyyy = d.getFullYear();
-										const mm = String(d.getMonth()+1).padStart(2,'0');
-										const dd = String(d.getDate()).padStart(2,'0');
-										let h = d.getHours();
-										const min = String(d.getMinutes()).padStart(2,'0');
-										const am = h < 12;
-										if (h === 0) h = 12; else if (h > 12) h -= 12;
-										return `${yyyy}-${mm}-${dd} ${h}:${min} ${am?'AM':'PM'}`;
-									} catch { return String(v); }
-								})(app.created_at);
+				// Display time in 12-hour format with AM/PM, keep raw for values
+				const rawTime = app.time && app.time.length > 5 ? app.time.slice(0,5) : (app.time || '');
+				const time = (function(t){ if(!t) return ''; const parts=t.split(':'); let h=parseInt(parts[0]||'0',10); const mm=(parts[1]||'00'); const am=h<12; if(h===0)h=12; if(h>12)h-=12; return `${h}:${mm} ${am?'AM':'PM'}`; })(rawTime);
+				// Format created_at (booking timestamp) to readable 12-hour
+				const bookedAt = (function(v){
+					if (!v) return '';
+					try {
+						// Expect formats like '2025-10-04 14:23:00' or ISO
+						const d = new Date(v.replace(' ','T'));
+						if (isNaN(d.getTime())) return String(v);
+						const yyyy = d.getFullYear();
+						const mm = String(d.getMonth()+1).padStart(2,'0');
+						const dd = String(d.getDate()).padStart(2,'0');
+						let h = d.getHours();
+						const min = String(d.getMinutes()).padStart(2,'0');
+						const am = h < 12;
+						if (h === 0) h = 12; else if (h > 12) h -= 12;
+						return `${yyyy}-${mm}-${dd} ${h}:${min} ${am?'AM':'PM'}`;
+					} catch { return String(v); }
+				})(app.created_at);
 				const purpose = app.purpose || app.service || '';
 				const status = (app.status || '').toLowerCase();
 				// Build actions with sizing similar to dn_patient view/delete (padding ~4px 12px, radius 6px)
@@ -134,6 +150,46 @@ document.addEventListener('DOMContentLoaded', function() {
 				tableBody.appendChild(tr);
 			});
 			setMsg('');
+
+			// Pagination controls
+			if (pagWrap) {
+				if (totalRows <= rowsPerPage) {
+					pagWrap.style.display = 'none';
+				} else {
+					pagWrap.style.display = 'flex';
+					if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+					if (prevBtn) {
+						const disabled = currentPage <= 1;
+						prevBtn.disabled = disabled;
+						prevBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+						prevBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+						prevBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+						prevBtn.style.opacity = disabled ? '0.6' : '1';
+						prevBtn.onclick = function(e) {
+							e.preventDefault();
+							if (!disabled) {
+								currentPage--;
+								applyFilters();
+							}
+						};
+					}
+					if (nextBtn) {
+						const disabled = currentPage >= totalPages;
+						nextBtn.disabled = disabled;
+						nextBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+						nextBtn.style.background = disabled ? '#9ca3af' : '#2563eb';
+						nextBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+						nextBtn.style.opacity = disabled ? '0.6' : '1';
+						nextBtn.onclick = function(e) {
+							e.preventDefault();
+							if (!disabled) {
+								currentPage++;
+								applyFilters();
+							}
+						};
+					}
+				}
+			}
 		}
 
 		async function loadAppointments() {
@@ -174,13 +230,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	loadAppointments();
 
-			if (statusFilter) statusFilter.addEventListener('change', applyFilters);
-			if (orderFilter) orderFilter.addEventListener('change', applyFilters);
-			if (apptSearch) apptSearch.addEventListener('input', applyFilters);
+			if (statusFilter) statusFilter.addEventListener('change', function(){ currentPage=1; applyFilters(); });
+			if (orderFilter) orderFilter.addEventListener('change', function(){ currentPage=1; applyFilters(); });
+			if (apptSearch) apptSearch.addEventListener('input', function(){ currentPage=1; applyFilters(); });
 			if (resetBtn) resetBtn.addEventListener('click', () => {
 				if (statusFilter) statusFilter.value = 'all';
 				if (orderFilter) orderFilter.value = 'newest';
 				if (apptSearch) apptSearch.value = '';
+				currentPage=1;
 				applyFilters();
 			});
 			// publish filter function globally so external helpers can re-render

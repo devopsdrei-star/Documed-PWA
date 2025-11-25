@@ -61,6 +61,48 @@ function documed_rule_intents(string $msg): ?array {
         return ['reply' => $reply, 'info' => 'served_by_rules_general_medicine'];
     }
 
+    // Common illness: colds / cough / sore throat / flu-like
+    if (preg_match('/\b(cold|colds|sipon|runny nose|barado ang ilong|sore throat|sorethroat|throat pain|ubong tuyo|ubong may plema|cough|ubo|flu|trangkaso)\b/i', $msg)) {
+        $reply = "For mild cough, colds, sore throat, or flu-like symptoms, general home care includes adequate rest, plenty of fluids, and fever control with over-the-counter medicines if you have no known allergy or contraindication. Avoid smoking and secondhand smoke, and wear a mask to protect others when coughing or sneezing. Go to the Campus Medical Clinic or a doctor urgently if you have difficulty breathing, chest pain, lips or face turning blue, very high or persistent fever, coughing blood, confusion, severe weakness, or symptoms lasting more than a few days without improvement. This is not a diagnosis; please consult a clinician for proper assessment.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_cough_colds'];
+    }
+
+    // Common illness: fever
+    if (preg_match('/\b(fever|lagnat|mataas na lagnat|chills)\b/i', $msg)) {
+        $reply = "Fever is often a sign that the body is fighting an infection. For mild fever in an otherwise healthy person, focus on rest, fluids, light clothing, and monitoring the temperature. Over-the-counter fever reducers may be used if you have no allergy or contraindication and you follow the package instructions. Seek immediate medical care if the fever is very high, lasts more than 2–3 days, is accompanied by severe headache, stiff neck, rash, persistent vomiting, difficulty breathing, chest pain, confusion, seizure, or if the patient is very young, elderly, pregnant, or has chronic illness. Visit the Campus Medical Clinic for proper evaluation. This is not a diagnosis or treatment plan.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_fever'];
+    }
+
+    // Common illness: stomach pain / hyperacidity / gastritis
+    if (preg_match('/\b(sakit ng sikmura|sakit sa sikmura|stomach pain|tummy ache|abdominal pain|hyperacidity|gastritis|acidity|heartburn)\b/i', $msg)) {
+        $reply = "Mild stomach pain or hyperacidity can sometimes improve with small frequent meals, avoiding very spicy or oily foods, limiting caffeine and soft drinks, and not lying down immediately after eating. Some people feel better with doctor-recommended antacids, but medicine choice should be based on an in-person assessment, especially if you have other illnesses or are taking long-term medicines. Go to the Campus Medical Clinic or emergency care urgently if the pain is severe or sudden, associated with vomiting blood or black stools, persistent vomiting, yellowing of eyes or skin, difficulty breathing, chest pain, fainting, or if the abdomen becomes hard and very tender. This is not a diagnosis; please see a clinician.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_stomach_pain'];
+    }
+
+    // Common illness: diarrhea
+    if (preg_match('/\b(diarrhea|diarrhoea|loose stool|loose stools|pagtatae|dumi na malabnaw)\b/i', $msg)) {
+        $reply = "For mild diarrhea without alarming symptoms, the main focus is to prevent dehydration by drinking plenty of safe fluids and oral rehydration solution if available, and to avoid very greasy or spicy foods. Do not self-treat with strong anti-diarrheal medicines if you have high fever, blood in the stool, severe abdominal pain, or recent antibiotic use, unless guided by a clinician. Seek urgent evaluation if there is blood or mucus in the stool, very frequent watery diarrhea, signs of dehydration (very dry mouth, little or no urination, dizziness), persistent vomiting, severe weakness, or diarrhea lasting more than 1–2 days without improvement. Please visit the Campus Medical Clinic for assessment. This is not a diagnosis or a prescription.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_diarrhea'];
+    }
+
+    // Common illness: dysmenorrhea / menstrual cramps
+    if (preg_match('/\b(dysmenorrhea|dysmenorrhoea|menstrual cramps|period cramps|sakit ng puson|sakit sa puson)\b/i', $msg)) {
+        $reply = "Menstrual cramps (dysmenorrhea) are common and may improve with local heat (such as a warm compress), gentle stretching, rest, and healthy hydration. Some people are advised by a clinician to use pain relievers or hormonal medicines, but these should not be started, stopped, or changed without proper evaluation. Seek medical care promptly if the pain is suddenly very severe, associated with heavy or prolonged bleeding, foul-smelling discharge, fever, dizziness, fainting, abdominal swelling, or if the pattern of pain changes significantly from your usual. You may visit the Campus Medical Clinic to discuss your symptoms. This is general information and not a diagnosis.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_dysmenorrhea'];
+    }
+
+    // Common illness: dizziness / vertigo / fainting tendency
+    if (preg_match('/\b(dizzy|dizziness|nahihilo|hilo|vertigo|faint|fainting|nahimatay)\b/i', $msg)) {
+        $reply = "Dizziness can have many causes, such as dehydration, lack of sleep, low blood sugar, inner ear problems, or more serious conditions. General safety steps include sitting or lying down when you feel dizzy, avoiding sudden position changes, drinking fluids if not restricted, and not driving or operating machines while dizzy. Go to the Campus Medical Clinic or emergency care immediately if the dizziness is sudden and severe, associated with chest pain, shortness of breath, severe headache, weakness or numbness of the face, arm, or leg, difficulty speaking, vision changes, repeated vomiting, fainting, or if you recently had a head injury. This information is not a diagnosis; please have an in-person assessment.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_dizziness'];
+    }
+
+    // Common issue: minor sprain or simple wound
+    if (preg_match('/\b(sprain|na-sprain|pilay|ankle twist|simple wound|gasgas|galos|abrasion|cut wound)\b/i', $msg)) {
+        $reply = "For minor sprains, basic first aid often includes rest of the affected joint, gentle elevation, and cold compress in the first 24–48 hours, followed later by gradual movement as tolerated. For small superficial wounds, gentle cleaning with clean water and mild soap, and covering with a clean dressing may help. However, wounds that are deep, dirty, or caused by sharp or rusty objects may need professional cleaning, possible tetanus protection, and further evaluation. Seek urgent medical care if you cannot move or bear weight on the joint, if there is obvious deformity, severe swelling, severe pain, numbness, uncontrolled bleeding, or signs of infection (increasing redness, warmth, pus, fever). You can visit the Campus Medical Clinic for proper wound or injury assessment. This is not a diagnosis or full treatment plan.";
+        return ['reply' => $reply, 'info' => 'served_by_rules_minor_injury'];
+    }
+
     return null; // No rule matched
 }
 
@@ -69,7 +111,7 @@ if ($rule = documed_rule_intents($userMessage)) {
     exit;
 }
 
-$system_prompt = "You are a helpful assistant for the Campus Medical Clinic (DocuMed). You must only answer questions about the Campus Medical Clinic and its services (appointments, clinic hours, locations, walk-in policy, immunizations, minor procedures handled by the clinic, medical certificates, basic laboratory tests, referral processes, patient record access, and how to use this system). Always reply in English and keep answers concise and friendly. If a user asks for medical diagnoses, detailed treatment plans, dosing, or clinical management beyond administrative or clinic-process information, refuse to provide medical instructions and instead advise the user to consult a clinician or go to emergency services when appropriate. If the user asks about topics outside the Campus Medical Clinic (insurance policy beyond the clinic, unrelated medical specialties, or general medical textbooks), reply: 'I am only able to answer about the Campus Medical Clinic services and this system — please contact the clinic or a licensed clinician for that question.'";
+$system_prompt = "You are a helpful assistant for the Campus Medical Clinic (DocuMed). You must only answer questions about the Campus Medical Clinic and its services (clinic hours, locations, walk-in policy, immunizations, minor procedures handled by the clinic, medical certificates, basic laboratory tests, referral processes, patient record access, and how to use this system). Online appointment booking in this system is ONLY for dental services; medical concerns are handled as walk-in or via the clinic's own process and cannot be booked through the app. Always reply in English and keep answers concise and friendly. If a user asks for medical diagnoses, detailed treatment plans, dosing, or clinical management beyond administrative or clinic-process information, refuse to provide medical instructions and instead advise the user to consult a clinician or go to emergency services when appropriate. If the user asks about topics outside the Campus Medical Clinic (insurance policy beyond the clinic, unrelated medical specialties, or general medical textbooks), reply: 'I am only able to answer about the Campus Medical Clinic services and this system — please contact the clinic or a licensed clinician for that question.'";
 
 // Load fallback FAQ early so we can use an out-of-scope message for sanitization
 $faqFile = __DIR__ . '/../config/fallback_faq.json';
@@ -142,8 +184,7 @@ if ($DEEPSEEK_AVAILABLE) {
 }
 
 if ($deepseekReply) {
-    $info = isset($sanitized) && $sanitized ? 'served_by_deepseek_sanitized' : 'served_by_deepseek';
-    echo json_encode(['reply' => $deepseekReply, 'info' => $info]);
+    echo json_encode(['reply' => $deepseekReply]);
     exit;
 }
 
@@ -189,7 +230,7 @@ function match_faq_force_en($msg, $faq_for_match, $faq_en, $faq_fil) {
 
 $local = match_faq_force_en($userMessage, $faq_for_match, $faq_en, $faq_fil);
 if ($local) {
-    echo json_encode(['reply' => $local, 'info' => 'served_by_local_fallback', 'lang' => 'en']);
+    echo json_encode(['reply' => $local, 'lang' => 'en']);
     exit;
 }
 // End OpenAI flow; if no provider reply was produced above, the local fallback handled it above.

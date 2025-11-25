@@ -281,7 +281,7 @@
       </div>
       <div class="nav-right">
         <div class="nav-actions" id="navActions">
-          <!-- Dynamic login/profile actions here -->
+            
         </div>
       </div>
     </nav>
@@ -308,114 +308,32 @@
         </div>
       </div>
       <div class="d-flex justify-content-end mb-3">
-  <button id="bookAppointmentBtn" class="btn btn-primary btn-lg">Book Dental Appointment</button>
+        <button id="bookAppointmentBtn" class="btn btn-primary btn-lg">Book Dental Appointment</button>
       </div>
       <!-- Pre-booking reCAPTCHA container removed -->
-      <div class="table-responsive">
+        <div class="table-responsive">
       <!-- recaptcha modal removed -->
-      <table class="table table-striped table-bordered">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Purpose</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="appointmentsBody">
-          <!-- Appointments will be dynamically loaded here -->
-        </tbody>
-      </table>
-      </div>
-    </div>
-    <!-- Booking Modal -->
-    <!-- <div class="modal fade" id="bookAppointmentModal" aria-labelledby="bookAppointmentModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content" style="border-radius:0;">
-          <div class="modal-header" style="background:#2563eb;color:#fff;border:none;padding:20px 32px;">
-            <h5 class="modal-title" id="bookAppointmentModalLabel" style="font-weight:600;font-size:1.5rem;">Book an Appointment</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body p-0">
-            <div class="row g-0">
-              Calendar Column
-              <div class="col-md-6 p-4" style="background:#f8fafc; height: 100%;">
-                <div class="calendar-wrapper" style="height: 100%;">
-                  <div id="calendarContainerModal" style="height: 100%;"></div>
-                  <div class="time-slots mt-4"></div>
-                </div>
-              </div>
-              Form Column
-              <div class="col-md-6 p-4">
-                <form id="appointmentFormModal" class="needs-validation" novalidate>
-                  <div id="formMsgModal" class="alert d-none"></div>
-                  
-                  <div class="mb-4">
-            <label for="nameModal" class="form-label text-success fw-500">Full Name</label>
-            <input type="text" class="form-control form-control-lg" id="nameModal" name="name" required style="font-size: 1.25rem; padding: 0.8rem 1rem;">
-          </div>
-
-                  <div class="mb-4">
-                    <label for="emailModal" class="form-label text-success fw-500">Email</label>
-                    <input type="email" class="form-control form-control-lg" id="emailModal" name="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" required oninvalid="this.setCustomValidity('Please enter a valid email address with @ symbol')" oninput="this.setCustomValidity('')">
-                    <div class="invalid-feedback">Please enter a valid email address (must contain @)</div>
-                  </div>
-
-                  <div class="mb-4">
-                    <label for="roleModal" class="form-label text-success fw-500">Role</label>
-                    <select class="form-select form-select-lg" id="roleModal" name="role" required>
-                      <option value="">Select Role</option>
-                      <option value="student">Student</option>
-                      <option value="teacher">Teacher</option>
-                      <option value="non-teaching">Non-Teaching Staff</option>
-                    </select>
-                  </div>
-
-                  <!-- Conditional Fields -->
-                  <!-- <div id="studentFieldsModal" class="mb-4" style="display:none;">
-                    <label for="yearCourseModal" class="form-label text-success fw-500">Year & Course</label>
-                    <input type="text" class="form-control form-control-lg" id="yearCourseModal" name="year_course" placeholder="e.g., IV-BSIT" style="font-size: 1.25rem; padding: 0.8rem 1rem;">
-                  </div>
-
-                  <div id="staffFieldsModal" class="mb-4" style="display:none;">
-                    <label for="departmentModal" class="form-label text-success fw-500">Department</label>
-                    <select class="form-select form-select-lg" id="departmentModal" name="department">
-                      <option value="">Select Department</option>
-                      <option value="CCS">CCS</option>
-                      <option value="CASL">CASL</option>
-                      <option value="CBPA">CBPA</option>
-                      <option value="CTHM">CTHM</option>
-                      <option value="CTE">CTE</option>
-                      <option value="CIT">CIT</option>
-                    </select>
-                  </div>                  <div class="mb-4">
-                    <label for="purposeModal" class="form-label text-success fw-500">Purpose of Visit</label>
-                    <textarea class="form-control form-control-lg" id="purposeModal" name="purpose" rows="3" required style="font-size: inherit;"></textarea>
-                  </div>
-
-                  <div class="mb-4">
-                    <label for="timeModal" class="form-label text-success fw-500">Time Slot</label>
-                    <select class="form-select form-select-lg" id="timeModal" name="time_slot" required>
-                      <option value="">Select Time Slot</option>
-                    </select>
-                  </div>
-
-                  <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-lg btn-light flex-grow-1" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-lg btn-primary flex-grow-1">Book Appointment</button>
-                  </div>
-                </form> -->
-                <!-- reCAPTCHA script removed -->
-  <script>
-    // reCAPTCHA logic removed
-  </script>
-                <!-- Removed legacy reCAPTCHA form submit logic -->
-              </div>
-            </div>
+            <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Purpose</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="appointmentsBody">
+                <!-- Appointments will be dynamically loaded here -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
+    </div>
+  </div>
+</div>
+</div>
 
     <style>
     .calendar-wrapper {
@@ -617,7 +535,7 @@
   </div>
   <div id="aiChatbotWindow" style="display:none;position:fixed;bottom:170px;right:32px;width:350px;max-width:95vw;height:480px;z-index:10000;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(37,99,235,0.18);overflow:hidden;flex-direction:column;">
     <div style="background:#2563eb;color:#fff;padding:16px 20px;font-weight:600;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between;">
-      <span>AI Assistant</span>
+      <span>Documed Chatbot</span>
       <button id="aiChatbotClose" style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">&times;</button>
     </div>
     <div id="aiChatbotMessages" style="flex:1;overflow-y:auto;padding:16px 12px 12px 12px;height:340px;background:#f8fafc;"></div>
@@ -635,6 +553,11 @@
   <script src="../assets/js/required_star.js"></script>
   <script src="../assets/js/help_modal.js"></script>
   <script src="../assets/js/user_nav_profile.js"></script>
+  <script src="../assets/js/user_dashboard.js"></script>
+  <script src="../assets/js/dashboard_modals.js"></script>
+  <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
+  <script src="../assets/js/qr_login.js"></script>
+  <script src="../assets/js/qr_challenge.js"></script>
   <script>
     (function(){
       const baseUrl = window.location.pathname.split('/frontend/')[0];
@@ -784,5 +707,505 @@
       <div style="font-size:1rem;">Powered by <span style="color:#00d1c7;font-weight:600;">DocuMed</span></div>
     </div>
   </footer>
+  <!-- Approve Login / QR View Modals copied so View Patient QR Code & Scan QR work like dashboard -->
+  <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+          <h5 class="modal-title" id="approveModalLabel">Scan to Approve Login</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="approveMsg" class="text-muted mb-2">Itutok ang camera sa QR na nasa desktop login.</div>
+          <div class="scan-box" id="scanBox" style="position:relative;width:100%;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#000;">
+            <div id="approveReader"></div>
+            <video id="approveVideo" playsinline style="display:none;width:100%;"></video>
+            <div class="scan-overlay" id="scanOverlay" style="position:absolute;inset:0;pointer-events:none;display:none;">
+              <div class="scan-line" style="position:absolute;left:8%;right:8%;height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,#22c55e,#22c55e,transparent);box-shadow:0 0 8px #22c55e;animation:scanY 2.2s linear infinite;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+          <h5 class="modal-title" id="confirmModalLabel">Confirm Login</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="confirmMsg" class="text-muted mb-2"></div>
+          <div class="card" style="border:1px solid #e5e7eb;">
+            <div class="card-body">
+              <div class="mb-2" style="font-weight:700;">Is this you?</div>
+              <div id="confirmDevice" class="mb-2" style="color:#334155;">Device: —</div>
+              <div class="text-muted" style="font-size:0.92rem;">Are you trying to log in on this computer?</div>
+              <div class="d-flex gap-2 mt-3">
+                <button type="button" id="confirmYes" class="btn btn-success">Yes, log me in</button>
+                <button type="button" id="confirmCancel" class="btn btn-outline-secondary">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <div id="confirmCreds" style="display:none;margin-top:12px;">
+            <div class="mb-2" style="font-weight:600;color:#0f172a;">Approve with your password</div>
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <input type="text" id="confirmIdentifier" class="form-control" placeholder="Email or School ID" />
+              </div>
+              <div class="col-12 col-md-6">
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Password" />
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-2 flex-wrap" style="gap:8px;">
+              <button type="button" id="enablePersonalNow2" class="btn btn-outline-secondary btn-sm">Enable One‑Tap Approval</button>
+              <div class="ms-auto"></div>
+              <button type="button" id="confirmSubmit" class="btn btn-primary btn-sm">Approve</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;">
+      <div class="modal-header" style="background:#2563eb;color:#fff;border-radius:16px 16px 0 0;">
+        <h5 class="modal-title" id="qrModalLabel">Patient Info QR Code</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="userQRImg" src="" alt="User QR Code" 
+             style="width:180px;height:180px;object-fit:contain;margin-bottom:12px;">
+        <div id="qrLabel" style="font-size:1.08rem;color:#222;"></div>
+        <div id="qrMsg" class="text-danger" style="margin-top:8px;"></div>
+        <button id="qrGenerateBtn" type="button" class="btn btn-primary btn-sm" style="margin-top:8px;display:none;">Enable QR Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Patient info qr script -->
+  <script>
+     document.addEventListener('DOMContentLoaded', function() {
+      // View QR pop-up
+      const qrModalEl = document.getElementById('qrModal');
+      const qrImgEl = document.getElementById('userQRImg');
+      const qrLabelEl = document.getElementById('qrLabel');
+      // Ensure a single modal instance is reused
+      let qrModal = bootstrap.Modal.getOrCreateInstance(qrModalEl, { backdrop: true, keyboard: true });
+      // Clean up any leftover backdrops/body state on hide (safety net)
+      qrModalEl.addEventListener('hidden.bs.modal', function(){
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('padding-right');
+        // Reset QR content to avoid flashes
+        if (qrImgEl) qrImgEl.src = '';
+        if (qrLabelEl) qrLabelEl.textContent = '';
+      });
+
+      document.body.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'viewQRBtn') {
+          e.preventDefault();
+          // Close any open dropdowns before showing modal
+          document.querySelectorAll('.dropdown-toggle[aria-expanded="true"]').forEach(function(t){
+            try { bootstrap.Dropdown.getOrCreateInstance(t).hide(); } catch(_) {}
+          });
+
+          // Get user QR from backend
+          let userObj = null;
+          try {
+            userObj = JSON.parse(localStorage.getItem('documed_user'));
+          } catch (e) {}
+          
+          let userId = userObj && userObj.id ? userObj.id : localStorage.getItem('id');
+          if (!userId) userId = localStorage.getItem('student_faculty_id');
+          const genBtn = document.getElementById('qrGenerateBtn');
+          const msg = document.getElementById('qrMsg');
+          if (msg) { msg.textContent = ''; msg.classList.remove('text-success'); msg.classList.add('text-danger'); }
+          
+          fetch(`../../backend/api/auth.php?action=get_user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${encodeURIComponent(userId)}`
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (qrImgEl && qrLabelEl) {
+              if (data.success && data.user && data.user.qr_code) {
+                qrImgEl.src = data.user.qr_code;
+                qrLabelEl.textContent = userObj ? (userObj.name || '') : '';
+                if (genBtn) genBtn.style.display = 'none';
+              } else {
+                qrImgEl.src = '../assets/images/documed_logo.png';
+                qrLabelEl.textContent = 'No QR code found.';
+                if (genBtn) {
+                  genBtn.style.display = 'inline-block';
+                  genBtn.onclick = function(){
+                    if (msg) { msg.textContent = 'Generating secure QR...'; msg.classList.remove('text-danger'); msg.classList.add('text-muted'); }
+                    fetch(`../../backend/api/auth.php?action=qr_generate_token`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                      body: `id=${encodeURIComponent(userId)}`
+                    })
+                    .then(r => r.json())
+                    .then(resp => {
+                      if (resp && resp.success) {
+                        // Set image to new QR, or refetch user if only path provided
+                        if (resp.qr_image) {
+                          qrImgEl.src = resp.qr_image + '?t=' + Date.now();
+                        } else if (resp.user && resp.user.qr_code) {
+                          qrImgEl.src = resp.user.qr_code + '?t=' + Date.now();
+                        } else {
+                          // Fallback: refetch user
+                          return fetch(`../../backend/api/auth.php?action=get_user`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `id=${encodeURIComponent(userId)}`
+                          }).then(rr => rr.json()).then(dd => {
+                            if (dd && dd.success && dd.user && dd.user.qr_code) {
+                              qrImgEl.src = dd.user.qr_code + '?t=' + Date.now();
+                            }
+                          });
+                        }
+                        if (msg) { msg.textContent = 'QR Login enabled.'; msg.classList.remove('text-danger','text-muted'); msg.classList.add('text-success'); }
+                        if (genBtn) genBtn.style.display = 'none';
+                      } else {
+                        if (msg) { msg.textContent = (resp && (resp.message || resp.error)) || 'Failed to generate QR.'; msg.classList.remove('text-success','text-muted'); msg.classList.add('text-danger'); }
+                      }
+                    })
+                    .catch(()=>{
+                      if (msg) { msg.textContent = 'Error contacting server.'; msg.classList.remove('text-success','text-muted'); msg.classList.add('text-danger'); }
+                    });
+                  };
+                }
+              }
+            }
+          });
+          
+          qrModal.show();
+        }
+      });
+    });
+
+ 
+  </script>
+    <script>
+    // Approve modal logic (opens camera automatically)
+    (function(){
+      const modalEl = document.getElementById('approveModal');
+      const approveMsg = document.getElementById('approveMsg');
+  let qrObj = null;
+  let video = document.getElementById('approveVideo');
+  let stream = null;
+  let rafId = null;
+  let detector = null;
+  let scannedChallenge = '';
+
+      function tryStart(){
+        approveMsg.textContent = 'Loading camera...';
+        const scanOverlay = document.getElementById('scanOverlay');
+        const start = async () => {
+          try {
+            // Prefer native BarcodeDetector if available
+            if ('BarcodeDetector' in window) {
+              try {
+                detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+              } catch (_) { detector = null; }
+            }
+
+            if (detector) {
+              // Start native camera stream
+              stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+              if (!video) video = document.getElementById('approveVideo');
+              const reader = document.getElementById('approveReader');
+              if (reader) reader.style.display = 'none';
+              video.style.display = 'block';
+              video.srcObject = stream;
+              await video.play();
+              approveMsg.textContent = 'Camera ready. Scan the QR on desktop.';
+              if (scanOverlay) scanOverlay.style.display = 'block';
+
+              const scanLoop = async () => {
+                try {
+                  const codes = await detector.detect(video);
+                  if (codes && codes.length) {
+                    const txt = codes[0].rawValue || '';
+                    approveMsg.textContent = 'Scanning, Waiting to Approve...';
+                    handleScannedText(txt);
+                    return; // stop loop after first success
+                  }
+                } catch(_) {}
+                rafId = requestAnimationFrame(scanLoop);
+              };
+              rafId = requestAnimationFrame(scanLoop);
+              return;
+            }
+
+            // Fallback to html5-qrcode library
+            const html5 = window.Html5Qrcode;
+            if (!html5) { approveMsg.textContent = 'QR engine not available.'; return; }
+            qrObj = new html5('approveReader');
+            qrObj.start({ facingMode:'environment' }, { fps:10, qrbox: { width:250, height:250 } }, (txt)=>{
+              approveMsg.textContent = 'Naka-scan. Nag-a-approve...';
+              handleScannedText(txt);
+            }, ()=>{}).catch(()=>{ approveMsg.textContent = 'Camera not available.'; });
+          } catch (e) { approveMsg.textContent = 'Unable to start camera.'; }
+        };
+        // Use loader from qr_login.js if present
+        if (window.loadHtml5Qr) {
+          window.loadHtml5Qr().then(start).catch(()=>{ approveMsg.textContent = 'QR engine not available.'; });
+        } else {
+          // Minimal fallback loader if qr_login.js loader is not present
+          const attempts = [];
+          const tryLoad = (url) => new Promise((resolve, reject) => { attempts.push(url); const s=document.createElement('script'); s.src=url; s.async=true; s.onload=()=>resolve(); s.onerror=()=>reject(); document.head.appendChild(s); setTimeout(()=>reject(),8000); });
+          const urls = [
+            '../assets/js/vendor/html5-qrcode.min.js',
+            '/documed_pwa/frontend/assets/js/vendor/html5-qrcode.min.js',
+            '/DocMed/documed_pwa/frontend/assets/js/vendor/html5-qrcode.min.js',
+            'https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js',
+            'https://unpkg.com/html5-qrcode/html5-qrcode.min.js'
+          ];
+          urls.reduce((p,u)=>p.catch(()=>tryLoad(u)), Promise.reject())
+            .then(()=>start())
+            .catch(()=>{ approveMsg.textContent = 'QR engine not available.'; });
+        }
+      }
+      function stopCam(){
+        if (qrObj) { try { qrObj.stop().catch(()=>{}); } catch(_) {} qrObj = null; }
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        if (video) { try { video.pause(); } catch(_) {} video.srcObject = null; }
+        if (stream) { try { stream.getTracks().forEach(t=>t.stop()); } catch(_) {} stream = null; }
+        detector = null;
+        const scanOverlay = document.getElementById('scanOverlay');
+        if (scanOverlay) scanOverlay.style.display = 'none';
+      }
+
+      function handleScannedText(txt){
+        try {
+          const parts = (txt||'').split(':');
+          let challenge = txt;
+          if (parts.length >= 3 && parts[0].toUpperCase()==='DMQR' && (parts[1].toLowerCase()==='chlg' || parts[1].toLowerCase()==='v1')) challenge = (parts[2] || parts[parts.length-1] || '').trim();
+          challenge = (challenge || '').trim();
+          scannedChallenge = challenge;
+          // Move to separate confirmation modal
+          // Stop camera and hide scan modal first
+          stopCam();
+          const scanModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('approveModal'));
+          scanModal.hide();
+          const cmEl = document.getElementById('confirmModal');
+          const cm = bootstrap.Modal.getOrCreateInstance(cmEl);
+          const cMsg = document.getElementById('confirmMsg');
+          const cDev = document.getElementById('confirmDevice');
+          const cCreds = document.getElementById('confirmCreds');
+          if (cCreds) cCreds.style.display = 'none';
+          if (cMsg) cMsg.textContent = 'Fetching device info...';
+          cm.show();
+          fetch('../../backend/api/auth.php?action=qr_challenge_info', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: 'challenge=' + encodeURIComponent(challenge) })
+            .then(r=>r.json())
+            .then(d=>{
+              if (d && d.success) {
+                if (cMsg) cMsg.textContent = 'Review and confirm login';
+                if (cDev) cDev.textContent = 'Device: ' + (d.ua_summary || 'Browser');
+              } else {
+                if (cMsg) cMsg.textContent = (d && (d.message||d.error)) || 'Unable to fetch device info.';
+              }
+            })
+            .catch(()=>{ if (cMsg) cMsg.textContent = 'Network error getting info.'; });
+        } catch (e) { approveMsg.textContent = 'Error processing scan.'; }
+      }
+
+      // Confirm modal handlers
+      document.addEventListener('click', async function(ev){
+        const yes = ev.target && ev.target.id === 'confirmYes';
+        if (!yes) return;
+        ev.preventDefault();
+        if (!scannedChallenge) { const cMsg = document.getElementById('confirmMsg'); if (cMsg) cMsg.textContent = 'No challenge scanned.'; return; }
+        const cMsg = document.getElementById('confirmMsg');
+        const personal = localStorage.getItem('documed_personal_qr') || '';
+        if (personal) {
+          if (cMsg) cMsg.textContent = 'Approving...';
+          const params = new URLSearchParams(); params.set('challenge', scannedChallenge); params.set('qr', personal);
+          try {
+            const r = await fetch('../../backend/api/auth.php?action=qr_approve_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+            const d = await r.json();
+            if (d && d.success) {
+              if (cMsg) cMsg.textContent = 'Approved! You can now continue on desktop.';
+              const cmEl = document.getElementById('confirmModal');
+              if (cmEl) { const cm = bootstrap.Modal.getOrCreateInstance(cmEl); cm.hide(); }
+            } else {
+              if (cMsg) cMsg.textContent = (d&&(d.message||d.error)) || 'Approval failed';
+            }
+          } catch(_) { if (cMsg) cMsg.textContent = 'Network error'; }
+          return;
+        }
+        // Attempt passwordless approval using active session (phone already logged in)
+        if (sessionStorage.getItem('documedLoggedIn') === '1') {
+          if (cMsg) cMsg.textContent = 'Approving...';
+          const params = new URLSearchParams(); params.set('challenge', scannedChallenge);
+          try {
+            const r = await fetch('../../backend/api/auth.php?action=qr_approve_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+            const d = await r.json();
+            if (d && d.success) {
+              if (cMsg) cMsg.textContent = 'Approved! You can now continue on desktop.';
+              const cmEl = document.getElementById('confirmModal');
+              if (cmEl) { const cm = bootstrap.Modal.getOrCreateInstance(cmEl); cm.hide(); }
+              return; // Done
+            } else {
+              // Fall through to credential method
+              if (cMsg) cMsg.textContent = (d&&(d.message||d.error)) || 'Password is required for approval.';
+            }
+          } catch(_) { if (cMsg) cMsg.textContent = 'Network error, please enter password.'; }
+        }
+        // No personal token: show creds UI
+        const creds = document.getElementById('confirmCreds');
+        if (creds) creds.style.display = 'block';
+        if (cMsg) cMsg.textContent = 'No personal QR token. You can enter your email/ID and password to approve.';
+        try {
+          const u = JSON.parse(localStorage.getItem('documed_user')||'null');
+          const idEl = document.getElementById('confirmIdentifier');
+          if (u && idEl) idEl.value = u.email || u.student_faculty_id || '';
+          const pwEl = document.getElementById('confirmPassword');
+          if (pwEl) pwEl.focus();
+        } catch(_) {}
+      });
+
+      // Cancel from confirm modal
+      document.addEventListener('click', async function(ev){
+        const btn = ev.target && ev.target.id === 'confirmCancel';
+        if (!btn) return; ev.preventDefault();
+        const cMsg = document.getElementById('confirmMsg');
+        if (!scannedChallenge) { if (cMsg) cMsg.textContent = 'No challenge scanned.'; return; }
+        if (cMsg) cMsg.textContent = 'Cancelling...';
+        try {
+          const r = await fetch('../../backend/api/auth.php?action=qr_cancel_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: 'challenge=' + encodeURIComponent(scannedChallenge) });
+          const d = await r.json();
+          if (cMsg) cMsg.textContent = (d && d.success) ? 'Cancelled.' : ((d&&(d.message||d.error)) || 'Failed to cancel');
+        } catch(_) { if (cMsg) cMsg.textContent = 'Network error'; }
+      });
+
+      // Submit approval with credentials (confirm modal)
+      document.addEventListener('click', function(ev){
+        const btn = ev.target && ev.target.id === 'confirmSubmit';
+        if (!btn) return;
+        ev.preventDefault();
+        const cMsg = document.getElementById('confirmMsg');
+        const idEl = document.getElementById('confirmIdentifier');
+        const pwEl = document.getElementById('confirmPassword');
+        const identifier = (idEl && idEl.value || '').trim();
+        const password = (pwEl && pwEl.value || '').trim();
+        if (!identifier || !password) { if (cMsg) cMsg.textContent = 'Please enter both email/ID and password.'; return; }
+        if (!scannedChallenge) { if (cMsg) cMsg.textContent = 'No challenge scanned. Scan again the QR on the desktop.'; return; }
+        if (cMsg) cMsg.textContent = 'Sending approval...';
+        const params = new URLSearchParams();
+        params.set('challenge', scannedChallenge);
+        params.set('identifier', identifier);
+        params.set('password', password);
+        fetch('../../backend/api/auth.php?action=qr_approve_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() })
+          .then(r=>r.json())
+          .then(d=>{
+            if (d && d.success) {
+              if (cMsg) cMsg.textContent = 'Approved! You can now continue on desktop.';
+              const cmEl = document.getElementById('confirmModal');
+              if (cmEl) { const cm = bootstrap.Modal.getOrCreateInstance(cmEl); cm.hide(); }
+            } else {
+              if (cMsg) cMsg.textContent = (d&&(d.message||d.error)) || 'Approval failed';
+            }
+          })
+          .catch(()=>{ if (cMsg) cMsg.textContent = 'Network error'; });
+      });
+
+      // Enable personal token from confirm modal and auto-approve
+      document.addEventListener('click', async function(ev){
+        const btn = ev.target && ev.target.id === 'enablePersonalNow2';
+        if (!btn) return;
+        ev.preventDefault();
+        const cMsg = document.getElementById('confirmMsg');
+        const idEl = document.getElementById('confirmIdentifier');
+        const pwEl = document.getElementById('confirmPassword');
+        const identifier = (idEl && idEl.value || '').trim();
+        const password = (pwEl && pwEl.value || '').trim();
+        if (!identifier || !password) { if (cMsg) cMsg.textContent = 'Please enter both email/ID and password.'; return; }
+        if (cMsg) cMsg.textContent = 'Enabling one‑tap approval...';
+        try {
+          const body = new URLSearchParams({ identifier, password }).toString();
+          const res = await fetch('../../backend/api/auth.php?action=qr_generate_token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+          const text = await res.text();
+          let data; try { data = JSON.parse(text); } catch(e){ console.error('enable token resp', text); throw new Error('Invalid server response'); }
+          if (data && data.success && data.qr_text) {
+            try { localStorage.setItem('documed_personal_qr', data.qr_text); } catch(_) {}
+            if (cMsg) cMsg.textContent = 'One‑tap approval enabled. Approving now...';
+            if (scannedChallenge) {
+              const params = new URLSearchParams(); params.set('challenge', scannedChallenge); params.set('qr', data.qr_text);
+              const r = await fetch('../../backend/api/auth.php?action=qr_approve_challenge', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: params.toString() });
+              const rt = await r.text(); let rd; try { rd = JSON.parse(rt); } catch(e){ rd=null; }
+              if (rd && rd.success) {
+                if (cMsg) cMsg.textContent = 'Approved! You can now continue on desktop.';
+                const cmEl = document.getElementById('confirmModal');
+                if (cmEl) { const cm = bootstrap.Modal.getOrCreateInstance(cmEl); cm.hide(); }
+              } else {
+                if (cMsg) cMsg.textContent = (rd && (rd.message||rd.error)) || 'Approval failed';
+              }
+            } else {
+              if (cMsg) cMsg.textContent = 'Enabled. Next scans will auto‑approve.';
+            }
+          } else {
+            if (cMsg) cMsg.textContent = (data && (data.message||data.error)) || 'Failed to enable one‑tap approval.';
+          }
+        } catch(err) {
+          console.error('enable now err', err);
+          if (cMsg) cMsg.textContent = 'Network or server error while enabling.';
+        }
+      });
+
+      // Allow Enter key on password to submit (confirm modal)
+      document.addEventListener('keydown', function(ev){
+        const pwEl = document.getElementById('confirmPassword');
+        if (!pwEl) return;
+        if (document.activeElement === pwEl && ev.key === 'Enter') {
+          ev.preventDefault();
+          const btn = document.getElementById('confirmSubmit');
+          if (btn) btn.click();
+        }
+      });
+
+      // Hide PWA install button while modal is open (avoid overlap blocking Approve)
+      const installBtn = document.getElementById('pwaInstallBtn');
+      modalEl.addEventListener('shown.bs.modal', function(){ if (installBtn) installBtn.style.display = 'none'; });
+      modalEl.addEventListener('hidden.bs.modal', function(){ if (installBtn) installBtn.style.display = ''; });
+
+      // Use delegated click so it works even if the dropdown is injected later
+      document.body.addEventListener('click', function(e){
+        const t = e.target && e.target.closest && e.target.closest('#scanApproveBtn');
+        if (!t) return;
+        e.preventDefault();
+        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+        m.show();
+      });
+      modalEl.addEventListener('shown.bs.modal', tryStart);
+      modalEl.addEventListener('hidden.bs.modal', stopCam);
+
+    })();
+
+        const qrImg = document.getElementById('userQRImg');
+      const qrLabel = document.getElementById('qrLabel');
+      
+      if (qrImg) {
+        if (user.qr_code) {
+          // Add timestamp to prevent caching
+          qrImg.src = user.qr_code + '?t=' + new Date().getTime();
+          if (qrLabel) {
+            qrLabel.textContent = `${user.first_name} ${user.last_name}'s QR Code`;
+          }
+        } else {
+          qrImg.src = '../assets/images/documed_logo.png'; // fallback image
+          if (qrLabel) {
+            qrLabel.textContent = 'QR Code not available';
+          }
+        }
+      }
+  // .catch block and stray closing removed to fix syntax error
+  </script>
   </body>
 </html>
