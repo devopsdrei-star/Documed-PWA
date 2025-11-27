@@ -231,7 +231,9 @@
   /* Per-image focus helpers */
   .staff-figure img.pos-upper { object-position: 50% 25%; }
   .staff-figure img.pos-mid { object-position: 50% 35%; }
-  .staff-figure img.pos-low { object-position: 50% 50%; }
+  .staff-figure img.pos-low { object-position: auto auto; 
+  object-fit: cover;
+  }
   .staff-figure.portrait-tight { height: 320px; }
   .staff-figure img.zoom-out { transform: scale(0.92); transform-origin: center top; }
   .staff-figure img.zoom-out-sm { transform: scale(0.96); transform-origin: center top; }
@@ -276,6 +278,10 @@
   .contact-card .muted { font-size:.92rem; color:#475569; }
   @media (max-width: 900px){ .contact-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
   @media (max-width: 600px){ .contact-grid { grid-template-columns: 1fr; } }
+  /* .pos-low {
+    object-position: 50% 60%;
+    object-fit: fill;
+} */
   </style>
 </head>
 <body>
@@ -367,7 +373,7 @@
             <div class="row g-3">
               <div class="col-12 col-md-6 col-lg-4 staff-col">
                 <figure class="staff-figure">
-                  <img src="../assets/images/clinic_staff/staff_1.jpg" alt="Staff Member 1" class="pos-low zoom-out-sm">
+                  <img src="../assets/images/clinic_staff/staff_8.jpg" alt="Staff Member 1" class="pos-low zoom-out-sm">
                   <figcaption class="staff-caption"><div class="name">Christia Marie P. Flores, MD</div><div class="role">Head, Medical-Dental Services</div></figcaption>
                 </figure>
               </div>
@@ -402,7 +408,7 @@
               </div>
               <div class="col-12 col-md-6 col-lg-4 staff-col">
                 <figure class="staff-figure">
-                  <img src="../assets/images/clinic_staff/staff_6.jpg" alt="Staff Member 6" class="tweak-staff-6">
+                  <img src="../assets/images/clinic_staff/staff_7.jpg" alt="Staff Member 6" class="tweak-staff-6">
                   <figcaption class="staff-caption"><div class="name">Ma. Asuncion Carino, RN</div><div class="role">Administrative Aide</div></figcaption>
                 </figure>
               </div>
@@ -1156,7 +1162,7 @@
   </script>
   <script src="../assets/js/notifications.js"></script>
   <script>
-    // Global image fallback: prevent many console 404s by replacing broken images with a lightweight placeholder.
+       // Global image fallback: prevent many console 404s by replacing broken images with a lightweight placeholder.
     // This only replaces the src once per element to avoid infinite loops.
     (function(){
       function onImgError(e){
