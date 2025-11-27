@@ -70,18 +70,50 @@ document.addEventListener('DOMContentLoaded', function() {
   const recentTable = document.getElementById('recentAppointmentsTable');
   if (recentTable) {
     const tbody = recentTable.querySelector('tbody');
-    function renderAppointments(filter) {
-      tbody.innerHTML = '';
-      // Simulate 8 appointments
-      for (let i = 0; i < 8; i++) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>Juan Dela Cruz</td><td>Dental</td><td>2025-08-${String(20+i).padStart(2,'0')}</td><td>Completed</td>`;
-        tbody.appendChild(tr);
+    async function fetchAppointments(filter) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Loading...</td></tr>';
+      let url = '../../backend/api/appointments_new.php?action=list';
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        tbody.innerHTML = '';
+        let appointments = Array.isArray(data.appointments) ? data.appointments : [];
+        // Filter by date if needed
+        const today = new Date();
+        let filtered = appointments;
+        if (filter === 'today') {
+          const todayStr = today.toISOString().slice(0,10);
+          filtered = appointments.filter(a => a.date === todayStr);
+        } else if (filter === 'week') {
+          const weekAgo = new Date(today.getTime() - 6*24*60*60*1000);
+          filtered = appointments.filter(a => {
+            const d = new Date(a.date);
+            return d >= weekAgo && d <= today;
+          });
+        } else if (filter === 'month') {
+          const month = today.getMonth();
+          const year = today.getFullYear();
+          filtered = appointments.filter(a => {
+            const d = new Date(a.date);
+            return d.getMonth() === month && d.getFullYear() === year;
+          });
+        }
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">No appointments found.</td></tr>';
+        } else {
+          filtered.slice(0,8).forEach(appt => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${appt.name || appt.patient || ''}</td><td>${appt.purpose || ''}</td><td>${appt.date || ''}</td><td>${appt.status || ''}</td>`;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#e11d48;">Error loading appointments.</td></tr>';
       }
     }
-    renderAppointments('today');
+    fetchAppointments('all');
     document.getElementById('recentSorter').addEventListener('change', e => {
-      renderAppointments(e.target.value);
+      fetchAppointments(e.target.value);
     });
   }
 

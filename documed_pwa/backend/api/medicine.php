@@ -45,6 +45,12 @@ function ensure_tables(PDO $pdo) {
     } catch (Throwable $e) { /* ignore */ }
 }
 
+// Helper: log admin action to audit trail
+function log_admin_action($pdo, $admin_id, $action, $details = '') {
+    $stmt = $pdo->prepare("INSERT INTO audit_trail (admin_id, action, details) VALUES (?, ?, ?)");
+    $stmt->execute([$admin_id, $action, $details]);
+}
+
 function thresholdQty(array $m): int {
     $percent = isset($m['reorder_threshold_percent']) ? (int)$m['reorder_threshold_percent'] : 20;
     $baseline = isset($m['baseline_qty']) && $m['baseline_qty'] !== null ? (int)$m['baseline_qty'] : (int)$m['quantity'];
@@ -109,6 +115,10 @@ if ($action === 'create') {
     if ($name === '') { echo json_encode(['success'=>false,'message'=>'Missing name']); exit; }
     $stmt = $pdo->prepare("INSERT INTO medicines (name, campus, unit, form, strength, quantity, baseline_qty, reorder_threshold_percent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([$name, $campus, $unit ?: null, $form ?: null, $strength ?: null, $quantity, $quantity, $percent > 0 ? $percent : 20]);
+    // Log admin action
+    if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+        log_admin_action($pdo, $_POST['admin_id'], 'Create Medicine', 'Name: ' . $name . ', Campus: ' . $campus);
+    }
     echo json_encode(['success'=>true]); exit;
 }
 
@@ -125,6 +135,10 @@ if ($action === 'update') {
     $params[] = $id;
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
+    // Log admin action
+    if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+        log_admin_action($pdo, $_POST['admin_id'], 'Update Medicine', 'Medicine ID: ' . $id);
+    }
     echo json_encode(['success'=>true]); exit;
 }
 
@@ -132,6 +146,10 @@ if ($action === 'delete') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['success'=>false,'message'=>'Missing id']); exit; }
     $pdo->prepare('DELETE FROM medicines WHERE id=?')->execute([$id]);
+    // Log admin action
+    if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+        log_admin_action($pdo, $_POST['admin_id'], 'Delete Medicine', 'Medicine ID: ' . $id);
+    }
     echo json_encode(['success'=>true]); exit;
 }
 
@@ -148,6 +166,10 @@ if ($action === 'add_batch') {
     $stmt->execute([$medicine_id, $campus, $qty, $expiry_date ?: null, $received_at ?: null, $batch_no ?: null, $notes ?: null]);
     // increment medicine quantity and maybe raise baseline
     $pdo->prepare('UPDATE medicines SET quantity = quantity + ?, baseline_qty = GREATEST(COALESCE(baseline_qty,0), quantity + ?) WHERE id = ?')->execute([$qty, $qty, $medicine_id]);
+    // Log admin action
+    if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+        log_admin_action($pdo, $_POST['admin_id'], 'Add Medicine Batch', 'Medicine ID: ' . $medicine_id . ', Qty: ' . $qty);
+    }
     echo json_encode(['success'=>true]); exit;
 }
 

@@ -345,7 +345,17 @@ if ($action === 'delete') {
     $stmt->execute([$id]);
     // Audit trail log with dynamic admin id (fallback 0 if missing)
     $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
-    if ($admin_id > 0) { audit($pdo, $admin_id, 'Deleted user', 'User ID: ' . $id); }
+        // Fetch user info for better audit details
+        $userInfo = '';
+        try {
+            $stmtInfo = $pdo->prepare('SELECT last_name, first_name, middle_initial, email, client_type FROM users WHERE id = ?');
+            $stmtInfo->execute([$id]);
+            $u = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+            if ($u) {
+                $userInfo = 'Name: ' . $u['last_name'] . ', ' . $u['first_name'] . ($u['middle_initial'] ? ' ' . $u['middle_initial'] . '.' : '') . '; Email: ' . $u['email'] . '; Role: ' . ($u['client_type'] ?? '');
+            }
+        } catch (Throwable $e) {}
+        if ($admin_id > 0) { audit($pdo, $admin_id, 'Deleted user', 'User ID: ' . $id . ($userInfo ? ' | ' . $userInfo : '')); }
     echo json_encode(['success' => true]);
     exit;
 }
@@ -367,8 +377,18 @@ if ($action === 'update') {
     $stmt->execute([$student_faculty_id, $last_name, $first_name, $middle_initial, $email, $role, $id]);
     // Audit trail log
     $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
-    $details = 'User ID: ' . $id . ', Name: ' . $last_name . ', ' . $first_name . ($middle_initial ? ' ' . $middle_initial . '.' : '');
-    if ($admin_id > 0) { audit($pdo, $admin_id, 'Updated user', $details); }
+        // Fetch previous user info for audit
+        $prevInfo = '';
+        try {
+            $stmtPrev = $pdo->prepare('SELECT last_name, first_name, middle_initial, email, client_type FROM users WHERE id = ?');
+            $stmtPrev->execute([$id]);
+            $u = $stmtPrev->fetch(PDO::FETCH_ASSOC);
+            if ($u) {
+                $prevInfo = 'Previous: Name: ' . $u['last_name'] . ', ' . $u['first_name'] . ($u['middle_initial'] ? ' ' . $u['middle_initial'] . '.' : '') . '; Email: ' . $u['email'] . '; Role: ' . ($u['client_type'] ?? '');
+            }
+        } catch (Throwable $e) {}
+        $details = 'User ID: ' . $id . ', Updated to: Name: ' . $last_name . ', ' . $first_name . ($middle_initial ? ' ' . $middle_initial . '.' : '') . '; Email: ' . $email . '; Role: ' . $role . ($prevInfo ? ' | ' . $prevInfo : '');
+        if ($admin_id > 0) { audit($pdo, $admin_id, 'Updated user', $details); }
     echo json_encode(['success' => true]);
     exit;
 }
@@ -439,7 +459,8 @@ if ($action === 'add') {
     $stmt->execute($params);
     // Audit
     $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
-    if ($admin_id > 0) { audit($pdo, $admin_id, 'Added user', 'School ID: ' . $student_faculty_id . ', Email: ' . $email); }
+        $details = 'School ID: ' . $student_faculty_id . '; Name: ' . $last_name . ', ' . $first_name . ($middle_initial ? ' ' . $middle_initial . '.' : '') . '; Email: ' . $email . '; Role: ' . $role;
+        if ($admin_id > 0) { audit($pdo, $admin_id, 'Added user', $details); }
     // Return minimal user object (sans password) for UI quick refresh
     $newId = $pdo->lastInsertId();
     $selCols = '*';
@@ -518,7 +539,17 @@ if ($action === 'toggle_status') {
         $stmt = $pdo->prepare('UPDATE users SET status = ? WHERE id = ?');
         $stmt->execute([$status, $id]);
         $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
-        if ($admin_id > 0) { audit($pdo, $admin_id, 'Toggled user status', 'User ID: ' . $id . ' => ' . $status); }
+            // Fetch user info for better audit details
+            $userInfo = '';
+            try {
+                $stmtInfo = $pdo->prepare('SELECT last_name, first_name, middle_initial, email, client_type, status FROM users WHERE id = ?');
+                $stmtInfo->execute([$id]);
+                $u = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+                if ($u) {
+                    $userInfo = 'Name: ' . $u['last_name'] . ', ' . $u['first_name'] . ($u['middle_initial'] ? ' ' . $u['middle_initial'] . '.' : '') . '; Email: ' . $u['email'] . '; Role: ' . ($u['client_type'] ?? '') . '; Previous Status: ' . ($u['status'] ?? '');
+                }
+            } catch (Throwable $e) {}
+            if ($admin_id > 0) { audit($pdo, $admin_id, 'Toggled user status', 'User ID: ' . $id . ' | New Status: ' . $status . ($userInfo ? ' | ' . $userInfo : '')); }
         echo json_encode(['success' => true]);
     } catch (Throwable $e) {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -542,7 +573,17 @@ if ($action === 'reset_password') {
     $stmt = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
     $stmt->execute([$hashed, $id]);
     $admin_id = intval($_POST['admin_id'] ?? ($_GET['admin_id'] ?? 0));
-    if ($admin_id > 0) { audit($pdo, $admin_id, 'Reset user password', 'User ID: ' . $id); }
+        // Fetch user info for better audit details
+        $userInfo = '';
+        try {
+            $stmtInfo = $pdo->prepare('SELECT last_name, first_name, middle_initial, email, client_type FROM users WHERE id = ?');
+            $stmtInfo->execute([$id]);
+            $u = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+            if ($u) {
+                $userInfo = 'Name: ' . $u['last_name'] . ', ' . $u['first_name'] . ($u['middle_initial'] ? ' ' . $u['middle_initial'] . '.' : '') . '; Email: ' . $u['email'] . '; Role: ' . ($u['client_type'] ?? '');
+            }
+        } catch (Throwable $e) {}
+        if ($admin_id > 0) { audit($pdo, $admin_id, 'Reset user password', 'User ID: ' . $id . ($userInfo ? ' | ' . $userInfo : '')); }
     echo json_encode(['success' => true, 'new_password' => $_POST['new_password'] ? null : $new]);
     exit;
 }

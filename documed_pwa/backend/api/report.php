@@ -100,8 +100,16 @@ if ($action === 'illness_stats') {
 	$roleInput = $_GET['role'] ?? $_POST['role'] ?? 'Student';
 	$rawRoleIn = strtoupper(trim($roleInput));
 	$roleMap = [
-		'STUDENT'=>'Student','FACULTY'=>'Faculty','STAFF'=>'Staff','TEACHER'=>'Faculty',
-		'NON-TEACHING'=>'Staff','NONTEACHING'=>'Staff','NON TEACHING'=>'Staff','ADMIN'=>'Staff','EMPLOYEE'=>'Staff'
+		'STUDENT'=>'Student',
+		'TEACHER'=>'Teacher',
+		// removed accidental trailing space
+		'NON-TEACHING'=>'Non-Teaching',
+		'NON TEACHING'=>'Non-Teaching',
+		'NONTEACHING'=>'Non-Teaching',
+		'STUDENTS'=>'Student',
+		'TEACHERS'=>'Teacher',
+		'NON-TEACHINGS'=>'Non-Teaching',
+		'STAFF'=>'Non-Teaching', // treat legacy Staff as Non-Teaching
 	];
 	$normRole = function($v) use($roleMap){
 		$V = strtoupper(trim($v ?? ''));
@@ -178,11 +186,15 @@ if ($action === 'illness_stats') {
 	}
 	// Filter by audience if not All (map Non-Teaching explicitly to Staff)
 	$unmatchedRoles = [];
+	$debugClientTypes = [];
+	$debugMappedRoles = [];
 	if ($role !== 'All') {
-		$rows = array_values(array_filter($rows, function($r) use($role,$normRole,&$unmatchedRoles){
+		$rows = array_values(array_filter($rows, function($r) use($role,$normRole,&$unmatchedRoles,&$debugClientTypes,&$debugMappedRoles){
 			$ctRaw = trim($r['client_type'] ?? '');
+			$debugClientTypes[] = $ctRaw;
 			$mapped = $normRole($ctRaw === '' ? 'Student' : $ctRaw);
-			if (!in_array($mapped,['Student','Faculty','Staff'])) { $unmatchedRoles[] = $ctRaw; $mapped = 'Staff'; }
+			$debugMappedRoles[] = $mapped;
+			if (!in_array($mapped,['Student','Teacher','Non-Teaching'])) { $unmatchedRoles[] = $ctRaw; $mapped = 'Non-Teaching'; }
 			return $mapped === $role;
 		}));
 	}
@@ -332,7 +344,7 @@ if ($action === 'illness_stats') {
 	$total = array_sum($values);
 
 	// Compute role counts based on client_type fallback and heuristics from department/year_and_course
-	$roleCounts = ['Student'=>0,'Faculty'=>0,'Staff'=>0];
+	$roleCounts = ['Student'=>0,'Teacher'=>0,'Non-Teaching'=>0];
 	$genderCounts = ['Male'=>0,'Female'=>0,'Other'=>0];
 	foreach ($rows as $r) {
 		$mapped = $normRole($r['client_type'] ?? '');
@@ -343,11 +355,11 @@ if ($action === 'illness_stats') {
 		if ($g === 'male' || $g === 'm') $genderCounts['Male']++; elseif ($g === 'female' || $g === 'f') $genderCounts['Female']++; elseif ($g !== '') $genderCounts['Other']++;
 	}
 
-	// Map internal Faculty/Staff buckets to Teacher/Non-Teaching for the frontend
+	// Direct mapping for frontend
 	$roleCountsDisplay = [
 		'Student' => $roleCounts['Student'] ?? 0,
-		'Teacher' => $roleCounts['Faculty'] ?? 0,
-		'Non-Teaching' => $roleCounts['Staff'] ?? 0
+		'Teacher' => $roleCounts['Teacher'] ?? 0,
+		'Non-Teaching' => $roleCounts['Non-Teaching'] ?? 0
 	];
 
 		echo json_encode([
@@ -364,7 +376,9 @@ if ($action === 'illness_stats') {
 				'stageDeptCount'=>$stageDeptCount,
 				'stageYearCount'=>$stageYearCount,
 				'stageCourseCount'=>$stageCourseCount,
-				'unmatchedRoles'=>$unmatchedRoles
+				'unmatchedRoles'=>$unmatchedRoles,
+				'clientTypes'=>$debugClientTypes,
+				'mappedRoles'=>$debugMappedRoles
 			], [
 				'inferredDeptHits'=>($inferredDeptHits ?? []),
 				'inferredDeptHitsCount'=>($inferredDeptHitsCount ?? 0)
@@ -588,27 +602,26 @@ if ($action === 'clinic_overview') {
 		} catch (Throwable $e) { $hasLegacyRole = false; }
 	}
 
+
 	$roleMap = [
 		'STUDENT'=>'Student',
-		'FACULTY'=>'Faculty',
-		'STAFF'=>'Staff',
-		'TEACHER'=>'Faculty',
-		'NON-TEACHING'=>'Staff',
-		'NONTEACHING'=>'Staff',
-		'NON TEACHING'=>'Staff',
-		'ADMIN'=>'Staff', // treat generic admin as Staff unless clarified
-		'EMPLOYEE'=>'Staff'
+		'FACULTY'=>'Teacher',
+		'STAFF'=>'Non-Teaching',
+		'TEACHER'=>'Teacher',
+		'NON-TEACHING'=>'Non-Teaching',
+		'NONTEACHING'=>'Non-Teaching',
+		'NON TEACHING'=>'Non-Teaching',
+		'ADMIN'=>'Non-Teaching', // treat generic admin as Non-Teaching unless clarified
+		'EMPLOYEE'=>'Non-Teaching'
 	];
-	$roles = ['Student','Faculty','Staff'];
+	$roles = ['Student','Teacher','Non-Teaching'];
 
 	// Ensure $hasRole flag used below is defined (was causing warnings)
 	$hasRole = $hasLegacyRole;
 
-	// Pull checkups in date range
+	// Directly fetch all checkups in date range, group by client_type
 	$whereDate = "WHERE DATE(created_at) BETWEEN ? AND ?";
-	$sql = $hasLegacyRole
-		? "SELECT COALESCE(NULLIF(client_type,''), role) AS role, assessment, present_illness, remarks FROM checkups $whereDate"
-		: "SELECT client_type AS role, assessment, present_illness, remarks FROM checkups $whereDate";
+	$sql = "SELECT client_type, assessment, present_illness, remarks FROM checkups $whereDate";
 	$stmt = $pdo->prepare($sql);
 	$stmt->execute([$start, $end]);
 	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -616,28 +629,14 @@ if ($action === 'clinic_overview') {
 	// Token helpers
 	$norm = function($s){ return strtolower(trim($s ?? '')); };
 	$incr = function(&$arr,$key,$role,$val=1) use($roles){ if(!isset($arr[$key])) $arr[$key] = array_fill_keys($roles,0); $arr[$key][$role] += (int)$val; };
-	$getRole = function($raw) use($roleMap){
+	$roles = ['Student','Teacher','Non-Teaching'];
+	$getRole = function($raw) {
 		$val = strtoupper(trim($raw ?? ''));
-		if ($val==='') return 'Student';
-		// unify separators
-		$val = str_replace(['  '],' ', $val);
-		$val = str_replace(['-'], ' ', $val);
-		$val = preg_replace('/\s+/', ' ', $val);
-		$valTrim = str_replace(' ', '-', $val); // allow both space and hyphen forms
-		$mapKey = $val;
-		if (!isset($roleMap[$mapKey]) && isset($roleMap[str_replace(' ','-',$mapKey)])) {
-			$mapKey = str_replace(' ','-',$mapKey);
-		}
-		$r = $roleMap[$mapKey] ?? ($roleMap[$valTrim] ?? null);
-		if ($r===null) {
-			// Explicit teacher / non-teaching detection BEFORE student heuristics to avoid misclassification (e.g., 'Teacher II')
-			if (preg_match('/TEACHER/i', $val)) return 'Faculty';
-			if (preg_match('/NON[ -]?TEACHING/i', $val)) return 'Staff';
-			// heuristic: contains year tokens => student
-			if (preg_match('/\b(i|ii|iii|iv|1st|2nd|3rd|4th|freshman|sophomore|junior|senior)\b/i',$val)) return 'Student';
-			return 'Staff'; // default fallback
-		}
-		return $r;
+		if ($val === 'TEACHER') return 'Teacher';
+		if ($val === 'NON-TEACHING') return 'Non-Teaching';
+		if ($val === 'STUDENT') return 'Student';
+		// fallback: treat anything else as Student
+		return 'Student';
 	};
 	$debugRawRoles = [];
 
@@ -778,14 +777,15 @@ if ($action === 'clinic_overview') {
 	$illnessCounts = [];
 	$medicineCounts = [];
 	$serviceCounts = [];
-	$roleRawCounts = ['Student'=>0,'Faculty'=>0,'Staff'=>0];
-	$othersIllnessByRole = ['Student'=>0,'Faculty'=>0,'Staff'=>0];
+	$roleRawCounts = ['Student'=>0,'Teacher'=>0,'Non-Teaching'=>0];
+	$othersIllnessByRole = ['Student'=>0,'Teacher'=>0,'Non-Teaching'=>0];
 
 	foreach ($rows as $r) {
-		$rawRole = $hasRole ? ($r['role'] ?? '') : ($r['client_type'] ?? '');
+		$rawRole = $r['client_type'] ?? '';
 		$debugRawRoles[] = $rawRole;
-		$role = $hasRole ? $getRole($rawRole) : $getRole($rawRole);
-		if (!isset($roleRawCounts[$role])) $roleRawCounts[$role]=0; $roleRawCounts[$role]++;
+		$role = $getRole($rawRole);
+		if (!isset($roleRawCounts[$role])) $roleRawCounts[$role]=0;
+		$roleRawCounts[$role]++;
 		$a = $norm(($r['assessment'] ?? '') . ' ' . ($r['present_illness'] ?? ''));
 		$rm = $norm($r['remarks'] ?? '');
 
@@ -797,7 +797,11 @@ if ($action === 'clinic_overview') {
 			}
 			if ($matchedIll) break;
 		}
-		if (!$matchedIll && $a !== '') { $incr($illnessCounts,'Others',$role,1); $othersIllnessByRole[$role]++; }
+		if (!$matchedIll && $a !== '') {
+			$incr($illnessCounts,'Others',$role,1);
+			if (!isset($othersIllnessByRole[$role])) $othersIllnessByRole[$role]=0;
+			$othersIllnessByRole[$role]++;
+		}
 
 		// Services from remarks
 		foreach ($serviceMap as $label => $keys) {
@@ -888,42 +892,93 @@ if ($action === 'clinic_overview') {
 	}
 
 	// Build ordered rows (keep input order where possible)
-	$rolesIdx = ['Student','Faculty','Staff'];
+
+	$rolesIdx = ['Student','Teacher','Non-Teaching'];
 	$sumRole = function($arr) use($rolesIdx){ $tot = array_fill_keys($rolesIdx,0); foreach($arr as $row){ foreach($rolesIdx as $r){ $tot[$r] += (int)($row[$r] ?? 0); } } return $tot; };
 
 	$medRows = [];
 	foreach ($medMap as $label => $_) { $medRows[] = ['label'=>$label] + ($medicineCounts[$label] ?? array_fill_keys($rolesIdx,0)); }
-	$medTotals = $sumRole(array_map(function($r){ return ['Student'=>$r['Student']??0,'Faculty'=>$r['Faculty']??0,'Staff'=>$r['Staff']??0]; }, $medRows));
+	$medTotals = $sumRole(array_map(function($r){ return ['Student'=>$r['Student']??0,'Teacher'=>$r['Teacher']??0,'Non-Teaching'=>$r['Non-Teaching']??0]; }, $medRows));
 
 	$svcRows = [];
 	foreach ($serviceMap as $label => $_) { $svcRows[] = ['label'=>$label] + ($serviceCounts[$label] ?? array_fill_keys($rolesIdx,0)); }
-	$svcTotals = $sumRole(array_map(function($r){ return ['Student'=>$r['Student']??0,'Faculty'=>$r['Faculty']??0,'Staff'=>$r['Staff']??0]; }, $svcRows));
+	$svcTotals = $sumRole(array_map(function($r){ return ['Student'=>$r['Student']??0,'Teacher'=>$r['Teacher']??0,'Non-Teaching'=>$r['Non-Teaching']??0]; }, $svcRows));
 
 	$illRows = [];
 	foreach ($illnessMap as $label => $_) { $illRows[] = ['label'=>$label] + ($illnessCounts[$label] ?? array_fill_keys($rolesIdx,0)); }
-	$illTotals = $sumRole(array_map(function($r){ return ['Student'=>$r['Student']??0,'Faculty'=>$r['Faculty']??0,'Staff'=>$r['Staff']??0]; }, $illRows));
+	$illTotals = $sumRole(array_map(function($r){ return ['Student'=>$r['Student']??0,'Teacher'=>$r['Teacher']??0,'Non-Teaching'=>$r['Non-Teaching']??0]; }, $illRows));
 
 	// Top 5 per role based on illness counts
 	$topByRole = [];
+
+	// Map backend roles to frontend columns: Faculty => Teacher, Staff => Non-Teaching, Teacher => Teacher, Non-Teaching => Non-Teaching
+	$frontendRole = function($r) {
+		if ($r === 'Faculty' || $r === 'Teacher') return 'Teacher';
+		if ($r === 'Staff' || $r === 'Non-Teaching') return 'Non-Teaching';
+		if ($r === 'Student') return 'Student';
+		return $r;
+	};
+
+	$rolesFrontend = ['Student','Teacher','Non-Teaching'];
+
+	// Remap all rows for output
+	$remapRows = function($rows) use ($rolesIdx, $rolesFrontend, $frontendRole) {
+		$out = [];
+		foreach ($rows as $row) {
+			$newRow = ['label'=>$row['label']];
+			foreach ($rolesIdx as $ri) {
+				$col = $frontendRole($ri);
+				$newRow[$col] = $row[$ri] ?? 0;
+			}
+			$out[] = $newRow;
+		}
+		return $out;
+	};
+
+	$medRowsOut = $remapRows($medRows);
+	$svcRowsOut = $remapRows($svcRows);
+	$illRowsOut = $remapRows($illRows);
+
+	// Remap totals
+	$remapTotals = function($totals) use ($rolesIdx, $rolesFrontend, $frontendRole) {
+		$out = [];
+		foreach ($rolesIdx as $ri) {
+			$col = $frontendRole($ri);
+			$out[$col] = $totals[$ri] ?? 0;
+		}
+		return $out;
+	};
+
+	$medTotalsOut = $remapTotals($medTotals);
+	$svcTotalsOut = $remapTotals($svcTotals);
+	$illTotalsOut = $remapTotals($illTotals);
+
+	// Top 5 per role (frontend)
+	$topByRole = [];
 	foreach ($rolesIdx as $r) {
+		$col = $frontendRole($r);
 		$pairs = [];
 		foreach ($illRows as $row) { $pairs[] = ['label'=>$row['label'], 'count'=> (int)($row[$r] ?? 0)]; }
 		usort($pairs, fn($a,$b)=> $b['count'] <=> $a['count']);
-		$topByRole[$r] = array_slice(array_map(fn($p)=> $p['label'], array_filter($pairs, fn($p)=> $p['count']>0)), 0, 5);
+		$topByRole[$col] = array_slice(array_map(fn($p)=> $p['label'], array_filter($pairs, fn($p)=> $p['count']>0)), 0, 5);
 	}
 
-	// Cases seen
-	$withIllness = $illTotals; // sum of illnesses implies with-illness
-	$otherServices = $svcTotals; // proxy for other services
-	$grandTotal = ['Student'=> ($withIllness['Student']+$otherServices['Student']), 'Faculty'=> ($withIllness['Faculty']+$otherServices['Faculty']), 'Staff'=> ($withIllness['Staff']+$otherServices['Staff']) ];
+	// Cases seen (remap)
+	$withIllness = $remapTotals($illTotals); // sum of illnesses implies with-illness
+	$otherServices = $remapTotals($svcTotals); // proxy for other services
+	$grandTotal = [];
+	foreach ($rolesIdx as $r) {
+		$col = $frontendRole($r);
+		$grandTotal[$col] = ($withIllness[$col] + $otherServices[$col]);
+	}
 
 	echo json_encode([
 		'success'=>true,
 		'period'=>['start'=>$start,'end'=>$end],
 		'hasRole'=>$hasLegacyRole,
-		'medicines'=>['rows'=>$medRows,'totals'=>$medTotals, 'grand'=> (int)$medTotals['Student'] + (int)$medTotals['Faculty'] + (int)$medTotals['Staff']],
-		'services'=>['rows'=>$svcRows,'totals'=>$svcTotals, 'grand'=> (int)$svcTotals['Student'] + (int)$svcTotals['Faculty'] + (int)$svcTotals['Staff']],
-		'illnesses'=>['rows'=>$illRows,'totals'=>$illTotals,'topByRole'=>$topByRole, 'grand'=> (int)$illTotals['Student'] + (int)$illTotals['Faculty'] + (int)$illTotals['Staff']],
+		'medicines'=>['rows'=>$medRowsOut,'totals'=>$medTotalsOut, 'grand'=> (int)$medTotalsOut['Student'] + (int)$medTotalsOut['Teacher'] + (int)$medTotalsOut['Non-Teaching']],
+		'services'=>['rows'=>$svcRowsOut,'totals'=>$svcTotalsOut, 'grand'=> (int)$svcTotalsOut['Student'] + (int)$svcTotalsOut['Teacher'] + (int)$svcTotalsOut['Non-Teaching']],
+		'illnesses'=>['rows'=>$illRowsOut,'totals'=>$illTotalsOut,'topByRole'=>$topByRole, 'grand'=> (int)$illTotalsOut['Student'] + (int)$illTotalsOut['Teacher'] + (int)$illTotalsOut['Non-Teaching']],
 		'casesSeen'=>[
 			'withIllness'=>$withIllness,
 			'otherServices'=>$otherServices,

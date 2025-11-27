@@ -58,7 +58,7 @@
   </div>
       <div>
         <h1 class="mb-2">Activity log</h1>
-  <div class="d-flex flex-wrap gap-2 align-items-end px-3 mb-2">
+  <div class="d-flex flex-wrap align-items-end gap-3 px-3 mb-2" style="flex-direction: row;">
           <div>
             <label class="form-label small mb-1">Start date</label>
             <input type="date" id="auditStart" class="form-control" style="height:38px;">
@@ -71,7 +71,7 @@
             <label class="form-label small mb-1">Admin (id or name)</label>
             <input type="text" id="auditAdmin" class="form-control" placeholder="e.g. 1 or Jane" style="height:38px;">
           </div>
-          <div class="flex-grow-1">
+          <div style="min-width:180px;">
             <label class="form-label small mb-1">Search</label>
             <input type="text" id="auditQ" class="form-control" placeholder="Action or details" style="height:38px;">
           </div>
@@ -83,14 +83,7 @@
               <option>500</option>
             </select>
           </div>
-          <div>
-            <label class="form-label small mb-1">Match existing admin accounts</label>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="auditAdminsOnly">
-              <label class="form-check-label" for="auditAdminsOnly">Admins only</label>
-            </div>
-          </div>
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 align-items-end">
             <button class="btn btn-primary" id="auditApply" style="height:38px;">Apply</button>
             <button class="btn btn-outline-secondary" id="auditReset" style="height:38px;">Reset</button>
           </div>
@@ -129,8 +122,7 @@
       if (a) params.set('admin', a);
       if (q) params.set('q', q);
       if (l) params.set('limit', l);
-  const adminsOnly = document.getElementById('auditAdminsOnly').checked ? '1' : '0';
-  params.set('admins_only', adminsOnly);
+      // Removed adminsOnly filter since the checkbox no longer exists
   const res = await fetch('../../backend/api/audit_trail.php?' + params.toString());
       const data = await res.json();
       if (data.success && data.logs) {
@@ -150,7 +142,6 @@
       document.getElementById('auditAdmin').value = '';
       document.getElementById('auditQ').value = '';
       document.getElementById('auditLimit').value = '200';
-      document.getElementById('auditAdminsOnly').checked = true;
       loadAudit();
     });
     loadAudit();

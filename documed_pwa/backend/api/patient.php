@@ -46,6 +46,12 @@ if ($action === 'list') {
     exit;
 }
 
+// Helper: log admin action to audit trail
+function log_admin_action($pdo, $admin_id, $action, $details = '') {
+    $stmt = $pdo->prepare("INSERT INTO audit_trail (admin_id, action, details) VALUES (?, ?, ?)");
+    $stmt->execute([$admin_id, $action, $details]);
+}
+
 // Add patient record with standardized fields
 if ($action === 'add') {
     $user_id = $_POST['user_id'] ?? '';
@@ -93,6 +99,10 @@ if ($action === 'add') {
                                   WHERE student_faculty_id = ? AND follow_up = 1 AND (follow_up_date IS NULL OR follow_up_date <= ?)");
             $upd->execute([$user_id, $doneDate]);
         } catch (Throwable $e) { /* non-fatal if update fails */ }
+        // Log admin action
+        if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+            log_admin_action($pdo, $_POST['admin_id'], 'Add Patient Record', 'Patient: ' . $name . ', User ID: ' . $user_id);
+        }
         echo json_encode(['success' => true, 'message' => 'Follow-up record successfully inserted!', 'insert_id' => $insertId]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage(), 'debug' => $_POST]);
@@ -128,6 +138,10 @@ if ($action === 'update') {
     }
         $stmt = $pdo->prepare("UPDATE patients SET name=?, address=?, age_sex=?, contact_number=?, date_of_examination=?, chief_complaint=?, bp=?, cr=?, rr=?, temp=?, wt=?, ht=?, bmi=?, impression=?, treatment=?, nurses_notes=?, last_visit=?, follow_up=?, follow_up_date=? WHERE id=?");
     $stmt->execute([$name, $address, $age_sex, $contact_number, $date_of_examination, $chief_complaint, $bp, $cr, $rr, $temp, $wt, $ht, $bmi, $impression, $treatment, $nurses_notes, $last_visit, (int)$follow_up, ($follow_up ? ($follow_up_date ?: null) : null), $id]);
+    // Log admin action
+    if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+        log_admin_action($pdo, $_POST['admin_id'], 'Update Patient Record', 'Patient ID: ' . $id);
+    }
     echo json_encode(['success' => true]);
     exit;
 }
@@ -141,6 +155,10 @@ if ($action === 'delete') {
     }
     $stmt = $pdo->prepare("DELETE FROM patients WHERE id=?");
     $stmt->execute([$id]);
+    // Log admin action
+    if (isset($_POST['admin_id']) && $_POST['admin_id']) {
+        log_admin_action($pdo, $_POST['admin_id'], 'Delete Patient Record', 'Patient ID: ' . $id);
+    }
     echo json_encode(['success' => true]);
     exit;
 }

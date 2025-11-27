@@ -207,17 +207,16 @@ document.addEventListener('DOMContentLoaded', function() {
 			} else if (mode === 'monthly') {
 				if (monthInput) monthInput.style.display = 'inline-block';
 			}
-			// Show filters per audience: Students -> Year/Course; Faculty/Staff -> Department
+			// Show filters per audience: Student -> Year/Course; Teacher/Non-Teaching -> Department
 			const aud = audienceFilter ? audienceFilter.value : 'All';
 			const deptC = document.getElementById('deptContainer');
 			const yearC = document.getElementById('yearContainer');
 			const courseC = document.getElementById('courseContainer');
 			if (aud === 'Student') {
-				// Show department too for students (college), plus year & course
 				if (deptC) deptC.style.display = 'flex';
 				if (yearC) yearC.style.display = 'flex';
 				if (courseC) courseC.style.display = 'flex';
-			} else if (aud === 'Faculty' || aud === 'Staff') {
+			} else if (aud === 'Teacher' || aud === 'Non-Teaching') {
 				if (deptC) deptC.style.display = 'flex';
 				if (yearC) yearC.style.display = 'none';
 				if (courseC) courseC.style.display = 'none';
@@ -792,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		const audience = audienceFilter ? (audienceFilter.value || 'Student') : 'Student';
 		reportResult.innerHTML = '';
 				const data = await fetchIllnessStats(audience);
-					const pluralMap = { 'Student':'Students', 'Faculty':'Faculty', 'Staff':'Staff' };
+					const pluralMap = { 'Student':'Students', 'Teacher':'Teachers', 'Non-Teaching':'Non-Teaching' };
 					const audLabel = audience === 'All' ? 'All Roles' : (pluralMap[audience] || audience);
 					const title = `Top Illnesses Among ${audLabel}`;
 						renderPie(data.labels, data.values, title);
@@ -845,6 +844,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	setTimeout(() => {
 		try {
 			if (reportType && !reportType.value) reportType.value = 'illness_stats';
+			if (audienceFilter) audienceFilter.value = 'All';
 		} catch(e) {}
 		updateInputs();
 		try { syncCourses(); } catch(_) {}
