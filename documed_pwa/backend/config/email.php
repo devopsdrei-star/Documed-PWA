@@ -47,13 +47,8 @@ function send_email($to, $subject, $htmlBody, $textBody = '') {
     $allowSelfSigned = (bool)($cfg['SMTP_ALLOW_SELF_SIGNED'] ?? (getenv('SMTP_ALLOW_SELF_SIGNED') ?: false));
 
         if (!$user || !$pass) {
-            // Dev fallback: save email to file for demos/tests if enabled
-            if (!empty($devDebug)) {
-                $saveDir = __DIR__ . '/../tmp/emails';
-                if (!is_dir($saveDir)) { @mkdir($saveDir, 0777, true); }
-            $devDebug = (bool)($cfg['DEV_EMAIL_DEBUG'] ?? (getenv('DEV_EMAIL_DEBUG') ?: false));
-            }
-            return [ 'success' => false, 'error' => 'SMTP not configured. Set SMTP_USER and SMTP_PASS (or create backend/config/email.local.php).' ];
+            // No SMTP configured; we'll skip SMTP and try mail() later
+            throw new Exception('SMTP not configured');
         }
 
         $mail->isSMTP();
@@ -95,9 +90,33 @@ function send_email($to, $subject, $htmlBody, $textBody = '') {
         $mail->send();
         return ['success' => true];
     } catch (Exception $e) {
-        error_log('Mail error: ' . $e->getMessage());
-        // In dev, include more context to aid troubleshooting
+        // SMTP failed; attempt PHP mail() fallback
         $err = $e->getMessage();
+        error_log('Mail SMTP error: ' . $err);
+
+        // Build plain text payload and headers
+        $plain = $textBody ?: strip_tags($htmlBody);
+        $headers = "From: " . ($fromName ? "$fromName <$fromEmail>" : $fromEmail) . "\r\n" .
+                   "Reply-To: $fromEmail\r\n" .
+                   "Content-Type: text/plain; charset=UTF-8\r\n" .
+                   "X-Mailer: PHP/" . phpversion();
+
+        $sent = @mail($to, $subject, $plain, $headers, '-f ' . $fromEmail);
+        if (!$sent) { $sent = @mail($to, $subject, $plain, $headers); }
+        if ($sent) {
+            return ['success' => true, 'fallback' => 'mail'];
+        }
+
+        // Final fallback: save .eml to disk if devDebug enabled
+        if (!empty($devDebug)) {
+            $saveDir = __DIR__ . '/../tmp/emails';
+            if (!is_dir($saveDir)) { @mkdir($saveDir, 0777, true); }
+            $fname = $saveDir . '/email_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.eml';
+            $eml = "Subject: $subject\r\n$headers\r\n\r\n$plain";
+            @file_put_contents($fname, $eml);
+            return ['success' => false, 'saved' => $fname, 'error' => $err];
+        }
+
         return ['success' => false, 'error' => $err];
     }
 }
