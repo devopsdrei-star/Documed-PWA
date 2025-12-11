@@ -1,0 +1,76 @@
+/* verify_user.css - Styles for the verify user page */
+.verify-user-container {
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 32px 28px 24px 28px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.08);
+  text-align: center;
+}
+.verify-user-container h2 {
+  color: #2d6cdf;
+  margin-bottom: 12px;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.verify-user-container p {
+  color: #444;
+  margin-bottom: 18px;
+  font-size: 1rem;
+}
+#verifyForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+#verificationCode {
+  padding: 10px 12px;
+  border: 1px solid #bfc9d9;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+#verificationCode:focus {
+  border-color: #2d6cdf;
+}
+#verifyForm button {
+  background: #2d6cdf;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#verifyForm button:hover {
+  background: #1a4fa0;
+}
+#verifyMessage {
+  min-height: 24px;
+  margin-bottom: 8px;
+  color: #e74c3c;
+  font-size: 0.98rem;
+}
+#resendCodeBtn {
+  background: none;
+  color: #2d6cdf;
+  border: none;
+  font-size: 0.98rem;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 8px;
+  transition: color 0.2s;
+}
+#resendCodeBtn:hover {
+  color: #1a4fa0;
+}
+body {
+  background: linear-gradient(120deg, #e3f0ff 0%, #f8fbff 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}

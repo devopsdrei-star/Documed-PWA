@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Account</title>
+    <link rel="stylesheet" href="../assets/css/verify_user.css">
+</head>
+<body>
+    <div class="verify-user-container">
+        <h2>Account Verification</h2>
+        <p>A verification code has been sent to <span id="verifyEmailDisplay" style="font-weight:600;color:#2d6cdf;"></span>. Please enter it below to activate your account.</p>
+        <form id="verifyForm">
+            <input type="text" id="verificationCode" name="verificationCode" placeholder="Enter verification code" required>
+            <button type="submit">Verify</button>
+        </form>
+        <div id="verifyMessage"></div>
+        <button id="resendCodeBtn" type="button">Resend Code</button>
+    </div>
+    <script src="../assets/js/verify_user.js"></script>
+</body>
+</html>

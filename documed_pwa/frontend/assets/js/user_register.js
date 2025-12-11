@@ -84,18 +84,18 @@ if (userRegisterForm) {
     .then(data => {
       if (data.success) {
         userRegisterMsg.style.color = 'green';
-        userRegisterMsg.textContent = 'Registration successful! Redirecting...';
+        userRegisterMsg.textContent = 'Registration successful! Please check your email for the verification code.';
 
-        // Store token or session data in localStorage or sessionStorage
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.user) {
-          localStorage.setItem('documed_user', JSON.stringify(data.user));
-          sessionStorage.setItem('documedLoggedIn', '1');
+        // Store email for verification page autofill
+        const emailVal = (document.getElementById('email')?.value || '').trim();
+        if (emailVal) {
+          localStorage.setItem('pendingVerifyEmail', emailVal);
+          sessionStorage.setItem('lastRegisterEmail', emailVal);
         }
 
+        // Backend already sent the code in auth.php flow; just redirect
         setTimeout(() => {
-          window.location.href = 'user_dashboard.html';
+          window.location.href = 'verify_user.html';
         }, 1500);
       } else {
         userRegisterMsg.style.color = 'red';

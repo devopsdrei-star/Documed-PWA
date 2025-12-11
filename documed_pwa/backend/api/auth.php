@@ -22,6 +22,31 @@ apply_security_headers();
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
+// ✅ Verify registration code and activate user
+if ($action === 'verify_code') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $email = trim($data['email'] ?? '');
+    $code = trim((string)($data['code'] ?? ''));
+    if ($email === '' || $code === '') {
+        jsonResponse(['success' => false, 'message' => 'Missing email or code']);
+    }
+    try {
+        $stmt = $pdo->prepare('SELECT id, verification_code, verification_expires, status FROM users WHERE LOWER(email)=LOWER(?) LIMIT 1');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user) jsonResponse(['success' => false, 'message' => 'User not found']);
+        if ($user['status'] !== 'pending') jsonResponse(['success' => false, 'message' => 'Account already verified or inactive']);
+        $dbCode = trim((string)$user['verification_code']);
+        if ($dbCode !== $code) jsonResponse(['success' => false, 'message' => 'Invalid code']);
+        if (strtotime($user['verification_expires']) < time()) jsonResponse(['success' => false, 'message' => 'Code expired']);
+        $upd = $pdo->prepare('UPDATE users SET status="active", verification_code=NULL, verification_expires=NULL WHERE id=?');
+        $upd->execute([$user['id']]);
+        jsonResponse(['success' => true, 'message' => 'Verification successful! You may now log in.']);
+    } catch (Throwable $e) {
+        jsonResponse(['success' => false, 'message' => 'Verification failed']);
+    }
+}
+
 function jsonResponse($arr) {
     // Clear any previous output and buffer
     if (ob_get_level()) ob_end_clean();
@@ -519,11 +544,21 @@ if ($action === 'user_register') {
             @$pdo->exec("ALTER TABLE users ADD COLUMN qr_code VARCHAR(255) NULL AFTER department");
         }
         if (!col_exists($pdo, 'users', 'status')) {
-            @$pdo->exec("ALTER TABLE users ADD COLUMN status ENUM('active','inactive') NOT NULL DEFAULT 'active' AFTER qr_code");
+            @$pdo->exec("ALTER TABLE users ADD COLUMN status ENUM('active','inactive','pending') NOT NULL DEFAULT 'pending' AFTER qr_code");
+        }
+        if (!col_exists($pdo, 'users', 'verification_code')) {
+            @$pdo->exec("ALTER TABLE users ADD COLUMN verification_code VARCHAR(16) NULL AFTER status");
+        }
+        if (!col_exists($pdo, 'users', 'verification_expires')) {
+            @$pdo->exec("ALTER TABLE users ADD COLUMN verification_expires DATETIME NULL AFTER verification_code");
         }
     } catch (Throwable $e) { /* ignore schema migration errors */ }
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
+
+    // Generate verification code
+    $verification_code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    $verification_expires = date('Y-m-d H:i:s', time() + 900); // 15 min
 
 require_once __DIR__ . '/phpqrcode.php';
     try {
@@ -537,10 +572,10 @@ require_once __DIR__ . '/phpqrcode.php';
         ];
         if ($hasGender) { $cols[]='gender'; $vals[]=$gender; }
         $cols = array_merge($cols,[
-            'date_of_birth','place_of_birth','year_course','student_faculty_id','contact_person','contact_number','email','password','client_type','department','photo','created_at'
+            'date_of_birth','place_of_birth','year_course','student_faculty_id','contact_person','contact_number','email','password','client_type','department','photo','created_at','status','verification_code','verification_expires'
         ]);
         $vals = array_merge($vals,[
-            $date_of_birth,$place_of_birth,$year_course,$student_faculty_id,$contact_person,$contact_number,$email,$hash,$client_type,$department,$photo_path,$created_at
+            $date_of_birth,$place_of_birth,$year_course,$student_faculty_id,$contact_person,$contact_number,$email,$hash,$client_type,$department,$photo_path,$created_at,'pending',$verification_code,$verification_expires
         ]);
         // Prepare statement
         $placeholders = rtrim(str_repeat('?,', count($cols)),',');
@@ -575,24 +610,18 @@ require_once __DIR__ . '/phpqrcode.php';
             ]);
         }
 
-        // Fetch full inserted user (without password) to return consistent client state
-        try {
-            $cols = '*';
-            $stmtFetch = $pdo->prepare("SELECT $cols FROM users WHERE id=? LIMIT 1");
-            $stmtFetch->execute([$user_id]);
-            $newUser = $stmtFetch->fetch(PDO::FETCH_ASSOC);
-            if ($newUser) { unset($newUser['password']); }
-        } catch (Throwable $e) { $newUser = null; }
+        // Send verification email
+        $subj = 'DocuMed Registration Verification Code';
+        $html = '<p>Your verification code is: <strong style="font-size:20px;letter-spacing:4px;">' . htmlspecialchars($verification_code) . '</strong></p><p>This code will expire in 15 minutes.</p>';
+        $text = "Your verification code is: $verification_code\nThis code will expire in 15 minutes.";
+        $sent = send_email($email, $subj, $html, $text);
 
-        if ($newUser && isset($newUser['client_type']) && !isset($newUser['role'])) {
-            $newUser['role'] = $newUser['client_type'];
-        }
         jsonResponse([
             'success' => true,
-            'message' => 'Registration successful! You can now login.',
+            'message' => 'Verification code sent. Please check your email.',
             'qr_code' => $qr_db_path ?? null,
             'user_id' => $user_id,
-            'user' => $newUser
+            'sent' => $sent
         ]);
     } catch (PDOException $e) {
         jsonResponse(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
